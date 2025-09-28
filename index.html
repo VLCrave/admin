@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Crave Street Admin</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen flex items-center justify-center px-4">
+  <div class="bg-gray-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-2xl text-white">
+    <h2 class="text-3xl font-bold text-center mb-6">📊 Dashboard Admin</h2>
+    <p class="text-center text-gray-300 mb-8">Selamat datang, <span id="userEmail" class="font-semibold text-blue-400"></span></p>
+
+    <!-- Menu Card -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+        <h3 class="text-lg font-semibold mb-2">📊 Laporan Arus Kas</h3>
+        <p class="text-gray-300 text-sm">Pantau arus kas masuk dan keluar dengan mudah.</p>
+      </div>
+      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+        <h3 class="text-lg font-semibold mb-2">🛒 Data Transaksi</h3>
+        <p class="text-gray-300 text-sm">Kelola data transaksi penjualan dengan cepat.</p>
+      </div>
+      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+        <h3 class="text-lg font-semibold mb-2">👥 Manajemen User</h3>
+        <p class="text-gray-300 text-sm">Kelola akun admin dan akses pengguna lain.</p>
+      </div>
+      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+        <h3 class="text-lg font-semibold mb-2">⚙️ Pengaturan</h3>
+        <p class="text-gray-300 text-sm">Atur preferensi sistem sesuai kebutuhan.</p>
+      </div>
+    </div>
+
+    <div class="mt-8 text-center">
+      <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold transition transform hover:scale-105">
+        Logout
+      </button>
+    </div>
+
+    <p class="text-gray-400 text-sm text-center mt-6">© 2025 Crave Street Admin Panel</p>
+  </div>
+
+  <!-- Firebase Auth Check -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+
+    // Config Firebase (sama dengan login.html)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCHZk2uU2DqRLFrUujc523W8iv15gOtax4",
+      authDomain: "vlcrave-24937.firebaseapp.com",
+      projectId: "vlcrave-24937",
+      storageBucket: "vlcrave-24937.firebasestorage.app",
+      messagingSenderId: "572472133475",
+      appId: "1:572472133475:web:91a723ef197bc427fc3556",
+      measurementId: "G-968SY07J0R"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // ✅ Cek apakah user login
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("userEmail").innerText = user.email;
+      } else {
+        // jika belum login → kembali ke login
+        window.location.href = "login.html";
+      }
+    });
+
+    // ✅ Logout
+    window.logout = function() {
+      signOut(auth).then(() => {
+        Swal.fire({
+          icon: "success",
+          title: "Logout Berhasil",
+          confirmButtonColor: "#2563eb"
+        }).then(() => {
+          window.location.href = "login.html";
+        });
+      });
+    }
+  </script>
+</body>
+</html>
