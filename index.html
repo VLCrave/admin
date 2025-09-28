@@ -11,46 +11,75 @@
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen flex items-center justify-center px-4">
-  <div class="bg-gray-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-2xl text-white">
-    <h2 class="text-3xl font-bold text-center mb-6">📊 Dashboard Admin</h2>
-    <p class="text-center text-gray-300 mb-8">Selamat datang, <span id="userEmail" class="font-semibold text-blue-400"></span></p>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen">
 
-    <!-- Menu Card -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">📊 Laporan Arus Kas</h3>
-        <p class="text-gray-300 text-sm">Pantau arus kas masuk dan keluar dengan mudah.</p>
+  <!-- Sticky Header -->
+  <header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-6 py-3 flex items-center justify-between shadow-lg">
+    <div class="flex items-center gap-3">
+      <img src="https://i.ibb.co/2v4G0Qh/logo.png" alt="Logo" class="h-10 w-10 rounded-full">
+      <h1 class="text-white font-bold text-xl">Crave Street Admin</h1>
+    </div>
+    <div class="flex items-center gap-4">
+      <div class="text-right">
+        <p class="text-gray-300 text-sm">Halo, <span id="userName" class="font-semibold text-blue-400"></span></p>
+        <p class="text-gray-400 text-xs">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p>
       </div>
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">🛒 Data Transaksi</h3>
-        <p class="text-gray-300 text-sm">Kelola data transaksi penjualan dengan cepat.</p>
-      </div>
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">👥 Manajemen User</h3>
-        <p class="text-gray-300 text-sm">Kelola akun admin dan akses pengguna lain.</p>
-      </div>
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">⚙️ Pengaturan</h3>
-        <p class="text-gray-300 text-sm">Atur preferensi sistem sesuai kebutuhan.</p>
+      <img id="userPhoto" src="https://i.ibb.co/2v4G0Qh/avatar.png" alt="User Photo" class="h-10 w-10 rounded-full border-2 border-blue-400">
+      <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold text-white">Logout</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex flex-col items-center justify-start px-4 py-8">
+    <div class="w-full max-w-4xl text-white">
+      <h2 class="text-3xl font-bold text-center mb-6">📊 Dashboard Admin</h2>
+
+      <!-- Menu Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Laporan Arus Kas -->
+        <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+          <h3 class="text-lg font-semibold mb-2">📊 Laporan Arus Kas</h3>
+          <p class="text-gray-300 text-sm mb-3">Pantau arus kas masuk dan keluar dengan mudah.</p>
+          <div id="arusKasData" class="text-sm text-gray-200 mb-3">
+            <p>Pemasukan: <span id="pemasukan" class="text-green-400 font-semibold">Rp 0</span></p>
+            <p>Pengeluaran: <span id="pengeluaran" class="text-red-400 font-semibold">Rp 0</span></p>
+            <p>Laba Kotor: <span id="laba" class="text-blue-400 font-semibold">Rp 0</span></p>
+          </div>
+          <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">Lihat Detail</button>
+        </div>
+
+        <!-- Data Transaksi -->
+        <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+          <h3 class="text-lg font-semibold mb-2">🛒 Data Transaksi</h3>
+          <p class="text-gray-300 text-sm mb-3">Kelola data transaksi penjualan dengan cepat.</p>
+          <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">Lihat Detail</button>
+        </div>
+
+        <!-- Manajemen User -->
+        <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+          <h3 class="text-lg font-semibold mb-2">👥 Manajemen User</h3>
+          <p class="text-gray-300 text-sm mb-3">Kelola akun admin dan akses pengguna lain.</p>
+          <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">Lihat Detail</button>
+        </div>
+
+        <!-- Pengaturan -->
+        <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
+          <h3 class="text-lg font-semibold mb-2">⚙️ Pengaturan</h3>
+          <p class="text-gray-300 text-sm mb-3">Atur preferensi sistem sesuai kebutuhan.</p>
+          <button class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">Lihat Detail</button>
+        </div>
       </div>
     </div>
+  </main>
 
-    <div class="mt-8 text-center">
-      <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold transition transform hover:scale-105">
-        Logout
-      </button>
-    </div>
+  <p class="text-gray-400 text-sm text-center mt-6">© 2025 Crave Street Admin Panel</p>
 
-    <p class="text-gray-400 text-sm text-center mt-6">© 2025 Crave Street Admin Panel</p>
-  </div>
-
-  <!-- Firebase Auth Check -->
+  <!-- Firebase Auth + Firestore -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-    // 🔑 Config Firebase terbaru (crave-street-id)
     const firebaseConfig = {
       apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
       authDomain: "crave-street-id.firebaseapp.com",
@@ -63,13 +92,38 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    // ✅ Cek apakah user login
-    onAuthStateChanged(auth, (user) => {
+    // ✅ Cek login
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
-        document.getElementById("userEmail").innerText = user.email;
+        document.getElementById("userName").innerText = user.displayName || user.email;
+        document.getElementById("userPhoto").src = user.photoURL || "https://i.ibb.co/2v4G0Qh/avatar.png";
+
+        // 🔹 Ambil saldo
+        try {
+          const docRef = doc(db, "users", user.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            document.getElementById("saldo").innerText = "Rp " + (data.saldo || 0).toLocaleString();
+          }
+        } catch (e) { console.error(e); }
+
+        // 🔹 Ambil data arus kas
+        try {
+          const snapshot = await getDocs(collection(db, "arusKas"));
+          let pemasukan = 0, pengeluaran = 0;
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            pemasukan += data.pemasukan || 0;
+            pengeluaran += data.pengeluaran || 0;
+          });
+          document.getElementById("pemasukan").innerText = "Rp " + pemasukan.toLocaleString();
+          document.getElementById("pengeluaran").innerText = "Rp " + pengeluaran.toLocaleString();
+          document.getElementById("laba").innerText = "Rp " + (pemasukan - pengeluaran).toLocaleString();
+        } catch (e) { console.error(e); }
       } else {
-        // jika belum login → kembali ke login
         window.location.href = "login.html";
       }
     });
@@ -81,9 +135,7 @@
           icon: "success",
           title: "Logout Berhasil",
           confirmButtonColor: "#2563eb"
-        }).then(() => {
-          window.location.href = "login.html";
-        });
+        }).then(() => window.location.href = "login.html");
       });
     }
   </script>
