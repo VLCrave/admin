@@ -8,34 +8,412 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen text-white">
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen">
 
 <!-- HEADER -->
-<header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 flex justify-between items-center shadow-lg">
-  <div class="flex items-center gap-2">
-    <img src="https://vlcrave.github.io/admin/logo.png" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full">
-    <h1 class="text-white font-bold text-base sm:text-xl">Crave Street</h1>
+<header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 flex flex-wrap items-center justify-between shadow-lg">
+  <div class="flex items-center gap-2 sm:gap-3 flex-1">
+    <img src="https://vlcrave.github.io/admin/logo.png" alt="Logo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full">
+    <h1 class="text-white font-bold text-lg sm:text-xl truncate">Crave Street</h1>
   </div>
-  <div class="flex items-center gap-3">
-    <div class="text-right text-xs sm:text-sm">
-      <p class="text-gray-300">Halo, <span id="userName" class="font-semibold text-blue-400">Admin</span></p>
-      <p class="text-gray-400">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p>
-      <p class="text-gray-400">Role: <span id="userRole" class="font-semibold text-yellow-400">-</span></p>
+  <div class="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-0">
+    <div class="text-right">
+      <p class="text-gray-300 text-xs sm:text-sm">Halo, <span id="userName" class="font-semibold text-blue-400 truncate block max-w-[80px] sm:max-w-full">Admin</span></p>
+      <p class="text-gray-400 text-[10px] sm:text-xs">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p>
+      <p class="text-gray-400 text-[10px] sm:text-xs">Role: <span id="userRole" class="font-semibold text-yellow-400">Admin</span></p>
     </div>
-    <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-blue-400">
-    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-white text-xs sm:text-sm">Logout</button>
+    <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" alt="User Photo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-blue-400">
+    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-semibold text-white text-xs sm:text-sm whitespace-nowrap">Logout</button>
   </div>
 </header>
 
-<!-- MAIN CONTENT -->
-<main id="mainContent" class="p-4 sm:p-6 max-w-6xl mx-auto"></main>
+<!-- MAIN -->
+<main class="p-4 max-w-5xl mx-auto mt-6">
+  <!-- Dashboard Grid -->
+  <div id="dashboardGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
 
-<!-- FIREBASE + JS -->
-<script type="module" src="auth.js"></script>
-<script type="module" src="dashboard.js"></script>
-<script type="module" src="kas.js"></script>
-<script type="module" src="transaksi.js"></script>
-<script type="module" src="pengaturan.js"></script>
+  <!-- Container laporan arus kas -->
+  <div id="kasContainer" class="hidden mt-6 text-white">
+    <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
+    <h2 class="text-xl font-bold mb-2">📊 Laporan Arus Kas</h2>
+    <div class="mb-3 flex gap-2 flex-wrap">
+      <button onclick="filterKas('all')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Semua</button>
+      <button onclick="filterKas('mingguan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Mingguan</button>
+      <button onclick="filterKas('bulanan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Bulanan</button>
+    </div>
+    <canvas id="chartKas" class="mb-3 bg-gray-800 rounded-xl p-2"></canvas>
+    <div id="kasList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+  </div>
 
+<!-- Container Data Transaksi -->
+<div id="transaksiContainer" class="hidden mt-6 text-white">
+  <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
+  <h2 class="text-xl font-bold mb-2">🛒 Data Transaksi</h2>
+
+  <!-- Filter -->
+  <div class="mb-3 flex gap-2 flex-wrap">
+    <button onclick="filterTransaksi('all')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Semua</button>
+    <button onclick="filterTransaksi('harian')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Harian</button>
+    <button onclick="filterTransaksi('mingguan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Mingguan</button>
+    <button onclick="filterTransaksi('bulanan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Bulanan</button>
+  </div>
+
+  <div id="transaksiTotal" class="mb-3"></div>
+  <div id="transaksiList" class="space-y-2 max-h-96 overflow-y-auto"></div>
+</div>
+
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
+  authDomain: "crave-street-id.firebaseapp.com",
+  projectId: "crave-street-id",
+  storageBucket: "crave-street-id.firebasestorage.app",
+  messagingSenderId: "221955592583",
+  appId: "1:221955592583:web:43dc59d791e750095cc322",
+  measurementId: "G-WCRQGLW47B"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+let currentUser = null;
+let kasData = [];
+const kasContainer = document.getElementById("kasContainer");
+const transaksiContainer = document.getElementById("transaksiContainer");
+
+// ===== AUTH =====
+onAuthStateChanged(auth, async (user) => {
+  if(!user) return window.location.href = "login.html";
+  currentUser = user;
+  const userDoc = await getDoc(doc(db,"users",user.uid));
+  const data = userDoc.exists() ? userDoc.data() : {};
+  document.getElementById("userName").innerText = data.name || "Admin";
+  document.getElementById("userRole").innerText = data.role || "Admin";
+  updateSaldo();
+  renderDashboard();
+  loadKas();
+});
+
+// ===== LOGOUT =====
+window.logout = () => signOut(auth).then(()=>window.location.href="login.html");
+
+// ===== UPDATE SALDO =====
+async function updateSaldo(){
+  const snap = await getDocs(collection(db,"transaksi"));
+  let pemasukan=0, pengeluaran=0;
+  snap.forEach(d=>{
+    const t=d.data();
+    if(t.type=="penjualan") pemasukan+=t.total;
+    else pengeluaran+=t.total;
+  });
+  document.getElementById("saldo").innerText="Rp "+(pemasukan-pengeluaran).toLocaleString("id-ID");
+}
+
+// ===== DASHBOARD =====
+function renderDashboard(){
+  kasContainer.classList.add("hidden");
+  transaksiContainer.classList.add("hidden");
+  const grid = document.getElementById("dashboardGrid");
+  grid.innerHTML="";
+  const modules = [
+    {key:"kas",title:"📊 Laporan Arus Kas",desc:"Pantau arus kas otomatis."},
+    {key:"transaksi",title:"🛒 Data Transaksi",desc:"Kelola data transaksi."},
+    {key:"pengaturan",title:"⚙️ Pengaturan",desc:"Atur preferensi sistem."}
+  ];
+  modules.forEach(mod=>{
+    const card=document.createElement("div");
+    card.className="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition";
+    let btns=`<button onclick="showSection('${mod.key}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Lihat Detail</button>`;
+    if(mod.key!=="kas" && mod.key!=="pengaturan"){
+      btns+=`
+        <button onclick="tambah('${mod.key}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm">Tambah</button>`;
+    }
+    card.innerHTML=`<h3 class="text-lg font-semibold mb-2">${mod.title}</h3>
+                    <p class="text-gray-300 text-sm mb-3">${mod.desc}</p>${btns}`;
+    grid.appendChild(card);
+  });
+}
+
+// ===== SHOW SECTION =====
+window.showSection = function(key){
+  if(key==="kas"){
+    kasContainer.classList.remove("hidden");
+    transaksiContainer.classList.add("hidden");
+    document.getElementById("dashboardGrid").classList.add("hidden");
+    renderKasList("all");
+  } else if(key==="transaksi"){
+    transaksiContainer.classList.remove("hidden");
+    kasContainer.classList.add("hidden");
+    document.getElementById("dashboardGrid").classList.add("hidden");
+    renderTransaksi("all");
+  } else {
+    Swal.fire("Info","Fitur "+key,"info");
+  }
+}
+
+// ===== BACK TO DASHBOARD =====
+window.backToDashboard = function(){
+  kasContainer.classList.add("hidden");
+  transaksiContainer.classList.add("hidden");
+  document.getElementById("dashboardGrid").classList.remove("hidden");
+}
+
+// ===== LOAD ARUS KAS =====
+async function loadKas(){
+  kasData=[];
+  const snap = await getDocs(query(collection(db,"transaksi"),orderBy("tanggal","asc")));
+  snap.forEach(d=>{
+    const t=d.data();
+    kasData.push({...t,id:d.id});
+  });
+}
+
+// ===== FILTER KAS =====
+window.filterKas = function(type){
+  renderKasList(type);
+}
+
+// ===== RENDER KAS LIST =====
+// ===== RENDER KAS LIST HARIAN =====
+function renderKasList(type){
+  const kasList = document.getElementById("kasList");
+  kasList.innerHTML="";
+  let now = new Date();
+  
+  // Kelompokkan transaksi per hari
+  const grouped = {};
+  kasData.forEach(t=>{
+    let include = true;
+    const tDate = t.tanggal ? new Date(t.tanggal.seconds*1000) : null;
+
+    if(type==="mingguan"){
+      let diff = (now.getTime()-tDate.getTime())/(1000*60*60*24);
+      if(diff>7) include=false;
+    } else if(type==="bulanan"){
+      if(tDate.getMonth()!==now.getMonth()) include=false;
+    }
+
+    if(include){
+      const dayKey = tDate ? `${tDate.getDate().toString().padStart(2,"0")}/${(tDate.getMonth()+1).toString().padStart(2,"0")}/${tDate.getFullYear()}` : "-";
+      if(!grouped[dayKey]) grouped[dayKey] = [];
+      grouped[dayKey].push(t);
+    }
+  });
+
+  // Render per hari
+  Object.keys(grouped).forEach(day=>{
+    const list = grouped[day];
+    let totalPemasukan=0, totalPengeluaran=0, count=0;
+    list.forEach(t=>{
+      count++;
+      if(t.type==="penjualan") totalPemasukan += t.total;
+      else totalPengeluaran += t.total;
+    });
+    const laba = totalPemasukan - totalPengeluaran;
+
+    kasList.innerHTML += `
+      <div class="border-b border-gray-600 py-2">
+        <p class="font-semibold">Tanggal: ${day}</p>
+        <p>Jumlah Transaksi: ${count}</p>
+        <p class="text-green-400">Pemasukan: Rp ${totalPemasukan.toLocaleString("id-ID")}</p>
+        <p class="text-red-400">Pengeluaran: Rp ${totalPengeluaran.toLocaleString("id-ID")}</p>
+        <p class="font-semibold text-white">Laba Kotor: Rp ${laba.toLocaleString("id-ID")}</p>
+      </div>`;
+  });
+
+  // Update chart seperti sebelumnya
+  const labels=[], pemasukan=[], pengeluaran=[];
+  Object.keys(grouped).forEach(day=>{
+    let totalPemasukan=0, totalPengeluaran=0;
+    grouped[day].forEach(t=>{
+      if(t.type==="penjualan") totalPemasukan += t.total;
+      else totalPengeluaran += t.total;
+    });
+    labels.push(day);
+    pemasukan.push(totalPemasukan);
+    pengeluaran.push(totalPengeluaran);
+  });
+
+  const ctx = document.getElementById("chartKas").getContext("2d");
+  if(window.kasChart) window.kasChart.destroy();
+  window.kasChart = new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels,
+      datasets:[
+        {label:"Pemasukan",data:pemasukan,backgroundColor:"rgba(34,197,94,0.7)"},
+        {label:"Pengeluaran",data:pengeluaran,backgroundColor:"rgba(239,68,68,0.7)"}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{labels:{color:"white"}}},
+      scales:{x:{ticks:{color:"white"}},y:{ticks:{color:"white"}}}
+    }
+  });
+}
+
+
+// ===== FILTER TRANSAKSI =====
+window.filterTransaksi = function(type){
+  renderTransaksi(type);
+}
+
+// ===== RENDER TRANSAKSI DENGAN FILTER =====
+async function renderTransaksi(type="all"){
+  const transaksiDiv = document.getElementById("transaksiList");
+  const transaksiTotal = document.getElementById("transaksiTotal");
+  transaksiDiv.innerHTML = "";
+  let totalPemasukan = 0, totalPengeluaran = 0;
+
+  const snap = await getDocs(query(collection(db,"transaksi"),orderBy("tanggal","asc")));
+  const now = new Date();
+  snap.forEach(d=>{
+    const t = d.data();
+    let include = true;
+    if(t.tanggal){
+      const tDate = new Date(t.tanggal.seconds*1000);
+      if(type==="harian"){
+        include = tDate.toDateString() === now.toDateString();
+      } else if(type==="mingguan"){
+        const diff = (now.getTime()-tDate.getTime())/(1000*60*60*24);
+        include = diff <= 7;
+      } else if(type==="bulanan"){
+        include = tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear();
+      }
+    }
+    if(include){
+      if(t.type==="penjualan") totalPemasukan += t.total;
+      else totalPengeluaran += t.total;
+
+      const dt = t.tanggal ? new Date(t.tanggal.seconds*1000) : null;
+      const tDateStr = dt ? `${dt.getDate().toString().padStart(2,"0")}/${(dt.getMonth()+1).toString().padStart(2,"0")}/${dt.getFullYear()}, ${dt.getHours().toString().padStart(2,"0")}.${dt.getMinutes().toString().padStart(2,"0")}.${dt.getSeconds().toString().padStart(2,"0")}` : "-";
+
+      transaksiDiv.innerHTML += `
+        <div class="border-b border-gray-600 py-2">
+          <p>Jenis: ${t.type}</p>
+          ${t.produkNama?`<p>Produk: ${t.produkNama}</p>`:""}
+          <p>Total: Rp ${t.total.toLocaleString("id-ID")}</p>
+          <p class="text-xs text-gray-400">Tanggal: ${tDateStr}</p>
+          <p class="text-xs text-gray-400 italic">Ditambahkan oleh: ${t.adminName || "Admin"}</p>
+        </div>`;
+    }
+  });
+
+  transaksiTotal.innerHTML = `<p class="font-semibold text-green-400">Total Pemasukan: Rp ${totalPemasukan.toLocaleString("id-ID")}</p>
+                              <p class="font-semibold text-red-400">Total Pengeluaran: Rp ${totalPengeluaran.toLocaleString("id-ID")}</p>
+                              <p class="font-semibold text-white">Saldo: Rp ${(totalPemasukan-totalPengeluaran).toLocaleString("id-ID")}</p>`;
+}
+
+
+// ===== TAMBAH TRANSAKSI =====
+window.tambah = async (section) => {
+  if (section !== "transaksi") return;
+
+  // Ambil data produk
+  const produkSnap = await getDocs(collection(db, "produk"));
+  const produkOptions = {};
+  produkSnap.forEach(d => {
+    produkOptions[d.id] = `${d.data().nama} - Rp${d.data().harga}`;
+  });
+
+  // Tampilkan Swal
+  const { value: formData } = await Swal.fire({
+    title: "Tambah Transaksi",
+    html: `
+      <select id="swalJenis" class="swal2-input">
+        <option value="" disabled selected>Jenis Transaksi</option>
+        <option value="penjualan">Penjualan</option>
+        <option value="pengeluaran">Pengeluaran</option>
+      </select>
+
+      <div id="produkContainer" style="display:none; margin-top:10px;">
+        <label>Pilih Produk</label>
+        <select id="swalProduk" class="swal2-input">
+          ${Object.entries(produkOptions)
+            .map(([id, name]) => `<option value="${id}">${name}</option>`)
+            .join('')}
+        </select>
+        <input id="swalJumlah" type="number" class="swal2-input" placeholder="Masukkan jumlah">
+      </div>
+
+      <div id="pengeluaranContainer" style="display:none; margin-top:10px;">
+        <label>Nama Pengeluaran</label>
+        <input id="swalNama" class="swal2-input" placeholder="Masukkan nama pengeluaran">
+        <label>Nominal</label>
+        <input id="swalNominal" type="number" class="swal2-input" placeholder="Masukkan nominal">
+      </div>
+    `,
+    focusConfirm: false,
+    showCancelButton: true,
+    preConfirm: () => {
+      const jenis = document.getElementById("swalJenis").value;
+      if (!jenis) Swal.showValidationMessage("Pilih jenis transaksi");
+
+      if (jenis === "penjualan") {
+        const produkId = document.getElementById("swalProduk").value;
+        const jumlah = document.getElementById("swalJumlah").value;
+        if (!produkId) Swal.showValidationMessage("Pilih produk");
+        if (!jumlah) Swal.showValidationMessage("Masukkan jumlah");
+        return { jenis, produkId, jumlah };
+      } else {
+        const nama = document.getElementById("swalNama").value;
+        const nominal = document.getElementById("swalNominal").value;
+        if (!nama) Swal.showValidationMessage("Masukkan nama pengeluaran");
+        if (!nominal) Swal.showValidationMessage("Masukkan nominal");
+        return { jenis, nama, nominal };
+      }
+    },
+    didOpen: () => {
+      const jenisSelect = document.getElementById("swalJenis");
+      jenisSelect.addEventListener("change", () => {
+        const isPenjualan = jenisSelect.value === "penjualan";
+        document.getElementById("produkContainer").style.display = isPenjualan ? "block" : "none";
+        document.getElementById("pengeluaranContainer").style.display = isPenjualan ? "none" : "block";
+      });
+    }
+  });
+
+  if (!formData) return;
+
+  if (formData.jenis === "penjualan") {
+    const produkDoc = await getDoc(doc(db, "produk", formData.produkId));
+    const produk = produkDoc.data();
+    await addDoc(collection(db, "transaksi"), {
+      type: "penjualan",
+      produkId: formData.produkId,
+      produkNama: produk.nama,
+      hargaSatuan: produk.harga,
+      jumlah: Number(formData.jumlah),
+      total: Number(formData.jumlah) * produk.harga,
+      tanggal: serverTimestamp(),
+      adminId: currentUser.uid,
+      adminName: currentUser.displayName || "Admin"
+    });
+  } else {
+    await addDoc(collection(db, "transaksi"), {
+      type: "pengeluaran",
+      produkNama: formData.nama,
+      total: Number(formData.nominal),
+      tanggal: serverTimestamp(),
+      adminId: currentUser.uid,
+      adminName: currentUser.displayName || "Admin"
+    });
+  }
+
+  Swal.fire("Berhasil", "Transaksi ditambahkan", "success");
+  updateSaldo();
+  loadKas();
+  renderTransaksi();
+};
+
+</script>
 </body>
 </html>
