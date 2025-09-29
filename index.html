@@ -1,151 +1,41 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Crave Street Admin</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SweetAlert2 -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Crave Street Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen">
 
-  <!-- Sticky Header -->
-  <header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 flex flex-wrap items-center justify-between shadow-lg">
-    <div class="flex items-center gap-2 sm:gap-3 flex-1">
-      <img src="https://vlcrave.github.io/admin/logo.png" alt="Logo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full">
-      <h1 class="text-white font-bold text-lg sm:text-xl truncate">Crave Street</h1>
-    </div>
-    <div class="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-0">
-      <div class="text-right">
-        <p class="text-gray-300 text-xs sm:text-sm">Halo, <span id="userName" class="font-semibold text-blue-400 truncate block max-w-[80px] sm:max-w-full"></span></p>
-        <p class="text-gray-400 text-[10px] sm:text-xs">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p>
-      </div>
-      <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" alt="User Photo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-blue-400">
-      <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-semibold text-white text-xs sm:text-sm whitespace-nowrap">Logout</button>
-    </div>
-  </header>
-
-  <!-- Dashboard Content -->
-  <main class="p-4 max-w-4xl mx-auto mt-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">📊 Laporan Arus Kas</h3>
-        <p class="text-gray-300 text-sm mb-3">Pantau arus kas masuk dan keluar dengan mudah.</p>
-        <p class="text-white font-semibold mb-3">Total Kas: <span id="totalKas">Rp 0</span></p>
-        <button onclick="showDetail('kas')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Lihat Detail</button>
-      </div>
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">🛒 Data Transaksi</h3>
-        <p class="text-gray-300 text-sm mb-3">Kelola data transaksi penjualan dengan cepat.</p>
-        <button onclick="showDetail('transaksi')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Lihat Detail</button>
-      </div>
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">👥 Manajemen User</h3>
-        <p class="text-gray-300 text-sm mb-3">Kelola akun admin dan akses pengguna lain.</p>
-        <button onclick="showDetail('user')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Lihat Detail</button>
-      </div>
-      <div class="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition">
-        <h3 class="text-lg font-semibold mb-2">⚙️ Pengaturan</h3>
-        <p class="text-gray-300 text-sm mb-3">Atur preferensi sistem sesuai kebutuhan.</p>
-        <button onclick="showDetail('pengaturan')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Lihat Detail</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- Modal Lihat Detail -->
-  <div id="detailModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 p-6 rounded-2xl w-11/12 max-w-lg text-white relative">
-      <h3 class="text-xl font-bold mb-4" id="modalTitle">Detail</h3>
-      <div id="modalContent" class="space-y-2 text-gray-300 max-h-96 overflow-y-auto"></div>
-      <button onclick="closeModal()" class="absolute top-3 right-3 text-red-500 font-bold text-lg">&times;</button>
-    </div>
+<!-- HEADER -->
+<header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 flex justify-between items-center shadow-lg">
+  <div class="flex items-center gap-2">
+    <img src="https://vlcrave.github.io/admin/logo.png" class="h-10 w-10 rounded-full">
+    <h1 class="text-white font-bold text-xl">Crave Street</h1>
   </div>
+  <div class="flex items-center gap-3">
+    <div class="text-right text-sm">
+      <p class="text-gray-300">Halo, <span id="userName" class="font-semibold text-blue-400">Admin</span></p>
+      <p class="text-gray-400">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p>
+      <p class="text-gray-400">Role: <span id="userRole" class="font-semibold text-yellow-400">-</span></p>
+    </div>
+    <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" class="h-10 w-10 rounded-full border-2 border-blue-400">
+    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white">Logout</button>
+  </div>
+</header>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+<!-- MAIN CONTENT -->
+<main id="mainContent" class="p-6 max-w-5xl mx-auto"></main>
 
-    // 🔑 Config Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
-      authDomain: "crave-street-id.firebaseapp.com",
-      projectId: "crave-street-id",
-      storageBucket: "crave-street-id.firebasestorage.app",
-      messagingSenderId: "221955592583",
-      appId: "1:221955592583:web:43dc59d791e750095cc322",
-      measurementId: "G-WCRQGLW47B"
-    };
+<!-- FIREBASE + JS -->
+<script type="module" src="auth.js"></script>
+<script type="module" src="dashboard.js"></script>
+<script type="module" src="kas.js"></script>
+<script type="module" src="transaksi.js"></script>
+<script type="module" src="pengaturan.js"></script>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // ✅ Cek login
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return window.location.href = "login.html";
-
-      document.getElementById("userName").innerText = user.displayName || "Admin";
-
-      // Ambil saldo dari Firestore
-      const saldoCol = collection(db, "saldo");
-      const saldoSnap = await getDocs(saldoCol);
-      let totalSaldo = 0;
-      saldoSnap.forEach(doc => { totalSaldo += doc.data().jumlah || 0; });
-      document.getElementById("saldo").innerText = "Rp " + totalSaldo.toLocaleString("id-ID");
-
-      // Ambil total kas dari Firestore
-      const kasCol = collection(db, "arus_kas");
-      const kasSnap = await getDocs(kasCol);
-      let totalKas = 0;
-      kasSnap.forEach(doc => { totalKas += doc.data().nominal || 0; });
-      document.getElementById("totalKas").innerText = "Rp " + totalKas.toLocaleString("id-ID");
-    });
-
-    // Logout
-    window.logout = function() {
-      signOut(auth).then(() => {
-        Swal.fire({ icon: "success", title: "Logout Berhasil", confirmButtonColor: "#2563eb" })
-        .then(() => window.location.href = "login.html");
-      });
-    }
-
-    // Modal Lihat Detail
-    window.showDetail = async function(section) {
-      const modal = document.getElementById("detailModal");
-      const title = document.getElementById("modalTitle");
-      const content = document.getElementById("modalContent");
-      content.innerHTML = "";
-
-      if(section === "kas") {
-        title.innerText = "Detail Laporan Arus Kas";
-        const q = query(collection(db, "arus_kas"), orderBy("tanggal", "desc"));
-        const snap = await getDocs(q);
-        snap.forEach(doc => {
-          const d = doc.data();
-          content.innerHTML += `<div class="border-b border-gray-600 py-2">
-            <p class="text-sm">Tanggal: ${d.tanggal}</p>
-            <p class="text-sm">Keterangan: ${d.keterangan}</p>
-            <p class="text-sm">Nominal: Rp ${d.nominal.toLocaleString("id-ID")}</p>
-          </div>`;
-        });
-      } else {
-        title.innerText = "Detail " + section;
-        content.innerHTML = `<p class="text-gray-400">Konten untuk ${section} belum tersedia.</p>`;
-      }
-
-      modal.classList.remove("hidden");
-      modal.classList.add("flex");
-    }
-
-    window.closeModal = function() {
-      document.getElementById("detailModal").classList.add("hidden");
-      document.getElementById("detailModal").classList.remove("flex");
-    }
-  </script>
 </body>
 </html>
