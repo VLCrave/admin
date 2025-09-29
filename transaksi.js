@@ -6,26 +6,23 @@ const main = document.getElementById("mainContent");
 
 export async function renderTransaksi() {
   const snap = await getDocs(collection(db,"transaksi"));
-  let rows="";
+  let list="";
   snap.forEach(d=>{
     let t=d.data();
-    rows+=`
-      <tr class="border-b border-gray-600">
-        <td>${t.type}</td>
-        <td>${t.produkNama||"-"}</td>
-        <td>${t.jumlah||"-"}</td>
-        <td>Rp ${t.total.toLocaleString("id-ID")}</td>
-      </tr>
+    list+=`
+      <div class="bg-gray-800 p-4 rounded-lg shadow mb-3">
+        <p class="font-bold">${t.type.toUpperCase()}</p>
+        <p>Produk: ${t.produkNama||"-"}</p>
+        <p>Jumlah: ${t.jumlah||"-"}</p>
+        <p>Total: <span class="text-green-400">Rp ${t.total.toLocaleString("id-ID")}</span></p>
+      </div>
     `;
   });
 
   main.innerHTML=`
-    <h2 class="text-2xl font-bold mb-4 text-white">🛒 Data Transaksi</h2>
+    <h2 class="text-xl sm:text-2xl font-bold mb-4">🛒 Data Transaksi</h2>
     <button onclick="tambahTransaksi()" class="bg-green-600 px-4 py-2 rounded-lg text-white mb-4">+ Tambah Transaksi</button>
-    <table class="w-full text-left text-white">
-      <thead class="bg-gray-700"><tr><th>Jenis</th><th>Produk</th><th>Jumlah</th><th>Total</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div>${list}</div>
   `;
 }
 
