@@ -8,27 +8,27 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen">
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen text-white">
 
 <!-- HEADER -->
 <header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 flex justify-between items-center shadow-lg">
   <div class="flex items-center gap-2">
-    <img src="https://vlcrave.github.io/admin/logo.png" class="h-10 w-10 rounded-full">
-    <h1 class="text-white font-bold text-xl">Crave Street</h1>
+    <img src="https://vlcrave.github.io/admin/logo.png" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full">
+    <h1 class="text-white font-bold text-base sm:text-xl">Crave Street</h1>
   </div>
   <div class="flex items-center gap-3">
-    <div class="text-right text-sm">
+    <div class="text-right text-xs sm:text-sm">
       <p class="text-gray-300">Halo, <span id="userName" class="font-semibold text-blue-400">Admin</span></p>
       <p class="text-gray-400">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p>
       <p class="text-gray-400">Role: <span id="userRole" class="font-semibold text-yellow-400">-</span></p>
     </div>
-    <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" class="h-10 w-10 rounded-full border-2 border-blue-400">
-    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-white">Logout</button>
+    <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-blue-400">
+    <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-3 py-1 sm:px-4 sm:py-2 rounded-lg text-white text-xs sm:text-sm">Logout</button>
   </div>
 </header>
 
 <!-- MAIN CONTENT -->
-<main id="mainContent" class="p-6 max-w-5xl mx-auto"></main>
+<main id="mainContent" class="p-4 sm:p-6 max-w-6xl mx-auto"></main>
 
 <!-- FIREBASE + JS -->
 <script type="module" src="auth.js"></script>
