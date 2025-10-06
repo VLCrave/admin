@@ -1,0 +1,560 @@
+        let html = '';
+        codes.forEach(code => {
+            html += `<div class="code-item flex justify-between items-center">
+                <span class="text-green-400 font-mono">${code}</span>
+                <span class="text-gray-400 text-sm">Unused</span>
+            </div>`;
+        });
+        list.innerHTML = html;
+    }
+    // ===== CLEAR RESULTS =====
+    window.clearResults = () => {
+        document.getElementById('hasilContainer').classList.add('hidden');
+        document.getElementById('codeList').innerHTML = '';
+    };
+    // ===== Event Listener untuk Enter Key =====
+    document.addEventListener('DOMContentLoaded', () => {
+        const jumlahInput = document.getElementById('jumlahKode');
+        jumlahInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                generateCodes();
+            }
+        });
+    });
+</script>
+</body>
+</html>
+
+pisahkan html dan js nya
+
+<!DOCTYPE html> <html lang="id"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Dashboard - Crave Street Admin</title> <script src="https://cdn.tailwindcss.com"></script> <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> </head> <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen"> <!-- HEADER --> <header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 flex flex-wrap items-center justify-between shadow-lg"> <div class="flex items-center gap-2 sm:gap-3 flex-1"> <img src="https://vlcrave.github.io/admin/logo.png" alt="Logo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full"> <h1 class="text-white font-bold text-lg sm:text-xl truncate">Crave Street</h1> </div> <div class="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-0"> <div class="text-right"> <p class="text-gray-300 text-xs sm:text-sm">Halo, <span id="userName" class="font-semibold text-blue-400 truncate block max-w-[80px] sm:max-w-full">Admin</span></p> <p class="text-gray-400 text-[10px] sm:text-xs">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p> <p class="text-gray-400 text-[10px] sm:text-xs">Role: <span id="userRole" class="font-semibold text-yellow-400">Admin</span></p> </div> <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" alt="User Photo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-blue-400"> <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-semibold text-white text-xs sm:text-sm whitespace-nowrap">Logout</button> </div> </header> <!-- MAIN --> <main class="p-4 max-w-5xl mx-auto mt-6"> <!-- Dashboard Grid --> <div id="dashboardGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div> <!-- Container laporan arus kas --> <div id="kasContainer" class="hidden mt-6 text-white"> <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button> <h2 class="text-xl font-bold mb-2">📊 Laporan Arus Kas</h2> <div class="mb-3 flex gap-2 flex-wrap"> <button onclick="filterKas('all')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Semua</button> <button onclick="filterKas('mingguan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Mingguan</button> <button onclick="filterKas('bulanan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Bulanan</button> </div> <canvas id="chartKas" class="mb-3 bg-gray-800 rounded-xl p-2"></canvas> <div id="kasList" class="space-y-2 max-h-96 overflow-y-auto"></div> </div> <!-- Container Data Transaksi --> <div id="transaksiContainer" class="hidden mt-6 text-white"> <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button> <h2 class="text-xl font-bold mb-2">🛒 Data Transaksi</h2> <!-- Filter --> <div class="mb-3 flex gap-2 flex-wrap"> <button onclick="filterTransaksi('all')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Semua</button> <button onclick="filterTransaksi('harian')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Harian</button> <button onclick="filterTransaksi('mingguan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Mingguan</button> <button onclick="filterTransaksi('bulanan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Bulanan</button> </div> <div id="transaksiTotal" class="mb-3"></div> <div id="transaksiList" class="space-y-2 max-h-96 overflow-y-auto"></div> </div> </main> <script type="module"> import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js"; import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js"; import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js"; // ===== FIREBASE CONFIG ===== const firebaseConfig = { apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40", authDomain: "crave-street-id.firebaseapp.com", projectId: "crave-street-id", storageBucket: "crave-street-id.firebasestorage.app", messagingSenderId: "221955592583", appId: "1:221955592583:web:43dc59d791e750095cc322", measurementId: "G-WCRQGLW47B" }; const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); let currentUser = null; let kasData = []; const kasContainer = document.getElementById("kasContainer"); const transaksiContainer = document.getElementById("transaksiContainer"); // ===== AUTH ===== onAuthStateChanged(auth, async (user) => { if(!user) return window.location.href = "login.html"; currentUser = user; const userDoc = await getDoc(doc(db,"users",user.uid)); const data = userDoc.exists() ? userDoc.data() : {}; document.getElementById("userName").innerText = data.name || "Admin"; document.getElementById("userRole").innerText = data.role || "Admin"; updateSaldo(); renderDashboard(); loadKas(); }); // ===== LOGOUT ===== window.logout = () => signOut(auth).then(()=>window.location.href="login.html"); // ===== UPDATE SALDO ===== async function updateSaldo(){ const snap = await getDocs(collection(db,"transaksi")); let pemasukan=0, pengeluaran=0; snap.forEach(d=>{ const t=d.data(); if(t.type=="penjualan") pemasukan+=t.total; else pengeluaran+=t.total; }); document.getElementById("saldo").innerText="Rp "+(pemasukan-pengeluaran).toLocaleString("id-ID"); } // ===== DASHBOARD ===== function renderDashboard(){ kasContainer.classList.add("hidden"); transaksiContainer.classList.add("hidden"); const grid = document.getElementById("dashboardGrid"); grid.innerHTML=""; const modules = [ {key:"kas",title:"📊 Laporan Arus Kas",desc:"Pantau arus kas otomatis."}, {key:"transaksi",title:"🛒 Data Transaksi",desc:"Kelola data transaksi."}, {key:"pengaturan",title:"⚙️ Pengaturan",desc:"Atur preferensi sistem."} ]; modules.forEach(mod=>{ const card=document.createElement("div"); card.className="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition"; let btns=`<button onclick="showSection('${mod.key}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Lihat Detail</button>`; if(mod.key!=="kas" && mod.key!=="pengaturan"){ btns+=` <button onclick="tambah('${mod.key}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm">Tambah</button>`; } card.innerHTML=`<h3 class="text-lg font-semibold mb-2">${mod.title}</h3> <p class="text-gray-300 text-sm mb-3">${mod.desc}</p>${btns}`; grid.appendChild(card); }); } // ===== SHOW SECTION ===== window.showSection = function(key){ if(key==="kas"){ kasContainer.classList.remove("hidden"); transaksiContainer.classList.add("hidden"); document.getElementById("dashboardGrid").classList.add("hidden"); renderKasList("all"); } else if(key==="transaksi"){ transaksiContainer.classList.remove("hidden"); kasContainer.classList.add("hidden"); document.getElementById("dashboardGrid").classList.add("hidden"); renderTransaksi("all"); } else { Swal.fire("Info","Fitur "+key,"info"); } } // ===== BACK TO DASHBOARD ===== window.backToDashboard = function(){ kasContainer.classList.add("hidden"); transaksiContainer.classList.add("hidden"); document.getElementById("dashboardGrid").classList.remove("hidden"); } // ===== LOAD ARUS KAS ===== async function loadKas(){ kasData=[]; const snap = await getDocs(query(collection(db,"transaksi"),orderBy("tanggal","asc"))); snap.forEach(d=>{ const t=d.data(); kasData.push({...t,id:d.id}); }); } // ===== FILTER KAS ===== window.filterKas = function(type){ renderKasList(type); } // ===== RENDER KAS LIST ===== // ===== RENDER KAS LIST HARIAN ===== function renderKasList(type){ const kasList = document.getElementById("kasList"); kasList.innerHTML=""; let now = new Date(); // Kelompokkan transaksi per hari const grouped = {}; kasData.forEach(t=>{ let include = true; const tDate = t.tanggal ? new Date(t.tanggal.seconds*1000) : null; if(type==="mingguan"){ let diff = (now.getTime()-tDate.getTime())/(1000*60*60*24); if(diff>7) include=false; } else if(type==="bulanan"){ if(tDate.getMonth()!==now.getMonth()) include=false; } if(include){ const dayKey = tDate ? `${tDate.getDate().toString().padStart(2,"0")}/${(tDate.getMonth()+1).toString().padStart(2,"0")}/${tDate.getFullYear()}` : "-"; if(!grouped[dayKey]) grouped[dayKey] = []; grouped[dayKey].push(t); } }); // Render per hari Object.keys(grouped).forEach(day=>{ const list = grouped[day]; let totalPemasukan=0, totalPengeluaran=0, count=0; list.forEach(t=>{ count++; if(t.type==="penjualan") totalPemasukan += t.total; else totalPengeluaran += t.total; }); const laba = totalPemasukan - totalPengeluaran; kasList.innerHTML += ` <div class="border-b border-gray-600 py-2"> <p class="font-semibold">Tanggal: ${day}</p> <p>Jumlah Transaksi: ${count}</p> <p class="text-green-400">Pemasukan: Rp ${totalPemasukan.toLocaleString("id-ID")}</p> <p class="text-red-400">Pengeluaran: Rp ${totalPengeluaran.toLocaleString("id-ID")}</p> <p class="font-semibold text-white">Laba Kotor: Rp ${laba.toLocaleString("id-ID")}</p> </div>`; }); // Update chart seperti sebelumnya const labels=[], pemasukan=[], pengeluaran=[]; Object.keys(grouped).forEach(day=>{ let totalPemasukan=0, totalPengeluaran=0; grouped[day].forEach(t=>{ if(t.type==="penjualan") totalPemasukan += t.total; else totalPengeluaran += t.total; }); labels.push(day); pemasukan.push(totalPemasukan); pengeluaran.push(totalPengeluaran); }); const ctx = document.getElementById("chartKas").getContext("2d"); if(window.kasChart) window.kasChart.destroy(); window.kasChart = new Chart(ctx,{ type:"bar", data:{ labels, datasets:[ {label:"Pemasukan",data:pemasukan,backgroundColor:"rgba(34,197,94,0.7)"}, {label:"Pengeluaran",data:pengeluaran,backgroundColor:"rgba(239,68,68,0.7)"} ] }, options:{ responsive:true, plugins:{legend:{labels:{color:"white"}}}, scales:{x:{ticks:{color:"white"}},y:{ticks:{color:"white"}}} } }); } // ===== FILTER TRANSAKSI ===== window.filterTransaksi = function(type){ renderTransaksi(type); } // ===== RENDER TRANSAKSI DENGAN FILTER ===== async function renderTransaksi(type="all"){ const transaksiDiv = document.getElementById("transaksiList"); const transaksiTotal = document.getElementById("transaksiTotal"); transaksiDiv.innerHTML = ""; let totalPemasukan = 0, totalPengeluaran = 0; const snap = await getDocs(query(collection(db,"transaksi"),orderBy("tanggal","asc"))); const now = new Date(); snap.forEach(d=>{ const t = d.data(); let include = true; if(t.tanggal){ const tDate = new Date(t.tanggal.seconds*1000); if(type==="harian"){ include = tDate.toDateString() === now.toDateString(); } else if(type==="mingguan"){ const diff = (now.getTime()-tDate.getTime())/(1000*60*60*24); include = diff <= 7; } else if(type==="bulanan"){ include = tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear(); } } if(include){ if(t.type==="penjualan") totalPemasukan += t.total; else totalPengeluaran += t.total; const dt = t.tanggal ? new Date(t.tanggal.seconds*1000) : null; const tDateStr = dt ? `${dt.getDate().toString().padStart(2,"0")}/${(dt.getMonth()+1).toString().padStart(2,"0")}/${dt.getFullYear()}, ${dt.getHours().toString().padStart(2,"0")}.${dt.getMinutes().toString().padStart(2,"0")}.${dt.getSeconds().toString().padStart(2,"0")}` : "-"; transaksiDiv.innerHTML += ` <div class="border-b border-gray-600 py-2"> <p>Jenis: ${t.type}</p> ${t.produkNama?`<p>Produk: ${t.produkNama}</p>`:""} <p>Total: Rp ${t.total.toLocaleString("id-ID")}</p> <p class="text-xs text-gray-400">Tanggal: ${tDateStr}</p> <p class="text-xs text-gray-400 italic">Ditambahkan oleh: ${t.adminName || "Admin"}</p> </div>`; } }); transaksiTotal.innerHTML = `<p class="font-semibold text-green-400">Total Pemasukan: Rp ${totalPemasukan.toLocaleString("id-ID")}</p> <p class="font-semibold text-red-400">Total Pengeluaran: Rp ${totalPengeluaran.toLocaleString("id-ID")}</p> <p class="font-semibold text-white">Saldo: Rp ${(totalPemasukan-totalPengeluaran).toLocaleString("id-ID")}</p>`; } // ===== TAMBAH TRANSAKSI ===== window.tambah = async (section) => { if (section !== "transaksi") return; // Ambil data produk const produkSnap = await getDocs(collection(db, "produk")); const produkOptions = {}; produkSnap.forEach(d => { produkOptions[d.id] = `${d.data().nama} - Rp${d.data().harga}`; }); // Tampilkan Swal const { value: formData } = await Swal.fire({ title: "Tambah Transaksi", html: ` <select id="swalJenis" class="swal2-input"> <option value="" disabled selected>Jenis Transaksi</option> <option value="penjualan">Penjualan</option> <option value="pengeluaran">Pengeluaran</option> </select> <div id="produkContainer" style="display:none; margin-top:10px;"> <label>Pilih Produk</label> <select id="swalProduk" class="swal2-input"> ${Object.entries(produkOptions) .map(([id, name]) => `<option value="${id}">${name}</option>`) .join('')} </select> <input id="swalJumlah" type="number" class="swal2-input" placeholder="Masukkan jumlah"> </div> <div id="pengeluaranContainer" style="display:none; margin-top:10px;"> <label>Nama Pengeluaran</label> <input id="swalNama" class="swal2-input" placeholder="Masukkan nama pengeluaran"> <label>Nominal</label> <input id="swalNominal" type="number" class="swal2-input" placeholder="Masukkan nominal"> </div> `, focusConfirm: false, showCancelButton: true, preConfirm: () => { const jenis = document.getElementById("swalJenis").value; if (!jenis) Swal.showValidationMessage("Pilih jenis transaksi"); if (jenis === "penjualan") { const produkId = document.getElementById("swalProduk").value; const jumlah = document.getElementById("swalJumlah").value; if (!produkId) Swal.showValidationMessage("Pilih produk"); if (!jumlah) Swal.showValidationMessage("Masukkan jumlah"); return { jenis, produkId, jumlah }; } else { const nama = document.getElementById("swalNama").value; const nominal = document.getElementById("swalNominal").value; if (!nama) Swal.showValidationMessage("Masukkan nama pengeluaran"); if (!nominal) Swal.showValidationMessage("Masukkan nominal"); return { jenis, nama, nominal }; } }, didOpen: () => { const jenisSelect = document.getElementById("swalJenis"); jenisSelect.addEventListener("change", () => { const isPenjualan = jenisSelect.value === "penjualan"; document.getElementById("produkContainer").style.display = isPenjualan ? "block" : "none"; document.getElementById("pengeluaranContainer").style.display = isPenjualan ? "none" : "block"; }); } }); if (!formData) return; if (formData.jenis === "penjualan") { const produkDoc = await getDoc(doc(db, "produk", formData.produkId)); const produk = produkDoc.data(); await addDoc(collection(db, "transaksi"), { type: "penjualan", produkId: formData.produkId, produkNama: produk.nama, hargaSatuan: produk.harga, jumlah: Number(formData.jumlah), total: Number(formData.jumlah) * produk.harga, tanggal: serverTimestamp(), adminId: currentUser.uid, adminName: currentUser.displayName || "Admin" }); } else { await addDoc(collection(db, "transaksi"), { type: "pengeluaran", produkNama: formData.nama, total: Number(formData.nominal), tanggal: serverTimestamp(), adminId: currentUser.uid, adminName: currentUser.displayName || "Admin" }); } Swal.fire("Berhasil", "Transaksi ditambahkan", "success"); updateSaldo(); loadKas(); renderTransaksi(); }; </script> </body> </html>
+Copy message
+Edit message
+BLACKBOXAI
+
+Berikut adalah pemisahan kode Anda menjadi dua file terpisah: HTML (file utama tanpa JavaScript inline) dan JavaScript (file eksternal bernama script.js). Saya telah memastikan bahwa:
+
+HTML merujuk ke file JS eksternal menggunakan <script type="module" src="script.js"></script>.
+Semua fungsi global (seperti logout(), showSection(), dll.) tetap didefinisikan di JS dengan window. untuk aksesibilitas.
+Import Firebase dan dependensi lainnya tetap di JS karena bersifat modul.
+Tidak ada perubahan logika atau fungsionalitas; hanya pemisahan struktur.
+1. File HTML (index.html atau nama file asli Anda)
+html
+70 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+2. File JavaScript (script.js)
+javascript
+265 lines
+Copy code
+Download code
+Click to expand
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+...
+
+buatkan halaman index untuk reedem code yang diambil dari database firebase
+
+lalu nanti setelah kode reedem berhasil akan memunculkan spinner yang terdiri dari 5 bagian lingkaran , ZONK , 2K , 10K , 20K, +1 PERCOBAAN
+
+masing masing memiliki persentase keluar
+ZONK 58%
+2K 10%
+10K 2%
++1 PERCOBAAN 30%
+
+Copy message
+Edit message
+BLACKBOXAI
+
+Berikut adalah implementasi lengkap untuk halaman index.html redeem code yang terintegrasi dengan Firebase Firestore. Saya telah membuatnya sebagai halaman standalone yang bisa diakses secara independen, tetapi bisa diintegrasikan ke app yang lebih besar (misalnya, dengan menambahkan auth jika diperlukan).
+
+Asumsi dan Penjelasan:
+Database Firebase: Saya asumsikan ada collection bernama "redeem_codes" di Firestore dengan struktur dokumen:
+code: String (kode redeem unik, e.g., "ABC123").
+used: Boolean (default false, untuk menandai apakah sudah dipakai).
+reward: String (opsional, e.g., "initial_reward" jika ada reward default).
+userId: String (untuk track user yang redeem, opsional; bisa diisi dari auth jika ada).
+Setelah redeem sukses, field used diubah menjadi true, dan redeemTime ditambahkan dengan timestamp.
+Probabilitas Spinner:
+ZONK: 58%
+2K (Rp 2.000): 10%
+10K (Rp 10.000): 2%
+20K (Rp 20.000): 0% (karena total persentase yang disebutkan adalah 100% tanpa ini; saya buat 0% agar tidak keluar, tapi tetap ada di spinner untuk visual. Jika ingin ubah, edit di JS).
++1 PERCOBAAN (extra try): 30%
+Total: 100%. Saya gunakan weighted random di JS untuk menentukan hasil (bukan berdasarkan posisi spinner, tapi random murni untuk fairness).
+Spinner: Dibuat dengan CSS (roda lingkaran dengan 5 segmen berwarna). Animasi putaran menggunakan CSS keyframes dan JS untuk menghentikan di posisi random. Setelah berhenti, tampilkan hasil dengan SweetAlert.
+Dependensi:
+Tailwind CSS (via CDN).
+SweetAlert2 (untuk notifikasi).
+Firebase SDK (v12.3.0, modular).
+Fungsionalitas:
+Input kode redeem.
+Verifikasi dari Firebase (jika valid dan belum used, proses redeem).
+Jika sukses, tampilkan spinner → hasil random → update saldo/user di app lain jika diintegrasikan (saya tambahkan contoh update saldo via Firestore user doc).
+Jika gagal: Notifikasi error.
+Auth: Saya tambahkan Firebase Auth sederhana (onAuthStateChanged). Jika user belum login, redirect ke login. Sesuaikan dengan app Anda.
+File Terpisah: Saya pisahkan JS ke redeem-script.js seperti permintaan sebelumnya untuk best practice.
+1. File HTML (index.html)
+html
+73 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+2. File JavaScript (redeem-script.js)
+javascript
+178 lines
+Copy code
+Download code
+Click to expand
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+...
+Cara Penggunaan:
+Setup Firebase:
+
+Pastikan project Firebase Anda sudah setup dengan Firestore dan Auth.
+Buat collection redeem_codes dan tambahkan dokumen contoh, e.g.:
+json
+4 lines
+Copy code
+Download code
+Click to expand
+{
+"code": "ABC123",
+...
+Jika ingin track user, tambahkan field userId.
+Testing:
+
+Buka index.html di browser.
+Login (jika auth aktif).
+Masukkan kode valid → Spinner muncul → Hasil random berdasarkan probabilitas.
+Kode yang sama tidak bisa redeem lagi (karena used: true).
+Kustomisasi:
+
+Probabilitas 20K: Jika ingin beri persentase (misal 0% jadi 5%, kurangi yang lain), edit di generateRandomResult().
+Update Saldo/Tries: Uncomment dan implementasikan fungsi updateUser Saldo atau updateUser Tries untuk integrasi dengan collection users.
+Spinner Visual: Sesuaikan CSS segmen jika ingin lebih presisi (saat ini sederhana; untuk advanced, gunakan library seperti Winwheel.js).
+No Auth: Jika tidak perlu auth, hapus bagian onAuthStateChanged dan izinkan redeem tanpa user.
+Jika ada modifikasi atau error, beri tahu!
+
+
+UNTUK HTML CSS DAN JS GABUNGKAN , GUNAKAN SWAL NYA
+
+Copy message
+Edit message
+BLACKBOXAI
+
+Berikut adalah implementasi lengkap dalam satu file HTML tunggal (index.html). Saya telah menggabungkan:
+
+HTML: Struktur utama halaman.
+CSS: Styling untuk spinner (roda dengan 5 segmen lingkaran), gradient background, dan elemen UI lainnya, ditempatkan di <style> tag di <head>.
+JS: Logika Firebase, redeem code, spinner animasi, dan probabilitas random, ditempatkan di <script type="module"> di akhir body. Saya menggunakan SweetAlert2 (Swal) untuk semua notifikasi (error, sukses, hasil spinner).
+Fitur Utama (Sama seperti Sebelumnya):
+Verifikasi kode redeem dari Firebase Firestore (collection redeem_codes).
+Jika sukses, tampilkan spinner dengan 5 segmen: ZONK (58%), 2K (10%), 10K (2%), 20K (0%), +1 PERCOBAAN (30%).
+Spinner menggunakan CSS transform untuk animasi putaran (random 1-3 putaran).
+Hasil ditentukan oleh weighted random (bukan posisi spinner, untuk fairness).
+Auth Firebase: Redirect ke login jika belum login.
+Enter key support untuk input kode.
+Update dokumen redeem di Firebase setelah sukses.
+Asumsi Database (Firestore):
+Collection: redeem_codes.
+Dokumen contoh:
+json
+4 lines
+Copy code
+Download code
+Click to expand
+{
+"code": "ABC123",
+...
+Setelah redeem: used: true, userId: uid_user, redeemTime: timestamp.
+File Lengkap: index.html
+html
+360 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+Cara Penggunaan:
+Setup Firebase: Pastikan config Firebase sesuai project Anda. Buat collection redeem_codes dengan dokumen test (lihat asumsi di atas).
+Testing:
+Buka file di browser.
+Jika belum login, akan redirect ke login.html (sesuaikan path jika perlu).
+Masukkan kode valid (e.g., "ABC123") → Spinner berputar 3 detik → Swal muncul dengan hasil random.
+Kode yang sama tidak bisa redeem lagi.
+Kustomisasi:
+Probabilitas: Edit di generateRandomResult(). Misal, beri 20K 5% dengan kurangi +1 TRY jadi 25%.
+Update Saldo/Tries: Uncomment fungsi di JS dan sesuaikan field di collection users.
+Spinner Visual: CSS segmen sudah disederhanakan; jika ingin lebih akurat, gunakan library eksternal seperti Winwheel.js.
+No Auth: Hapus onAuthStateChanged dan izinkan redeem tanpa user (ganti currentUser .uid dengan null atau sesuatu).
+File ini siap pakai sebagai standalone. Jika ada error atau modifikasi, beri tahu!
+
+
+Tidak perlu login , hanya saat memasukan kode reedem harus input nomor whatsapp , nama lengkap
+
+Copy message
+Edit message
+BLACKBOXAI
+
+Berikut adalah implementasi lengkap dalam satu file HTML tunggal (index.html) yang telah dimodifikasi sesuai permintaan Anda:
+
+Perubahan Utama:
+Tidak Perlu Login: Saya telah menghapus seluruh Firebase Auth (import, onAuthStateChanged, dan redirect ke login). Siapa pun bisa akses halaman dan redeem tanpa autentikasi.
+Input Nama Lengkap dan Nomor WhatsApp:
+Setelah verifikasi kode redeem sukses (valid dan belum used), muncul SweetAlert (Swal) dengan form input untuk:
+Nama lengkap (text, required).
+Nomor WhatsApp (number, format sederhana seperti 08123456789, required).
+Validasi: Jika kosong atau nomor WA tidak valid (kurang dari 10 digit), tampilkan error di Swal.
+Setelah input valid, data disimpan ke dokumen Firebase redeem_codes (field baru: userName, whatsappNumber).
+Kemudian lanjut ke spinner dan hasil random.
+Database Firebase (Firestore):
+Collection: redeem_codes.
+Dokumen contoh (sebelum redeem):
+json
+4 lines
+Copy code
+Download code
+Click to expand
+{
+"code": "ABC123",
+...
+Setelah redeem sukses:
+json
+7 lines
+Copy code
+Download code
+Click to expand
+{
+"code": "ABC123",
+...
+Nomor WA digunakan sebagai identifier unik (bisa tambah query where('whatsappNumber', '==', ...) di masa depan untuk cegah duplikasi jika perlu).
+Lainnya:
+Spinner, probabilitas (ZONK 58%, 2K 10%, 10K 2%, 20K 0%, +1 PERCOBAAN 30%), dan Swal untuk notifikasi tetap sama.
+Enter key support untuk input kode redeem.
+CSS spinner tetap sederhana (5 segmen lingkaran dengan warna berbeda).
+File Lengkap: index.html
+html
+340 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+Cara Penggunaan:
+Setup Firebase:
+
+Pastikan config Firebase sesuai project Anda.
+Buat collection redeem_codes dengan dokumen test (lihat contoh di atas).
+Tidak perlu setup Auth.
+Testing:
+
+Buka file di browser (tanpa login).
+Masukkan kode valid (e.g., "ABC123") → Klik Redeem.
+Jika valid, muncul Swal untuk input nama lengkap dan nomor WA → Isi dan konfirmasi.
+Swal konfirmasi data → Spinner berputar 3 detik → Swal hasil random (dengan nama user di pesan).
+Kode yang sama tidak bisa redeem lagi (karena used: true).
+Data nama dan WA tersimpan di Firebase untuk tracking.
+Kustomisasi:
+
+Validasi Nomor WA: Saat ini sederhana (minimal 10 digit). Bisa tambah regex untuk format Indonesia (e.g., mulai 08).
+Probabilitas: Edit di generateRandomResult().
+Update Saldo: Jika ingin integrasi dengan collection lain (e.g., users berdasarkan WA), tambahkan fungsi update setelah Swal input.
+Duplikasi WA: Untuk cegah redeem ganda per WA, tambah query `where('whatsappNumber',
+
+untuk setup firebase nya ambil kode darimana?
+
+saya sudah ada koleksinya , strukturnya gimana
+
+Copy message
+Edit message
+BLACKBOXAI
+
+Berikut adalah penjelasan lengkap dan langkah demi langkah untuk setup Firebase berdasarkan kode yang saya berikan sebelumnya. Saya asumsikan Anda sudah punya project Firebase (jika belum, buat dulu di Firebase Console). Karena Anda bilang sudah ada koleksinya, saya akan fokus pada konfigurasi dan struktur dokumen yang sesuai dengan kode redeem code.
+
+1. Mendapatkan Kode Konfigurasi Firebase (firebaseConfig)
+Kode konfigurasi Firebase (yang ada di JS seperti apiKey, authDomain, dll.) diambil dari Firebase Console. Ini adalah kredensial unik untuk project Anda, bukan dari kode saya. Jika Anda copy-paste config dari kode saya, itu akan gagal karena config tersebut milik project "crave-street-id" (contoh). Berikut langkah-langkahnya:
+
+Langkah-langkah:
+Buka Firebase Console:
+
+Masuk ke https://console.firebase.google.com/.
+Pilih project Anda (jika belum ada, klik "Create a project" dan ikuti wizard).
+Aktifkan Firestore (jika belum):
+
+Di sidebar kiri, klik Firestore Database.
+Klik Create database.
+Pilih mode Start in test mode (untuk development; nanti ubah ke production rules jika live).
+Pilih lokasi (e.g., asia-southeast2 untuk Indonesia).
+Klik Done.
+Dapatkan Konfigurasi Web App:
+
+Di sidebar kiri, klik ikon gear (Project settings) > Project settings.
+Scroll ke bawah ke bagian Your apps.
+Jika belum ada web app, klik ikon </> (Web) > Beri nama app (e.g., "crave-redeem") > Register app.
+Copy kode konfigurasi yang muncul (seperti ini):
+javascript
+8 lines
+Copy code
+Download code
+Click to expand
+const firebaseConfig = {
+apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", // Ganti dengan milik Anda
+...
+PENTING: Paste config ini ke file index.html Anda, ganti bagian firebaseConfig di <script type="module">. Jangan bagikan config ini secara publik (gunakan environment variables jika deploy ke hosting).
+Atur Rules Firestore (untuk keamanan):
+
+Di Firestore > Rules tab.
+Untuk test, gunakan rules sederhana ini (izinkan read/write tanpa auth):
+
+Run
+Copy code
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;  // Hati-hati, ini untuk test only!
+    }
+  }
+}
+Klik Publish. Nanti untuk production, tambah rules seperti allow read, write: if request.auth != null; jika pakai auth.
+Deploy (Opsional):
+
+Jika ingin host halaman ini, gunakan Firebase Hosting: Install Firebase CLI (npm install -g firebase-tools), login (firebase login), init project, lalu firebase deploy.
+Setelah ini, config Firebase siap. Jika error "project not found", pastikan project ID di config benar.
+
+2. Struktur Collection di Firestore
+Karena Anda sudah punya collection-nya, pastikan strukturnya sesuai dengan kode JS. Collection bernama redeem_codes (huruf kecil, underscore). Setiap dokumen di collection ini mewakili satu kode redeem unik.
+
+Field yang Diperlukan (Struktur Dokumen):
+ID Dokumen: Otomatis dibuat oleh Firestore (e.g., "abc123def456"). Bisa manual jika mau.
+Field Wajib:
+code (string): Kode redeem unik (e.g., "ABC123"). Ini yang dicek di JS dengan query where('code', '==', inputUser ).
+used (boolean): Status apakah sudah dipakai. Default: false. Setelah redeem: true.
+Field Opsional (akan ditambahkan otomatis oleh JS setelah redeem):
+userName (string): Nama lengkap user (dari input Swal).
+whatsappNumber (string): Nomor WA (e.g., "08123456789").
+redeemTime (timestamp): Waktu redeem (otomatis dari serverTimestamp()).
+Contoh Dokumen di Collection redeem_codes:
+Anda bisa tambah dokumen test langsung di Firebase Console (Firestore > Collection > Add document).
+
+Sebelum Redeem (Dokumen Baru/Tidak Digunakan):
+
+ID Dokumen: test1 (atau auto-generate).
+Data (JSON):
+json
+4 lines
+Copy code
+Download code
+Click to expand
+{
+"code": "ABC123",
+...
+Setelah Redeem Sukses (Dokumen Diupdate oleh JS):
+
+ID Dokumen: Tetap test1.
+Data (JSON):
+json
+7 lines
+Copy code
+Download code
+Click to expand
+{
+"code": "ABC123",
+...
+Cara Menambahkan Dokumen Test di Firebase Console:
+Buka Firestore di Console.
+Jika collection redeem_codes belum ada, klik Start collection > Nama: redeem_codes.
+Klik Add document.
+Field 1: ID code, Type string, Value "ABC123".
+Field 2: ID used, Type boolean, Value false.
+Klik Save. Ulangi untuk kode lain (e.g., "DEF456").
+Tips untuk Collection:
+Unik Kode: Pastikan field code unik (gunakan index jika query banyak). Firestore otomatis handle query where('code', '==', ...) dengan composite index jika perlu (Console akan prompt jika error).
+Batasan: Firestore gratis punya kuota (1GB storage, 50K reads/hari). Untuk production, monitor usage.
+Query di JS: Kode JS query where('code', '==', code) AND where('used', '==', false). Jika collection besar, tambah index di Console > Indexes.
+Ekspor/Import Data: Gunakan Firebase CLI atau tools seperti Firefoo untuk backup.
+3. Testing Setup
+Update Config: Ganti firebaseConfig di index.html dengan milik Anda.
+Tambah Dokumen Test: Seperti contoh di atas (minimal 1-2 kode).
+Buka index.html di browser (bisa local atau host di GitHub Pages/Netlify).
+Test Flow:
+Masukkan kode "ABC123" → Redeem.
+Swal muncul untuk nama & WA → Isi (e.g., Nama: "Test User", WA: "08123456789").
+Konfirmasi → Spinner putar → Swal hasil (random: ZONK, 2K, dll.).
+Cek Firestore: Dokumen update dengan used: true, userName, whatsappNumber, redeemTime.
+Coba kode sama lagi → Error "sudah digunakan".
+Error Umum:
+"Permission denied": Cek rules Firestore (pastikan allow read, write: if true; untuk test).
+"No such collection": Buat collection redeem_codes.
+"Invalid config": Pastikan apiKey dll. benar.
+Jika masih error atau butuh screenshot langkah Console, beri tahu detail error-nya! Saya bisa bantu troubleshoot. 😊
+
+
+tambahkan fitur generate kode dan detail user / kode reedem
+
+<!DOCTYPE html> <html lang="id"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Dashboard - Crave Street Admin</title> <script src="https://cdn.tailwindcss.com"></script> <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> </head> <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen"> <!-- HEADER --> <header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 flex flex-wrap items-center justify-between shadow-lg"> <div class="flex items-center gap-2 sm:gap-3 flex-1"> <img src="https://vlcrave.github.io/admin/logo.png" alt="Logo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full"> <h1 class="text-white font-bold text-lg sm:text-xl truncate">Crave Street</h1> </div> <div class="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-0"> <div class="text-right"> <p class="text-gray-300 text-xs sm:text-sm">Halo, <span id="userName" class="font-semibold text-blue-400 truncate block max-w-[80px] sm:max-w-full">Admin</span></p> <p class="text-gray-400 text-[10px] sm:text-xs">Saldo: <span id="saldo" class="font-semibold text-green-400">Rp 0</span></p> <p class="text-gray-400 text-[10px] sm:text-xs">Role: <span id="userRole" class="font-semibold text-yellow-400">Admin</span></p> </div> <img id="userPhoto" src="https://vlcrave.github.io/admin/logo.png" alt="User Photo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full border-2 border-blue-400"> <button onclick="logout()" class="bg-red-600 hover:bg-red-700 px-3 sm:px-4 py-1 sm:py-2 rounded-lg font-semibold text-white text-xs sm:text-sm whitespace-nowrap">Logout</button> </div> </header> <!-- MAIN --> <main class="p-4 max-w-5xl mx-auto mt-6"> <!-- Dashboard Grid --> <div id="dashboardGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div> <!-- Container laporan arus kas --> <div id="kasContainer" class="hidden mt-6 text-white"> <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button> <h2 class="text-xl font-bold mb-2">📊 Laporan Arus Kas</h2> <div class="mb-3 flex gap-2 flex-wrap"> <button onclick="filterKas('all')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Semua</button> <button onclick="filterKas('mingguan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Mingguan</button> <button onclick="filterKas('bulanan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Bulanan</button> </div> <canvas id="chartKas" class="mb-3 bg-gray-800 rounded-xl p-2"></canvas> <div id="kasList" class="space-y-2 max-h-96 overflow-y-auto"></div> </div> <!-- Container Data Transaksi --> <div id="transaksiContainer" class="hidden mt-6 text-white"> <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button> <h2 class="text-xl font-bold mb-2">🛒 Data Transaksi</h2> <!-- Filter --> <div class="mb-3 flex gap-2 flex-wrap"> <button onclick="filterTransaksi('all')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Semua</button> <button onclick="filterTransaksi('harian')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Harian</button> <button onclick="filterTransaksi('mingguan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Mingguan</button> <button onclick="filterTransaksi('bulanan')" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg">Bulanan</button> </div> <div id="transaksiTotal" class="mb-3"></div> <div id="transaksiList" class="space-y-2 max-h-96 overflow-y-auto"></div> </div> </main> <script type="module"> import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js"; import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js"; import { getFirestore, doc, getDoc, collection, getDocs, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js"; // ===== FIREBASE CONFIG ===== const firebaseConfig = { apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40", authDomain: "crave-street-id.firebaseapp.com", projectId: "crave-street-id", storageBucket: "crave-street-id.firebasestorage.app", messagingSenderId: "221955592583", appId: "1:221955592583:web:43dc59d791e750095cc322", measurementId: "G-WCRQGLW47B" }; const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); let currentUser = null; let kasData = []; const kasContainer = document.getElementById("kasContainer"); const transaksiContainer = document.getElementById("transaksiContainer"); // ===== AUTH ===== onAuthStateChanged(auth, async (user) => { if(!user) return window.location.href = "login.html"; currentUser = user; const userDoc = await getDoc(doc(db,"users",user.uid)); const data = userDoc.exists() ? userDoc.data() : {}; document.getElementById("userName").innerText = data.name || "Admin"; document.getElementById("userRole").innerText = data.role || "Admin"; updateSaldo(); renderDashboard(); loadKas(); }); // ===== LOGOUT ===== window.logout = () => signOut(auth).then(()=>window.location.href="login.html"); // ===== UPDATE SALDO ===== async function updateSaldo(){ const snap = await getDocs(collection(db,"transaksi")); let pemasukan=0, pengeluaran=0; snap.forEach(d=>{ const t=d.data(); if(t.type=="penjualan") pemasukan+=t.total; else pengeluaran+=t.total; }); document.getElementById("saldo").innerText="Rp "+(pemasukan-pengeluaran).toLocaleString("id-ID"); } // ===== DASHBOARD ===== function renderDashboard(){ kasContainer.classList.add("hidden"); transaksiContainer.classList.add("hidden"); const grid = document.getElementById("dashboardGrid"); grid.innerHTML=""; const modules = [ {key:"kas",title:"📊 Laporan Arus Kas",desc:"Pantau arus kas otomatis."}, {key:"transaksi",title:"🛒 Data Transaksi",desc:"Kelola data transaksi."}, {key:"pengaturan",title:"⚙️ Pengaturan",desc:"Atur preferensi sistem."} ]; modules.forEach(mod=>{ const card=document.createElement("div"); card.className="bg-gray-700/60 p-5 rounded-xl shadow-lg hover:scale-105 transition"; let btns=`<button onclick="showSection('${mod.key}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm">Lihat Detail</button>`; if(mod.key!=="kas" && mod.key!=="pengaturan"){ btns+=` <button onclick="tambah('${mod.key}')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm">Tambah</button>`; } card.innerHTML=`<h3 class="text-lg font-semibold mb-2">${mod.title}</h3> <p class="text-gray-300 text-sm mb-3">${mod.desc}</p>${btns}`; grid.appendChild(card); }); } // ===== SHOW SECTION ===== window.showSection = function(key){ if(key==="kas"){ kasContainer.classList.remove("hidden"); transaksiContainer.classList.add("hidden"); document.getElementById("dashboardGrid").classList.add("hidden"); renderKasList("all"); } else if(key==="transaksi"){ transaksiContainer.classList.remove("hidden"); kasContainer.classList.add("hidden"); document.getElementById("dashboardGrid").classList.add("hidden"); renderTransaksi("all"); } else { Swal.fire("Info","Fitur "+key,"info"); } } // ===== BACK TO DASHBOARD ===== window.backToDashboard = function(){ kasContainer.classList.add("hidden"); transaksiContainer.classList.add("hidden"); document.getElementById("dashboardGrid").classList.remove("hidden"); } // ===== LOAD ARUS KAS ===== async function loadKas(){ kasData=[]; const snap = await getDocs(query(collection(db,"transaksi"),orderBy("tanggal","asc"))); snap.forEach(d=>{ const t=d.data(); kasData.push({...t,id:d.id}); }); } // ===== FILTER KAS ===== window.filterKas = function(type){ renderKasList(type); } // ===== RENDER KAS LIST ===== // ===== RENDER KAS LIST HARIAN ===== function renderKasList(type){ const kasList = document.getElementById("kasList"); kasList.innerHTML=""; let now = new Date(); // Kelompokkan transaksi per hari const grouped = {}; kasData.forEach(t=>{ let include = true; const tDate = t.tanggal ? new Date(t.tanggal.seconds*1000) : null; if(type==="mingguan"){ let diff = (now.getTime()-tDate.getTime())/(1000*60*60*24); if(diff>7) include=false; } else if(type==="bulanan"){ if(tDate.getMonth()!==now.getMonth()) include=false; } if(include){ const dayKey = tDate ? `${tDate.getDate().toString().padStart(2,"0")}/${(tDate.getMonth()+1).toString().padStart(2,"0")}/${tDate.getFullYear()}` : "-"; if(!grouped[dayKey]) grouped[dayKey] = []; grouped[dayKey].push(t); } }); // Render per hari Object.keys(grouped).forEach(day=>{ const list = grouped[day]; let totalPemasukan=0, totalPengeluaran=0, count=0; list.forEach(t=>{ count++; if(t.type==="penjualan") totalPemasukan += t.total; else totalPengeluaran += t.total; }); const laba = totalPemasukan - totalPengeluaran; kasList.innerHTML += ` <div class="border-b border-gray-600 py-2"> <p class="font-semibold">Tanggal: ${day}</p> <p>Jumlah Transaksi: ${count}</p> <p class="text-green-400">Pemasukan: Rp ${totalPemasukan.toLocaleString("id-ID")}</p> <p class="text-red-400">Pengeluaran: Rp ${totalPengeluaran.toLocaleString("id-ID")}</p> <p class="font-semibold text-white">Laba Kotor: Rp ${laba.toLocaleString("id-ID")}</p> </div>`; }); // Update chart seperti sebelumnya const labels=[], pemasukan=[], pengeluaran=[]; Object.keys(grouped).forEach(day=>{ let totalPemasukan=0, totalPengeluaran=0; grouped[day].forEach(t=>{ if(t.type==="penjualan") totalPemasukan += t.total; else totalPengeluaran += t.total; }); labels.push(day); pemasukan.push(totalPemasukan); pengeluaran.push(totalPengeluaran); }); const ctx = document.getElementById("chartKas").getContext("2d"); if(window.kasChart) window.kasChart.destroy(); window.kasChart = new Chart(ctx,{ type:"bar", data:{ labels, datasets:[ {label:"Pemasukan",data:pemasukan,backgroundColor:"rgba(34,197,94,0.7)"}, {label:"Pengeluaran",data:pengeluaran,backgroundColor:"rgba(239,68,68,0.7)"} ] }, options:{ responsive:true, plugins:{legend:{labels:{color:"white"}}}, scales:{x:{ticks:{color:"white"}},y:{ticks:{color:"white"}}} } }); } // ===== FILTER TRANSAKSI ===== window.filterTransaksi = function(type){ renderTransaksi(type); } // ===== RENDER TRANSAKSI DENGAN FILTER ===== async function renderTransaksi(type="all"){ const transaksiDiv = document.getElementById("transaksiList"); const transaksiTotal = document.getElementById("transaksiTotal"); transaksiDiv.innerHTML = ""; let totalPemasukan = 0, totalPengeluaran = 0; const snap = await getDocs(query(collection(db,"transaksi"),orderBy("tanggal","asc"))); const now = new Date(); snap.forEach(d=>{ const t = d.data(); let include = true; if(t.tanggal){ const tDate = new Date(t.tanggal.seconds*1000); if(type==="harian"){ include = tDate.toDateString() === now.toDateString(); } else if(type==="mingguan"){ const diff = (now.getTime()-tDate.getTime())/(1000*60*60*24); include = diff <= 7; } else if(type==="bulanan"){ include = tDate.getMonth() === now.getMonth() && tDate.getFullYear() === now.getFullYear(); } } if(include){ if(t.type==="penjualan") totalPemasukan += t.total; else totalPengeluaran += t.total; const dt = t.tanggal ? new Date(t.tanggal.seconds*1000) : null; const tDateStr = dt ? `${dt.getDate().toString().padStart(2,"0")}/${(dt.getMonth()+1).toString().padStart(2,"0")}/${dt.getFullYear()}, ${dt.getHours().toString().padStart(2,"0")}.${dt.getMinutes().toString().padStart(2,"0")}.${dt.getSeconds().toString().padStart(2,"0")}` : "-"; transaksiDiv.innerHTML += ` <div class="border-b border-gray-600 py-2"> <p>Jenis: ${t.type}</p> ${t.produkNama?`<p>Produk: ${t.produkNama}</p>`:""} <p>Total: Rp ${t.total.toLocaleString("id-ID")}</p> <p class="text-xs text-gray-400">Tanggal: ${tDateStr}</p> <p class="text-xs text-gray-400 italic">Ditambahkan oleh: ${t.adminName || "Admin"}</p> </div>`; } }); transaksiTotal.innerHTML = `<p class="font-semibold text-green-400">Total Pemasukan: Rp ${totalPemasukan.toLocaleString("id-ID")}</p> <p class="font-semibold text-red-400">Total Pengeluaran: Rp ${totalPengeluaran.toLocaleString("id-ID")}</p> <p class="font-semibold text-white">Saldo: Rp ${(totalPemasukan-totalPengeluaran).toLocaleString("id-ID")}</p>`; } // ===== TAMBAH TRANSAKSI ===== window.tambah = async (section) => { if (section !== "transaksi") return; // Ambil data produk const produkSnap = await getDocs(collection(db, "produk")); const produkOptions = {}; produkSnap.forEach(d => { produkOptions[d.id] = `${d.data().nama} - Rp${d.data().harga}`; }); // Tampilkan Swal const { value: formData } = await Swal.fire({ title: "Tambah Transaksi", html: ` <select id="swalJenis" class="swal2-input"> <option value="" disabled selected>Jenis Transaksi</option> <option value="penjualan">Penjualan</option> <option value="pengeluaran">Pengeluaran</option> </select> <div id="produkContainer" style="display:none; margin-top:10px;"> <label>Pilih Produk</label> <select id="swalProduk" class="swal2-input"> ${Object.entries(produkOptions) .map(([id, name]) => `<option value="${id}">${name}</option>`) .join('')} </select> <input id="swalJumlah" type="number" class="swal2-input" placeholder="Masukkan jumlah"> </div> <div id="pengeluaranContainer" style="display:none; margin-top:10px;"> <label>Nama Pengeluaran</label> <input id="swalNama" class="swal2-input" placeholder="Masukkan nama pengeluaran"> <label>Nominal</label> <input id="swalNominal" type="number" class="swal2-input" placeholder="Masukkan nominal"> </div> `, focusConfirm: false, showCancelButton: true, preConfirm: () => { const jenis = document.getElementById("swalJenis").value; if (!jenis) Swal.showValidationMessage("Pilih jenis transaksi"); if (jenis === "penjualan") { const produkId = document.getElementById("swalProduk").value; const jumlah = document.getElementById("swalJumlah").value; if (!produkId) Swal.showValidationMessage("Pilih produk"); if (!jumlah) Swal.showValidationMessage("Masukkan jumlah"); return { jenis, produkId, jumlah }; } else { const nama = document.getElementById("swalNama").value; const nominal = document.getElementById("swalNominal").value; if (!nama) Swal.showValidationMessage("Masukkan nama pengeluaran"); if (!nominal) Swal.showValidationMessage("Masukkan nominal"); return { jenis, nama, nominal }; } }, didOpen: () => { const jenisSelect = document.getElementById("swalJenis"); jenisSelect.addEventListener("change", () => { const isPenjualan = jenisSelect.value === "penjualan"; document.getElementById("produkContainer").style.display = isPenjualan ? "block" : "none"; document.getElementById("pengeluaranContainer").style.display = isPenjualan ? "none" : "block"; }); } }); if (!formData) return; if (formData.jenis === "penjualan") { const produkDoc = await getDoc(doc(db, "produk", formData.produkId)); const produk = produkDoc.data(); await addDoc(collection(db, "transaksi"), { type: "penjualan", produkId: formData.produkId, produkNama: produk.nama, hargaSatuan: produk.harga, jumlah: Number(formData.jumlah), total: Number(formData.jumlah) * produk.harga, tanggal: serverTimestamp(), adminId: currentUser.uid, adminName: currentUser.displayName || "Admin" }); } else { await addDoc(collection(db, "transaksi"), { type: "pengeluaran", produkNama: formData.nama, total: Number(formData.nominal), tanggal: serverTimestamp(), adminId: currentUser.uid, adminName: currentUser.displayName || "Admin" }); } Swal.fire("Berhasil", "Transaksi ditambahkan", "success"); updateSaldo(); loadKas(); renderTransaksi(); }; </script> </body> </html>
+Copy message
+Edit message
+BLACKBOXAI
+
+Berikut adalah kode lengkap untuk dashboard admin yang telah dimodifikasi. Saya telah menambahkan fitur Kelola Redeem Code sebagai modul baru di dashboard, termasuk:
+
+Fitur Baru yang Ditambahkan:
+Modul "Kelola Redeem Code" di Dashboard:
+
+Title: "🎁 Kelola Redeem Code".
+Deskripsi: "Generate kode baru dan lihat detail user yang redeem."
+Tombol: "Lihat Detail" (untuk tampilkan list kode dan user) + "Generate Kode" (untuk buat kode baru).
+Generate Kode Redeem:
+
+Saat klik "Generate Kode", muncul Swal untuk input jumlah kode (e.g., 1-100).
+Generate random kode unik (format: 6 karakter alfanumerik uppercase, e.g., "ABC123").
+Simpan batch ke Firestore collection redeem_codes dengan field: { code: "ABC123", used: false }.
+Konfirmasi sukses dengan Swal, dan refresh list.
+Detail User / Kode Redeem:
+
+Container baru (redeemContainer) yang muncul saat klik "Lihat Detail".
+Filter: Semua, Belum Digunakan (used: false), Sudah Digunakan (used: true).
+List dalam bentuk table sederhana (menggunakan div untuk responsive):
+Kolom: Kode, Status (Used/Unused), Nama User, Nomor WA, Waktu Redeem, Hasil (jika ada; saat ini opsional karena redeem page belum simpan hasil—lihat catatan di bawah).
+Data diambil dari collection redeem_codes (query dengan orderBy redeemTime desc untuk terbaru dulu).
+Jika kode belum digunakan, tampilkan "Belum Diredeem". Jika sudah, tampilkan detail user dari field userName, whatsappNumber, redeemTime.
+Tombol "Kembali ke Dashboard".
+Integrasi dengan Firebase:
+
+Tambah import addDoc dan query/where untuk redeem (sudah ada sebagian).
+Collection: redeem_codes (seperti di redeem page: field code, used, userName, whatsappNumber, redeemTime).
+Asumsi: Dokumen redeem sudah ada dari redeem page (jika belum, generate akan buat yang baru).
+Catatan Hasil Spinner: Di redeem page sebelumnya, hasil (ZONK, 2K, dll.) tidak disimpan ke Firestore. Jika ingin tampilkan di admin, tambahkan field result saat update di redeem page (e.g., result: "2K"). Untuk sekarang, saya buat kolom "Hasil" kosong/tidak ada; jika perlu, beri tahu untuk modifikasi redeem page.
+Lainnya:
+
+UI konsisten dengan Tailwind (dark theme, responsive).
+Error handling dengan Swal (e.g., jika generate gagal).
+Auth admin tetap ada (harus login untuk akses dashboard).
+Tidak ubah fitur lama (Kas, Transaksi).
+Struktur Collection redeem_codes (Firestore):
+Seperti sebelumnya: { code: string, used: boolean, userName: string?, whatsappNumber: string?, redeemTime: timestamp? }.
+Generate akan tambah dokumen baru dengan used: false.
+Contoh dokumen setelah generate: { code: "XYZ789", used: false }.
+Setelah redeem (dari user page): { code: "XYZ789", used: true, userName: "John Doe", whatsappNumber: "08123456789", redeemTime: timestamp }.
+File Lengkap: dashboard.html (atau nama file asli Anda)
+html
+250 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+
+kirim full final no cut no edit
+
+Copy message
+Edit message
+BLACKBOXAI
+
+html
+343 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+
+gabugnkan seluruh file css dan js dan html daam 1 file , bnuat fix no eor rno bug
+
+Copy message
+Edit message
+BLACKBOXAI
+
+html
+319 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+
+buatkan kode tambahan untuk mengelola reedem code , untuk reedem code diawali dengan CRVSxxxxxx
+
+Copy message
+Edit message
+BLACKBOXAI
+
+html
+318 lines
+Copy code
+Download code
+Click to expand
+<!DOCTYPE html>
+<html lang="id">
+...
+
+buatkan halaman khusus generate reedem code,
+
+Copy message
+Edit message
+BLACKBOXAI
+
+html
+248 lines
+Copy code
+Download code
+Click to close
+<!DOCTYPE html>
+<html lang="id">
+...
+Penjelasan Fitur Halaman Ini:
+Auth Protection: Halaman memerlukan login Firebase Auth. Jika belum login, redirect ke login.html dengan Swal warning.
+Generate Kode:
+Input jumlah (1-100).
+Format: CRVS + 6 karakter random (huruf besar A-Z + angka 0-9).
+Cek unik berdasarkan existing data di Firestore (load sekali saat login).
+Simpan batch ke collection redeem_codes dengan { code, used: false, createdAt: timestamp }.
+Jika gagal generate unik (jarang), tampilkan error.
+Hasil:
+Tampilkan list kode baru di bawah form (dengan status "Unused").
+Tombol "Generate Lagi" dan "Hapus Hasil".
+UI/UX:
+Dark theme dengan Tailwind, responsive.
+SweetAlert untuk input validasi dan notifikasi.
+Enter key support di input jumlah.
+Header dengan logout.
+Setup Firebase:
+Ganti firebaseConfig dengan milik Anda.
+Pastikan rules Firestore izinkan write (e.g., allow write: if request.auth != null; untuk security).
+Collection redeem_codes harus ada (otomatis dibuat saat addDoc pertama).
+Cara Penggunaan:
+Buka file di browser (pastikan sudah login via login.html).
+Masukkan jumlah (e.g., 5) → Klik "Generate Kode".
+Lihat hasil di bawah → Kode tersimpan di Firestore.
+Test: Cek console untuk error, atau Firestore Console untuk verifikasi data.
+Jika perlu modifikasi (e.g., export ke CSV, batch lebih besar), beri tahu! 😊
+
+
+
+Copy message
+Export
+
+Notifications
+START TRIAL NOW
+Upgrade plan
+
+
+
+
+Models
