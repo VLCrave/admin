@@ -64,7 +64,7 @@ input, select {transition:all 0.3s ease;}
         <div class="mb-4">
   <img src="https://vlcrave.github.io/admin/logo.png" alt="Gift" class="w-24 h-24 mx-auto">
 </div>
-        <h1 class="text-5xl font-black title-glow mb-3 tracking-tight">Crave Street</h1>
+        <h1 class="text-5xl font-black title-glow mb-3 tracking-tight">EVENT SPESIAL</h1>
         <p class="text-gray-200 text-base mb-6 leading-relaxed">
             Masukkan kode redeem eksklusif Anda dan<br>
             <span class="font-semibold text-yellow-300">spin untuk hadiah hingga 10K!</span>
@@ -80,12 +80,15 @@ input, select {transition:all 0.3s ease;}
     <div id="redeemForm" class="space-y-5">
         <div class="relative group">
             <label class="block text-sm font-semibold text-gray-200 mb-2 ml-1">🔑 Kode Redeem</label>
-            <input type="text" id="redeemCode" placeholder="Masukkan kode (contoh: ABC123)" class="w-full px-5 py-4 bg-white/10 rounded-xl text-white placeholder-gray-400 border-2 border-white/20 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all text-lg font-semibold tracking-wider uppercase" maxlength="15">
+            <input type="text" id="redeemCode" placeholder="Masukkan kode" class="w-full px-5 py-4 bg-white/10 rounded-xl text-white placeholder-gray-400 border-2 border-white/20 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all text-lg font-semibold tracking-wider uppercase" maxlength="15">
         </div>
         <button id="redeemButton" class="w-full btn-primary text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] shadow-xl relative z-10">
             <span id="redeemButtonText" class="relative z-10">🚀 Redeem Sekarang</span>
             <span id="redeemLoading" class="loading-spinner hidden"></span>
         </button>
+<button id="howToGetCode" class="w-full btn-success text-white py-3 rounded-xl font-bold text-lg mt-3">
+  📜 Cara Mendapatkan Kode
+</button>
         <div class="flex items-center justify-center gap-3 pt-2">
             <div class="info-badge">
                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
@@ -226,6 +229,25 @@ function updateWheelVisual(){
 }
 updateWheelVisual();
 
+document.getElementById("howToGetCode").addEventListener("click", () => {
+  Swal.fire({
+    title: "📜 Cara Mendapatkan Kode Redeem",
+    html: `
+      <ul style="text-align:left; padding-left:20px; line-height:1.6;">
+        <li>🎁 Lakukan pembelian minimal <b>Rp25.000</b> untuk mendapatkan 1 kode redeem.</li>
+        <li>📈 Pembelian kelipatan memberikan kode lebih banyak (Rp50.000 = 2 kode, Rp75.000 = 3 kode, dst).</li>
+        <li>🔒 Setiap kode hanya berlaku untuk 1 pengguna dan tidak dapat digunakan ulang.</li>
+        <li>⚠️ Jangan menyebarkan atau menjual kode.</li>
+        <li>💰 Hadiah dikirim maksimal 1x24 jam setelah pengisian data pembayaran.</li>
+      </ul>
+    `,
+    icon: "info",
+    confirmButtonText: "✅ Mengerti",
+    background:'#1e1b4b',
+    color:'#fff'
+  });
+});
+
 document.getElementById("redeemCode").value=localStorage.getItem("redeemCode")||"";
 
 document.getElementById("redeemButton").addEventListener("click",async()=>{
@@ -253,18 +275,128 @@ document.getElementById("redeemButton").addEventListener("click",async()=>{
     const codeData=codeDoc.data();
     
     if(codeData.used===true){
-      Swal.fire({title:"⚠️ Kode Sudah Digunakan",text:"Kode ini sudah digunakan oleh pengguna lain",icon:"warning",background:'#1e1b4b',color:'#fff'});
+      Swal.fire({title:" Kode Sudah Digunakan",text:"Kode ini sudah digunakan oleh pengguna lain",icon:"warning",background:'#1e1b4b',color:'#fff'});
       document.getElementById("redeemLoading").classList.add("hidden");
       document.getElementById("redeemButtonText").classList.remove("hidden");
       return;
     }
     
-    currentCodeId=codeDoc.id;
-    localStorage.setItem("redeemCode",code);
-    localStorage.setItem("currentCodeId",currentCodeId);
-    
+        currentCodeId = codeDoc.id;
+    localStorage.setItem("redeemCode", code);
+    localStorage.setItem("currentCodeId", currentCodeId);
+
     document.getElementById("redeemLoading").classList.add("hidden");
     document.getElementById("redeemButtonText").classList.remove("hidden");
+
+    // 🔹 Tambahan swal syarat & ketentuan
+  Swal.fire({
+    title: "📜 Syarat & Ketentuan Program Crave Street",
+    html: `
+      <div id="termsContainer" style="position: relative;">
+        <div id="termsScroll" style="
+          max-height: 250px;
+          overflow-y: auto;
+          text-align: left;
+          font-size: 14px;
+          line-height: 1.6;
+          padding-right: 10px;
+        ">
+          <p>🎁 <strong>Cara Mendapatkan Kode Redeem</strong></p>
+          <ul style="margin-left: 18px; list-style-type: disc;">
+            <li>Pelanggan harus melakukan pembelian minimal <b>Rp25.000</b> untuk mendapatkan 1 kode redeem.</li>
+            <li>Berlaku kelipatan — contoh: Rp50.000 = 2 kode, Rp75.000 = 3 kode, dan seterusnya.</li>
+          </ul>
+          <br>
+
+          <p>🔐 <strong>Keamanan Kode Redeem</strong></p>
+          <ul style="margin-left: 18px; list-style-type: disc;">
+            <li>Setiap kode redeem hanya berlaku untuk <b>1 pengguna</b> dan tidak dapat digunakan ulang.</li>
+            <li>Dilarang menyebarluaskan atau memperjualbelikan kode redeem.</li>
+            <li>Kode yang telah diterima sepenuhnya menjadi tanggung jawab pelanggan.</li>
+          </ul>
+          <br>
+
+          <p>💰 <strong>Pencairan Hadiah</strong></p>
+          <ul style="margin-left: 18px; list-style-type: disc;">
+            <li>Hadiah akan dikirim maksimal dalam waktu <b>1x24 jam</b> setelah data pembayaran dikirim.</li>
+            <li>Pelanggan wajib mengisi data dengan benar dan valid untuk mempercepat proses verifikasi.</li>
+            <li>Kesalahan data dapat menyebabkan keterlambatan atau pembatalan pengiriman hadiah.</li>
+          </ul>
+          <br>
+
+          <p>⚠️ <strong>Ketentuan Penting</strong></p>
+          <ul style="margin-left: 18px; list-style-type: disc;">
+            <li>Kode redeem tidak dapat dipindahtangankan maupun ditukar dengan uang tunai.</li>
+            <li>Setiap indikasi kecurangan akan mengakibatkan pembatalan hadiah.</li>
+            <li>Keputusan tim Crave Street bersifat <b>final</b> dan tidak dapat diganggu gugat.</li>
+          </ul>
+          <br>
+
+          <p>✨ <strong>Informasi Tambahan</strong></p>
+          <ul style="margin-left: 18px; list-style-type: disc;">
+            <li>Kode redeem berlaku <b>24 jam sejak diterbitkan</b>.</li>
+            <li>Simpan bukti transaksi untuk keperluan verifikasi.</li>
+            <li>Program ini dapat berubah sewaktu-waktu sesuai kebijakan Crave Street.</li>
+            <li>Jika terjadi kendala, hubungi tim Customer Service resmi Crave Street.</li>
+          </ul>
+        </div>
+
+        <button id="scrollDownBtn" style="
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          background: #10b981;
+          color: #fff;
+          border: none;
+          padding: 5px 10px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 14px;
+        ">⬇ Scroll</button>
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: "✅ Saya Setuju",
+    cancelButtonText: "❌ Tidak Setuju",
+    background: "#1e1b4b",
+    color: "#fff",
+    confirmButtonColor: "#10b981",
+    cancelButtonColor: "#ef4444",
+    didOpen: () => {
+      const confirmBtn = Swal.getConfirmButton();
+      confirmBtn.disabled = true; // tombol nonaktif dulu
+
+      const terms = document.getElementById("termsScroll");
+      const scrollBtn = document.getElementById("scrollDownBtn");
+
+      // tombol scroll otomatis
+      scrollBtn.addEventListener("click", () => {
+        const scrollInterval = setInterval(() => {
+          terms.scrollTop += 10;
+          if (terms.scrollTop + terms.clientHeight >= terms.scrollHeight) {
+            clearInterval(scrollInterval);
+          }
+        }, 20);
+      });
+
+      // aktifkan tombol setuju jika sudah scroll sampai bawah
+      terms.addEventListener("scroll", () => {
+        if (terms.scrollTop + terms.clientHeight >= terms.scrollHeight - 5) {
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = "✅ Saya Setuju";
+        }
+      });
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      document.getElementById("redeemForm").classList.add("hidden");
+      document.getElementById("userForm").classList.remove("hidden");
+      updateSteps(2);
+    } else if (result.isDismissed || result.isDenied) {
+      window.location.href = "redeem.html";
+    }
+  });
+
     document.getElementById("redeemForm").classList.add("hidden");
     document.getElementById("userForm").classList.remove("hidden");
     updateSteps(2);
@@ -306,7 +438,7 @@ document.getElementById("userFormButton").addEventListener("click",async()=>{
     document.getElementById("spinnerContainer").classList.remove("hidden");
     updateSteps(3);
     
-    Swal.fire({title:"Berhasil!",text:"Sekarang Anda bisa memutar roda hadiah",icon:"success",background:'#1e1b4b',color:'#fff'});
+    Swal.fire({title:"Berhasil!",text:"Semoga Beruntung!",icon:"success",background:'#1e1b4b',color:'#fff'});
   }catch(err){
     console.error(err);
     Swal.fire({title:"Error",text:"Gagal menyimpan data",icon:"error",background:'#1e1b4b',color:'#fff'});
