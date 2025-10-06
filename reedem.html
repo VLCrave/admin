@@ -1,340 +1,426 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redeem Code - Crave Street</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <style>
-        /* Spinner Wheel CSS */
-        #spinnerWheel {
-            transition: transform 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        
-        /* Segmen Spinner (5 bagian lingkaran) */
-        .segment {
-            position: absolute;
-            border-radius: 50% 50% 50% 50% / 100% 100% 0 0;
-            transform-origin: 50% 100%;
-            left: 50%;
-            top: 50%;
-            width: 100%;
-            height: 100%;
-            margin-left: -50%;
-            margin-top: -50%;
-        }
-        
-        .segment-1 { /* ZONK: 144° (58%) */
-            background: #ef4444;
-            transform: rotate(0deg);
-            clip-path: polygon(0 0, 100% 0, 100% 40%);
-        }
-        
-        .segment-2 { /* 2K: 36° (10%) */
-            background: #10b981;
-            transform: rotate(144deg);
-            clip-path: polygon(0 0, 100% 0, 100% 10%);
-        }
-        
-        .segment-3 { /* 10K: 7.2° (2%) */
-            background: #059669;
-            transform: rotate(180deg);
-            clip-path: polygon(0 0, 100% 0, 100% 2%);
-        }
-        
-        .segment-4 { /* 20K: 0° (placeholder 36°) */
-            background: #3b82f6;
-            transform: rotate(187.2deg);
-            clip-path: polygon(0 0, 100% 0, 100% 0%); /* Kosong */
-        }
-        
-        .segment-5 { /* +1 TRY: 108° (30%) */
-            background: #f59e0b;
-            transform: rotate(194.4deg);
-            clip-path: polygon(0 0, 100% 0, 100% 30%);
-        }
-        
-        /* Pointer (panah) */
-        .pointer {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-top: 20px solid #fff;
-            z-index: 10;
-        }
-        
-        /* Label Segmen (sederhana) */
-        .label {
-            position: absolute;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-            transform-origin: center;
-        }
-        
-        .label-1 { top: 20%; left: 45%; transform: rotate(0deg); }
-        .label-2 { top: 10%; right: 20%; transform: rotate(72deg); }
-        .label-3 { top: 5%; right: 40%; transform: rotate(144deg); }
-        .label-4 { bottom: 10%; right: 20%; transform: rotate(216deg); }
-        .label-5 { bottom: 20%; left: 40%; transform: rotate(288deg); }
-        
-        /* Responsive */
-        @media (max-width: 640px) {
-            .label { font-size: 10px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redeem Code - Crave Street</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+@keyframes fadeInUp {from {opacity:0;transform:translateY(40px);}to{opacity:1;transform:translateY(0);}}
+@keyframes float {0%,100%{transform:translateY(0);}50%{transform:translateY(-20px);}}
+@keyframes spin {to{transform:rotate(360deg);}}
+@keyframes pulse {0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+@keyframes shimmer {0%{background-position:-1000px 0;}100%{background-position:1000px 0;}}
+@keyframes gradientShift {0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+
+.container-main {animation:fadeInUp 0.8s cubic-bezier(0.34,1.56,0.64,1);}
+body::before {
+    content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+    background:radial-gradient(circle at 20% 80%, rgba(168,85,247,0.4) 0%, transparent 50%),
+               radial-gradient(circle at 80% 20%, rgba(59,130,246,0.4) 0%, transparent 50%),
+               radial-gradient(circle at 40% 40%, rgba(236,72,153,0.3) 0%, transparent 50%);
+    pointer-events:none;z-index:0;animation:float 6s ease-in-out infinite;
+}
+.particle {position:fixed;width:4px;height:4px;background:white;border-radius:50%;opacity:0.3;animation:float 8s ease-in-out infinite;z-index:0;}
+input:focus, select:focus {transform:translateY(-2px);transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 8px 30px rgba(59,130,246,0.4);}
+input, select {transition:all 0.3s ease;}
+.btn-primary {position:relative;overflow:hidden;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);transition:all 0.3s ease;}
+.btn-primary::before {content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);transition:left 0.5s;}
+.btn-primary:hover::before {left:100%;}
+.btn-primary:hover {transform:translateY(-2px);box-shadow:0 10px 40px rgba(102,126,234,0.5);}
+.btn-success {background:linear-gradient(135deg,#10b981 0%,#059669 100%);position:relative;overflow:hidden;}
+.btn-success::after {content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,0.3);transform:translate(-50%,-50%);transition:width 0.6s,height 0.6s;}
+.btn-success:hover::after {width:300px;height:300px;}
+.loading-spinner {display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:#fff;animation:spin 0.8s linear infinite;}
+#spinnerWheel {position:relative;width:100%;height:100%;border-radius:50%;transition:transform 5s cubic-bezier(0.17,0.67,0.12,0.99);box-shadow:0 0 0 8px rgba(255,255,255,0.1),0 0 0 16px rgba(255,255,255,0.05),inset 0 0 30px rgba(0,0,0,0.3);}
+.wheel-center {position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;box-shadow:0 4px 20px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:14px;z-index:20;border:3px solid white;}
+.pointer {position:absolute;top:-15px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:20px solid transparent;border-right:20px solid transparent;border-top:35px solid #fbbf24;z-index:15;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.3));}
+.pointer::after {content:'▼';position:absolute;top:-30px;left:50%;transform:translateX(-50%);color:#fbbf24;font-size:16px;}
+.label {position:absolute;top:50%;left:50%;font-weight:800;font-size:22px;color:white;text-shadow:2px 2px 4px rgba(0,0,0,0.7);white-space:nowrap;transform-origin:center;z-index:5;}
+.reward-text {opacity:0;transform:scale(0.5) translateY(20px);transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1);font-size:28px;font-weight:900;background:linear-gradient(135deg,#fbbf24,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-top:20px;}
+.reward-text.show {opacity:1;transform:scale(1) translateY(0);}
+.title-glow {background:linear-gradient(135deg,#fff,#e0e7ff,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite;background-size:1000px 100%;}
+.glass-card {background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.2);}
+.info-badge {display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4);border-radius:20px;font-size:13px;color:#93c5fd;transition:all 0.3s ease;}
+.info-badge:hover {background:rgba(59,130,246,0.3);transform:scale(1.05);}
+.step-indicator {display:flex;gap:8px;justify-content:center;margin-bottom:20px;}
+.step {width:40px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;transition:all 0.3s ease;}
+.step.active {background:linear-gradient(90deg,#667eea,#764ba2);box-shadow:0 0 10px rgba(102,126,234,0.5);}
+.confetti {position:fixed;width:10px;height:10px;background:#fbbf24;animation:confetti-fall 3s ease-out forwards;z-index:100;pointer-events:none;}
+@keyframes confetti-fall {to{transform:translateY(100vh) rotate(360deg);opacity:0;}}
+@media (max-width:400px){.label{font-size:18px;}.wheel-center{width:60px;height:60px;font-size:12px;}}
+</style>
 </head>
-<body class="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white/10 backdrop-blur-lg rounded-2xl p-8 max-w-md w-full shadow-2xl border border-white/20">
-        <h1 class="text-3xl font-bold text-center text-white mb-6">🎁 Redeem Code</h1>
-        
-        <div id="redeemForm" class="space-y-4">
-            <input 
-                type="text" 
-                id="redeemCode" 
-                placeholder="Masukkan kode redeem" 
-                class="w-full px-4 py-3 bg-white/20 rounded-lg text-white placeholder-gray-300 border border-white/30 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400"
-                maxlength="10"
-            >
-            <button 
-                onclick="redeemCode()" 
-                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition duration-200"
-            >
-                Redeem
-            </button>
-        </div>
+<body class="bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 min-h-screen flex items-center justify-center p-4 relative">
 
-        <!-- Spinner Container (hidden awalnya) -->
-        <div id="spinnerContainer" class="hidden mt-6">
-            <h2 class="text-xl font-bold text-center text-white mb-4">Memutar Hadiah...</h2>
-            <div class="relative w-64 h-64 mx-auto">
-                <!-- Spinner Wheel -->
-                <div id="spinnerWheel" class="w-full h-full border-4 border-white/30 rounded-full overflow-hidden relative">
-                    <!-- Segmen 1: ZONK (merah, 58%) -->
-                    <div class="segment segment-1"></div>
-                    <!-- Segmen 2: 2K (hijau muda, 10%) -->
-                    <div class="segment segment-2"></div>
-                    <!-- Segmen 3: 10K (hijau tua, 2%) -->
-                    <div class="segment segment-3"></div>
-                    <!-- Segmen 4: 20K (biru, 0%) -->
-                    <div class="segment segment-4"></div>
-                    <!-- Segmen 5: +1 PERCOBAAN (kuning, 30%) -->
-                    <div class="segment segment-5"></div>
-                    
-                    <!-- Pointer (panah atas) -->
-                    <div class="pointer"></div>
-                    
-                    <!-- Label Segmen -->
-                    <div class="label label-1">ZONK</div>
-                    <div class="label label-2">2K</div>
-                    <div class="label label-3">10K</div>
-                    <div class="label label-4">20K</div>
-                    <div class="label label-5">+1 TRY</div>
-                </div>
-            </div>
-        </div>
+<div class="particle" style="top:20%;left:10%;"></div>
+<div class="particle" style="top:60%;left:80%;animation-delay:2s;"></div>
+<div class="particle" style="top:80%;left:20%;animation-delay:4s;"></div>
+<div class="particle" style="top:40%;left:70%;animation-delay:1s;"></div>
 
-        <p class="text-center text-gray-300 mt-4 text-sm">Pastikan kode redeem valid dan belum digunakan. Setelah redeem, masukkan nama lengkap dan nomor WhatsApp Anda.</p>
+<div class="glass-card rounded-3xl p-8 max-w-lg w-full shadow-2xl container-main relative z-10">
+    <div class="text-center mb-8">
+        <div class="mb-4">
+  <img src="https://vlcrave.github.io/logo.png" alt="Gift" class="w-24 h-24 mx-auto">
+</div>
+        <h1 class="text-5xl font-black title-glow mb-3 tracking-tight">Crave Street</h1>
+        <p class="text-gray-200 text-base mb-6 leading-relaxed">
+            Masukkan kode redeem eksklusif Anda dan<br>
+            <span class="font-semibold text-yellow-300">spin untuk hadiah hingga 10K!</span>
+        </p>
+        <div class="step-indicator">
+            <div class="step active" id="step1"></div>
+            <div class="step" id="step2"></div>
+            <div class="step" id="step3"></div>
+        </div>
     </div>
 
-    <!-- Firebase JS (Modular, tanpa Auth) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-        import { getFirestore, collection, query, where, getDocs, doc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+    <!-- REDEEM FORM -->
+    <div id="redeemForm" class="space-y-5">
+        <div class="relative group">
+            <label class="block text-sm font-semibold text-gray-200 mb-2 ml-1">🔑 Kode Redeem</label>
+            <input type="text" id="redeemCode" placeholder="Masukkan kode (contoh: ABC123)" class="w-full px-5 py-4 bg-white/10 rounded-xl text-white placeholder-gray-400 border-2 border-white/20 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all text-lg font-semibold tracking-wider uppercase" maxlength="15">
+        </div>
+        <button id="redeemButton" class="w-full btn-primary text-white py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.02] shadow-xl relative z-10">
+            <span id="redeemButtonText" class="relative z-10">🚀 Redeem Sekarang</span>
+            <span id="redeemLoading" class="loading-spinner hidden"></span>
+        </button>
+        <div class="flex items-center justify-center gap-3 pt-2">
+            <div class="info-badge">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                <span>Berlaku 24 jam</span>
+            </div>
+        </div>
+    </div>
 
-        // ===== FIREBASE CONFIG ===== (Sesuaikan dengan project Anda)
-        const firebaseConfig = {
-            apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
-            authDomain: "crave-street-id.firebaseapp.com",
-            projectId: "crave-street-id",
-            storageBucket: "crave-street-id.firebasestorage.app",
-            messagingSenderId: "221955592583",
-            appId: "1:221955592583:web:43dc59d791e750095cc322",
-            measurementId: "G-WCRQGLW47B"
-        };
+    <!-- USER FORM -->
+    <div id="userForm" class="hidden space-y-4">
+        <div>
+            <label class="block text-sm font-semibold text-gray-200 mb-2 ml-1">👤 Nama Lengkap</label>
+            <input type="text" id="redeemName" class="w-full px-4 py-3 rounded-xl bg-white/10 text-white border-2 border-white/20 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30" placeholder="Masukkan nama lengkap">
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-200 mb-2 ml-1">📱 Nomor WhatsApp</label>
+            <input type="text" id="redeemWA" class="w-full px-4 py-3 rounded-xl bg-white/10 text-white border-2 border-white/20 focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30" placeholder="08123456789">
+        </div>
+        <button id="userFormButton" class="w-full btn-primary text-white py-4 rounded-xl font-bold text-lg">Lanjutkan ke Spin</button>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    <!-- SPINNER -->
+    <div id="spinnerContainer" class="hidden mt-8 text-center">
+        <div class="mb-6">
+            <h2 class="text-2xl font-black text-white mb-2">🎡 Putar Roda Keberuntungan!</h2>
+            <p class="text-gray-300 text-sm">Tekan tombol SPIN dan lihat hadiah Anda</p>
+        </div>
+        <div class="relative w-72 h-72 mx-auto mb-6">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-full blur-xl"></div>
+            <div class="relative w-full h-full border-4 border-white/30 rounded-full shadow-2xl bg-gradient-to-br from-purple-900/50 to-pink-900/50">
+                <div class="pointer"></div>
+                <div id="spinnerWheel" class="w-full h-full"></div>
+                <div class="wheel-center">SPIN</div>
+            </div>
+        </div>
+        <button id="spinButton" class="btn-success text-white px-8 py-4 rounded-xl font-bold text-lg shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 relative z-10">
+            <span class="relative z-10">✨ SPIN SEKARANG ✨</span>
+        </button>
+        <div id="rewardText" class="reward-text"></div>
+    </div>
 
-        // ===== REDEEM FUNCTION =====
-        window.redeemCode = async () => {
-            const codeInput = document.getElementById('redeemCode');
-            const code = codeInput.value.trim().toUpperCase();
+    <!-- PAYMENT FORM -->
+    <div id="paymentForm" class="hidden mt-6 space-y-4">
+        <div class="text-center mb-4">
+            <h2 class="text-white text-2xl font-black mb-2">💰 Data Penerima Hadiah</h2>
+            <p class="text-gray-300 text-sm">Isi data dengan benar agar hadiah dapat dikirim</p>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-200 mb-2 ml-1">🏦 Metode Pembayaran</label>
+            <select id="paymentMethod" class="w-full px-4 py-3 rounded-xl bg-white/10 text-white border-2 border-white/20 focus:outline-none focus:border-purple-400 text-lg font-semibold">
+                <option value="">-- Pilih Metode --</option>
+                <option value="BCA">💳 BANK BCA</option>
+                <option value="SEABANK">🏦 SEABANK</option>
+                <option value="DANA">📱 DANA</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-200 mb-2 ml-1">👤 Nama Pemilik Rekening</label>
+            <input type="text" id="accountName" placeholder="Contoh: John Doe" class="w-full p-4 rounded-xl bg-white/10 text-white border-2 border-white/20 focus:outline-none focus:border-purple-400"/>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-200 mb-2 ml-1">🔢 Nomor Rekening / Akun</label>
+            <input type="text" id="accountNumber" placeholder="Masukkan nomor rekening / akun" class="w-full p-4 rounded-xl bg-white/10 text-white border-2 border-white/20 focus:outline-none focus:border-purple-400"/>
+        </div>
+        <button id="claimButton" class="btn-success w-full py-4 rounded-xl font-bold text-lg text-white">✅ Klaim Hadiah</button>
+        <p class="text-xs text-center text-gray-400 pt-2">🔒 Data Anda aman dan akan diproses dalam 1x24 jam</p>
+    </div>
+</div>
 
-            if (!code) {
-                Swal.fire('Error', 'Masukkan kode redeem!', 'error');
-                return;
-            }
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {getFirestore,collection,query,where,getDocs,doc,updateDoc,addDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-            // Verifikasi kode dari Firebase
-            try {
-                const q = query(collection(db, 'redeem_codes'), where('code', '==', code), where('used', '==', false));
-                const querySnapshot = await getDocs(q);
+const firebaseConfig = {
+    apiKey:"AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
+    authDomain:"crave-street-id.firebaseapp.com",
+    projectId:"crave-street-id",
+    storageBucket:"crave-street-id.firebasestorage.app",
+    messagingSenderId:"221955592583",
+    appId:"1:221955592583:web:43dc59d791e750095cc322",
+    measurementId:"G-WCRQGLW47B"
+};
 
-                if (querySnapshot.empty) {
-                    Swal.fire('Gagal', 'Kode redeem tidak valid atau sudah digunakan!', 'error');
-                    return;
-                }
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-                // Ambil dokumen pertama (asumsi kode unik)
-                const redeemDoc = querySnapshot.docs[0];
+const TELEGRAM_BOT_TOKEN='8012881635:AAEBqLZZz0jaA4Ek0GsvFkzuEXoknxiq8Rg';
+const TELEGRAM_CHAT_ID='6046360096';
 
-                // Tampilkan Swal untuk input nama dan nomor WA
-                const { value: userData } = await Swal.fire({
-                    title: 'Data Pribadi',
-                    text: 'Masukkan nama lengkap dan nomor WhatsApp Anda untuk memproses redeem.',
-                    html: `
-                        <input id="swalName" class="swal2-input" placeholder="Nama Lengkap" style="margin-bottom: 10px;">
-                        <input id="swalWhatsapp" type="number" class="swal2-input" placeholder="Nomor WhatsApp (contoh: 08123456789)">
-                    `,
-                    focusConfirm: false,
-                    showCancelButton: true,
-                    confirmButtonText: 'Lanjutkan',
-                    cancelButtonText: 'Batal',
-                    preConfirm: () => {
-                        const name = document.getElementById('swalName').value.trim();
-                        const whatsapp = document.getElementById('swalWhatsapp').value.trim();
+const wheelRewards=[
+  {text:"10K",color:"#eab308"},
+  {text:"5K",color:"#f43f5e"},
+  {text:"2K",color:"#22c55e"},
+  {text:"1K",color:"#3b82f6"}
+];
 
-                        if (!name) {
-                            Swal.showValidationMessage('Nama lengkap harus diisi!');
-                            return false;
-                        }
-                        if (!whatsapp || whatsapp.length < 10) {
-                            Swal.showValidationMessage('Nomor WhatsApp harus valid (minimal 10 digit)!');
-                            return false;
-                        }
-                        return { name, whatsapp };
-                    }
-                });
+const segmentAngle=360/wheelRewards.length;
+let hasSpun=false;
+let spinCount=parseInt(localStorage.getItem("spinCount"))||0;
+let currentReward="";
+let currentCodeId="";
 
-                if (!userData) {
-                    Swal.fire('Dibatalkan', 'Proses redeem dibatalkan.', 'info');
-                    return;
-                }
+function updateSteps(step){
+  document.querySelectorAll('.step').forEach((el,i)=>{
+    el.classList.toggle('active',i<step);
+  });
+}
 
-                // Update dokumen: tandai sebagai used + simpan data user
-                await updateDoc(doc(db, 'redeem_codes', redeemDoc.id), {
-                    used: true,
-                    userName: userData.name,
-                    whatsappNumber: userData.whatsapp,
-                    redeemTime: serverTimestamp()
-                });
+function createConfetti(){
+  for(let i=0;i<30;i++){
+    const confetti=document.createElement('div');
+    confetti.className='confetti';
+    confetti.style.left=Math.random()*100+'%';
+    confetti.style.top='-10px';
+    confetti.style.background=['#fbbf24','#f43f5e','#22c55e','#3b82f6'][Math.floor(Math.random()*4)];
+    confetti.style.animationDelay=Math.random()*0.5+'s';
+    document.body.appendChild(confetti);
+    setTimeout(()=>confetti.remove(),3000);
+  }
+}
 
-                // Clear input kode
-                codeInput.value = '';
+function updateWheelVisual(){
+  let gradientStops="";
+  wheelRewards.forEach((r,i)=>{
+    gradientStops+=`${r.color} ${i*segmentAngle}deg ${(i+1)*segmentAngle}deg, `;
+  });
+  spinnerWheel.style.background=`conic-gradient(${gradientStops.slice(0,-2)})`;
+  
+  spinnerWheel.innerHTML="";
+  wheelRewards.forEach((r,i)=>{
+    const label=document.createElement("div");
+    label.className="label";
+    label.innerText=r.text;
+    const angle=i*segmentAngle+segmentAngle/2;
+    label.style.transform=`translate(-50%,-50%) rotate(${angle}deg) translateY(-100px) rotate(-${angle}deg)`;
+    spinnerWheel.appendChild(label);
+  });
+}
+updateWheelVisual();
 
-                // Tampilkan Swal konfirmasi data
-                Swal.fire({
-                    title: 'Data Terkonfirmasi',
-                    text: `Terima kasih, ${userData.name}! Nomor WA: ${userData.whatsapp}. Memproses hadiah...`,
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+document.getElementById("redeemCode").value=localStorage.getItem("redeemCode")||"";
 
-                // Tampilkan spinner
-                showSpinner();
+document.getElementById("redeemButton").addEventListener("click",async()=>{
+  const code=document.getElementById("redeemCode").value.trim().toUpperCase();
+  if(!code){
+    Swal.fire({title:"Error",text:"Masukkan kode redeem valid",icon:"error",background:'#1e1b4b',color:'#fff'});
+    return;
+  }
+  
+  document.getElementById("redeemLoading").classList.remove("hidden");
+  document.getElementById("redeemButtonText").classList.add("hidden");
 
-                // Simulate proses (delay untuk animasi spinner)
-                setTimeout(() => {
-                    const result = generateRandomResult();
-                    showResult(result, userData.name);
-                }, 3000); // 3 detik
+  try{
+    const q=query(collection(db,"redeem_codes"),where("code","==",code));
+    const snapshot=await getDocs(q);
+    
+    if(snapshot.empty){
+      Swal.fire({title:"❌ Kode Tidak Valid",text:"Kode yang Anda masukkan tidak ditemukan",icon:"error",background:'#1e1b4b',color:'#fff'});
+      document.getElementById("redeemLoading").classList.add("hidden");
+      document.getElementById("redeemButtonText").classList.remove("hidden");
+      return;
+    }
+    
+    const codeDoc=snapshot.docs[0];
+    const codeData=codeDoc.data();
+    
+    if(codeData.used===true){
+      Swal.fire({title:"⚠️ Kode Sudah Digunakan",text:"Kode ini sudah digunakan oleh pengguna lain",icon:"warning",background:'#1e1b4b',color:'#fff'});
+      document.getElementById("redeemLoading").classList.add("hidden");
+      document.getElementById("redeemButtonText").classList.remove("hidden");
+      return;
+    }
+    
+    currentCodeId=codeDoc.id;
+    localStorage.setItem("redeemCode",code);
+    localStorage.setItem("currentCodeId",currentCodeId);
+    
+    document.getElementById("redeemLoading").classList.add("hidden");
+    document.getElementById("redeemButtonText").classList.remove("hidden");
+    document.getElementById("redeemForm").classList.add("hidden");
+    document.getElementById("userForm").classList.remove("hidden");
+    updateSteps(2);
+    
+  }catch(err){
+    console.error(err);
+    Swal.fire({title:"Error",text:"Terjadi kesalahan saat validasi kode",icon:"error",background:'#1e1b4b',color:'#fff'});
+    document.getElementById("redeemLoading").classList.add("hidden");
+    document.getElementById("redeemButtonText").classList.remove("hidden");
+  }
+});
 
-            } catch (error) {
-                console.error('Error redeeming code:', error);
-                Swal.fire('Error', 'Terjadi kesalahan. Coba lagi nanti.', 'error');
-            }
-        };
+document.getElementById("userFormButton").addEventListener("click",async()=>{
+  const name=document.getElementById("redeemName").value.trim();
+  const wa=document.getElementById("redeemWA").value.trim();
+  
+  if(!name||!wa){
+    Swal.fire({title:"Error",text:"Isi Nama dan WhatsApp dengan benar",icon:"error",background:'#1e1b4b',color:'#fff'});
+    return;
+  }
+  
+  if(wa.length<10){
+    Swal.fire({title:"Error",text:"Nomor WhatsApp minimal 10 digit",icon:"error",background:'#1e1b4b',color:'#fff'});
+    return;
+  }
+  
+  try{
+    await updateDoc(doc(db,"redeem_codes",currentCodeId),{
+      used:true,
+      usedBy:`${name} (${wa})`,
+      used_at:serverTimestamp(),
+      dateUsed:serverTimestamp()
+    });
+    
+    localStorage.setItem("redeemName",name);
+    localStorage.setItem("redeemWA",wa);
+    
+    document.getElementById("userForm").classList.add("hidden");
+    document.getElementById("spinnerContainer").classList.remove("hidden");
+    updateSteps(3);
+    
+    Swal.fire({title:"Berhasil!",text:"Sekarang Anda bisa memutar roda hadiah",icon:"success",background:'#1e1b4b',color:'#fff'});
+  }catch(err){
+    console.error(err);
+    Swal.fire({title:"Error",text:"Gagal menyimpan data",icon:"error",background:'#1e1b4b',color:'#fff'});
+  }
+});
 
-        // ===== SHOW SPINNER =====
-        function showSpinner() {
-            document.getElementById('redeemForm').classList.add('hidden');
-            document.getElementById('spinnerContainer').classList.remove('hidden');
+function getCustomRandomIndex(){
+  spinCount++;
+  localStorage.setItem("spinCount",spinCount);
+  if(spinCount%10===0)return [0,1][Math.floor(Math.random()*2)];
+  else if(spinCount%5===0)return [1,2][Math.floor(Math.random()*2)];
+  else return [2,3][Math.floor(Math.random()*2)];
+}
 
-            const wheel = document.getElementById('spinnerWheel');
-            // Reset dan animasi putaran random
-            wheel.style.transition = 'none';
-            wheel.style.transform = 'rotate(0deg)';
-            wheel.offsetHeight; // Trigger reflow
-            const randomRotation = Math.floor(Math.random() * 720) + 1080; // 3-5 putaran + random
-            wheel.style.transition = 'transform 3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-            wheel.style.transform = `rotate(${randomRotation}deg)`;
-        }
+document.getElementById("spinButton").addEventListener("click",async()=>{
+  if(hasSpun)return;
+  hasSpun=true;
+  document.getElementById("spinButton").disabled=true;
 
-        // ===== GENERATE RANDOM RESULT (Weighted Probability) =====
-        function generateRandomResult() {
-            const rand = Math.random() * 100;
-            if (rand < 58) return 'ZONK'; // 58%
-            else if (rand < 68) return '2K'; // 10%
-            else if (rand < 70) return '10K'; // 2%
-            else if (rand < 100) return '+1 PERCOBAAN'; // 30%
-            else return '20K'; // 0% (jarang)
-        }
+  const index=getCustomRandomIndex();
+  const randomExtra=Math.floor(Math.random()*(segmentAngle-10))+5;
+  const stopAngle=360*5+(360-(index*segmentAngle+segmentAngle/2))+randomExtra;
+  spinnerWheel.style.transform=`rotate(${stopAngle}deg)`;
 
-        // ===== SHOW RESULT dengan Swal =====
-        function showResult(result, userName) {
-            const wheel = document.getElementById('spinnerWheel');
-            wheel.style.transition = 'none'; // Stop animasi
+  rewardText.classList.remove("show");
 
-            let title = result;
-            let text = '';
-            let icon = 'info';
-            let confirmButtonColor = '#3b82f6';
+  setTimeout(async()=>{
+    const reward=wheelRewards[index].text;
+    currentReward=reward;
+    rewardText.innerText=`🎉 Anda mendapatkan ${reward}!`;
+    rewardText.classList.add("show");
+    createConfetti();
 
-            switch (result) {
-                case 'ZONK':
-                    text = `Sayang sekali, ${userName}! Kamu dapat ZONK. Coba lagi lain kali!`;
-                    icon = 'error';
-                    break;
-                case '2K':
-                    text = `Selamat, ${userName}! Kamu dapat Rp 2.000. Saldo akan ditambahkan ke akun WhatsApp-mu.`;
-                    icon = 'success';
-                    break;
-                case '10K':
-                    text = `Wah, ${userName}! Kamu dapat Rp 10.000. Saldo akan ditambahkan ke akun WhatsApp-mu.`;
-                    icon = 'success';
-                    break;
-                case '20K':
-                    text = `Jackpot, ${userName}! Kamu dapat Rp 20.000. Saldo akan ditambahkan ke akun WhatsApp-mu.`;
-                    icon = 'success';
-                    break;
-                case '+1 PERCOBAAN':
-                    text = `Bagus, ${userName}! Kamu dapat +1 percobaan ekstra. Gunakan segera!`;
-                    icon = 'success';
-                    break;
-            }
+    const name=localStorage.getItem("redeemName")||"Anonymous";
+    const wa=localStorage.getItem("redeemWA")||"0000000000";
+    const code=localStorage.getItem("redeemCode")||"NOCODE";
 
-            // Hide spinner dan tampilkan hasil dengan Swal
-            document.getElementById('spinnerContainer').classList.add('hidden');
-            document.getElementById('redeemForm').classList.remove('hidden');
+    try{
+      await addDoc(collection(db,"reward_claims"),{
+        name,wa,code,reward,timestamp:serverTimestamp()
+      });
 
-            Swal.fire({
-                title: title,
-                text: text,
-                icon: icon,
-                confirmButtonText: 'OK',
-                confirmButtonColor: confirmButtonColor
-            });
-        }
+      const message=`🎁 *Klaim Hadiah Baru!*\n━━━━━━━━━━━━━━\n🔑 Kode: ${code}\n💰 Hadiah: ${reward}\n👤 Nama: ${name}\n📱 WA: ${wa}\n🕒 ${new Date().toLocaleString("id-ID")}`;
+      
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({chat_id:TELEGRAM_CHAT_ID,text:message,parse_mode:"Markdown"})
+      });
 
-        // ===== Event Listener untuk Enter Key (pada input kode) =====
-        document.addEventListener('DOMContentLoaded', () => {
-            const codeInput = document.getElementById('redeemCode');
-            codeInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    redeemCode();
-                }
-            });
-        });
-    </script>
+      Swal.fire({
+        title:`🎊 Selamat!`,
+        html:`Anda mendapatkan <strong>${reward}</strong>!<br>Silakan isi data pembayaran untuk klaim hadiah.`,
+        icon:"success",
+        background:'#1e1b4b',
+        color:'#fff'
+      });
+
+      setTimeout(()=>{
+        document.getElementById("spinnerContainer").classList.add("hidden");
+        document.getElementById("paymentForm").classList.remove("hidden");
+      },2000);
+    }catch(err){
+      console.error(err);
+      Swal.fire({title:"Error",text:"Terjadi kesalahan saat menyimpan data",icon:"error",background:'#1e1b4b',color:'#fff'});
+    }
+    
+    hasSpun=false;
+    document.getElementById("spinButton").disabled=false;
+  },5200);
+});
+
+document.getElementById("claimButton").addEventListener("click",async()=>{
+  const method=document.getElementById("paymentMethod").value;
+  const accName=document.getElementById("accountName").value.trim();
+  const accNumber=document.getElementById("accountNumber").value.trim();
+
+  if(!method||!accName||!accNumber){
+    Swal.fire({title:"Error",text:"Harap isi semua data pembayaran",icon:"error",background:'#1e1b4b',color:'#fff'});
+    return;
+  }
+
+  const name=localStorage.getItem("redeemName")||"Anonymous";
+  const wa=localStorage.getItem("redeemWA")||"0000000000";
+  const code=localStorage.getItem("redeemCode")||"NOCODE";
+
+  try{
+    await addDoc(collection(db,"payment_claims"),{
+      name,wa,code,reward:currentReward,paymentMethod:method,accountName:accName,accountNumber:accNumber,timestamp:serverTimestamp()
+    });
+
+    const message=`💳 *Data Pembayaran Baru!*\n━━━━━━━━━━━━━━\n🔑 Kode: ${code}\n💰 Hadiah: ${currentReward}\n👤 Nama: ${name}\n📱 WA: ${wa}\n🏦 Metode: ${method}\n👤 A/N: ${accName}\n🔢 No.Rek: ${accNumber}\n🕒 ${new Date().toLocaleString("id-ID")}`;
+
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({chat_id:TELEGRAM_CHAT_ID,text:message,parse_mode:"Markdown"})
+    });
+
+    Swal.fire({
+      title:"✅ Berhasil!",
+      html:"Data pembayaran berhasil dikirim!<br>Hadiah akan diproses dalam 1x24 jam.",
+      icon:"success",
+      background:'#1e1b4b',
+      color:'#fff'
+    }).then(()=>{
+      localStorage.clear();
+      location.reload();
+    });
+  }catch(err){
+    console.error(err);
+    Swal.fire({title:"Error",text:"Gagal mengirim data pembayaran",icon:"error",background:'#1e1b4b',color:'#fff'});
+  }
+});
+</script>
 </body>
 </html>
