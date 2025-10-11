@@ -38,6 +38,7 @@
 
   <div id="dashboardGrid" class="space-y-4"></div>
 
+  <!-- ================= VOUCHER CONTAINER ================= -->
   <div id="voucherContainer" class="hidden mt-6 text-white">
     <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
     <h2 class="text-xl font-bold mb-3">🎟️ Kelola Voucher</h2>
@@ -61,6 +62,29 @@
     <div id="voucherList" class="space-y-3 max-h-96 overflow-y-auto pb-6"></div>
   </div>
 
+  <!-- ================= FINANCE CONTAINER ================= -->
+  <div id="financeContainer" class="hidden mt-6 text-white">
+    <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
+    <h2 class="text-xl font-bold mb-3">📊 Laporan Keuangan</h2>
+
+    <!-- Form Tambah -->
+    <div class="bg-gray-800/60 p-4 rounded-xl mb-4">
+      <h3 class="font-semibold mb-2">Tambah Transaksi</h3>
+      <div class="grid grid-cols-2 gap-2">
+        <select id="jenisTransaksi" class="bg-gray-700 rounded-lg p-2">
+          <option value="pemasukan">Pemasukan</option>
+          <option value="pengeluaran">Pengeluaran</option>
+        </select>
+        <input id="nominalTransaksi" type="number" placeholder="Nominal (Rp)" class="bg-gray-700 rounded-lg p-2">
+      </div>
+      <input id="keteranganTransaksi" type="text" placeholder="Keterangan" class="bg-gray-700 rounded-lg p-2 w-full mt-2">
+      <button onclick="tambahTransaksi()" class="mt-3 bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg w-full font-semibold">➕ Simpan Transaksi</button>
+    </div>
+
+    <!-- Daftar Laporan -->
+    <div id="financeList" class="space-y-3 max-h-96 overflow-y-auto"></div>
+  </div>
+
   <div id="printArea" class="hidden"></div>
 
 </main>
@@ -68,7 +92,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, serverTimestamp, orderBy, doc, updateDoc, deleteDoc, query } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
@@ -85,7 +109,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
-let existingVouchers = []; // Simpan array objek voucher
+let existingVouchers = [];
 
 const voucherListEl = document.getElementById("voucherList");
 const voucherContainer = document.getElementById("voucherContainer");
@@ -98,6 +122,7 @@ onAuthStateChanged(auth, async (user) => {
   document.getElementById("userRole").innerText = "Admin";
   renderDashboard();
   await loadVouchers();
+  await loadFinance();
 });
 
 window.logout = ()=>signOut(auth).then(()=>window.location.href="login.html");
@@ -107,7 +132,10 @@ function renderDashboard(){
   voucherContainer.classList.add("hidden");
   const grid = document.getElementById("dashboardGrid");
   grid.innerHTML = "";
-  const modules = [{key:"voucher", title:"🎟️ Kelola Voucher", desc:"Generate & kelola voucher redeem."}];
+  const modules = [
+    {key:"voucher", title:"🎟️ Kelola Voucher", desc:"Generate & kelola voucher redeem."},
+    {key:"finance", title:"📊 Laporan Keuangan", desc:"Catat pemasukan & pengeluaran bisnis."}
+  ];
   modules.forEach(mod=>{
     const card = document.createElement("div");
     card.className="list-item flex flex-col gap-2";
@@ -120,7 +148,6 @@ function renderDashboard(){
       </div>
       <div class="flex gap-2">
         <button onclick="showSection('${mod.key}')" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-semibold">Lihat Detail</button>
-        <button onclick="tambah('${mod.key}')" class="bg-green-600 hover:bg-green-700 py-2 px-3 rounded-lg">Tambah</button>
       </div>
     `;
     grid.appendChild(card);
@@ -128,31 +155,34 @@ function renderDashboard(){
 }
 
 window.showSection = function(key){
+  document.getElementById("dashboardGrid").classList.add("hidden");
   if(key==="voucher"){
     voucherContainer.classList.remove("hidden");
-    document.getElementById("dashboardGrid").classList.add("hidden");
     renderVouchers("all");
+  }
+  if(key==="finance"){
+    document.getElementById("financeContainer").classList.remove("hidden");
+    loadFinance();
   }
 };
 
 window.backToDashboard = function(){
   voucherContainer.classList.add("hidden");
+  document.getElementById("financeContainer").classList.add("hidden");
   document.getElementById("dashboardGrid").classList.remove("hidden");
 };
 
-// ===== LOAD VOUCHER =====
+// =======================
+// ===== VOUCHER PART ====
+// =======================
 window.loadVouchers = async () => {
   const snap = await getDocs(query(collection(db, "redeem_codes"), orderBy("createdAt","desc")));
   existingVouchers = [];
-  snap.forEach(d=>{
-    const data = d.data();
-    existingVouchers.push({id:d.id, ...data});
-  });
+  snap.forEach(d=> existingVouchers.push({id:d.id, ...d.data()}));
   renderVouchers("all", existingVouchers);
   return existingVouchers;
 };
 
-// ===== RENDER VOUCHER =====
 window.renderVouchers = (filter="all", vouchers=null) => {
   voucherListEl.innerHTML = "";
   const arr = vouchers || existingVouchers;
@@ -164,7 +194,6 @@ window.renderVouchers = (filter="all", vouchers=null) => {
     return;
   }
 
-  // Fungsi format tanggal
   const formatDate = (ts) => {
     if(!ts) return "-";
     const date = ts.toDate ? ts.toDate() : new Date(ts);
@@ -176,7 +205,6 @@ window.renderVouchers = (filter="all", vouchers=null) => {
     const div = document.createElement("div");
     div.id = "v-" + v.id;
     div.className = "list-item flex flex-col gap-2";
-    
     const createdDate = formatDate(v.createdAt);
     const usedDate = formatDate(v.usedAt);
 
@@ -202,18 +230,8 @@ window.renderVouchers = (filter="all", vouchers=null) => {
   });
 };
 
-// ===== FUNGSI SALIN =====
-window.copyToClipboard = function(text){
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Kode voucher berhasil disalin!");
-  }).catch(err => {
-    console.error("Gagal menyalin:", err);
-  });
-}
+window.copyToClipboard = (text)=>navigator.clipboard.writeText(text).then(()=>alert("Kode voucher disalin!"));
 
-
-
-// ===== GENERATE VOUCHER =====
 window.generateVouchers = async ()=>{
   let jumlah = parseInt(document.getElementById("voucherJumlah").value);
   if(!jumlah || jumlah<1 || jumlah>100){ Swal.fire("Error","Jumlah harus 1-100","error"); return; }
@@ -230,62 +248,40 @@ window.generateVouchers = async ()=>{
         if(attempts>200) throw new Error("Gagal buat kode unik");
       }while(existingVouchers.some(v=>v.code===code));
       const docRef = await addDoc(collection(db,"redeem_codes"),{
-        code, used:false, usedBy:null, usedAt:null, createdAt:serverTimestamp(), createdBy:currentUser.uid||null
+        code, used:false, usedBy:null, usedAt:null, createdAt:serverTimestamp(), createdBy:currentUser.displayName||"Admin"
       });
       created.push({id:docRef.id, code});
     }
     document.getElementById("voucherJumlah").value="";
     Swal.fire("Berhasil",`Generated ${created.length} voucher`,"success");
     await loadVouchers();
-  }catch(err){ console.error(err); Swal.fire("Error",err.message||"Gagal generate","error"); }
+  }catch(err){ Swal.fire("Error",err.message,"error"); }
   finally{ btn.disabled=false; btn.innerText="➕ Generate"; }
 };
 
-// ===== DELETE VOUCHER =====
 window.deleteVoucher = async (id)=>{
   const v = existingVouchers.find(x=>x.id===id);
-  const res = await Swal.fire({
-    title: `Hapus ${v.code}?`,
-    text: "Voucher akan dihapus permanen.",
-    icon: "warning",
-    showCancelButton:true,
-    confirmButtonText:"Hapus"
-  });
+  const res = await Swal.fire({title:`Hapus ${v.code}?`,text:"Voucher akan dihapus permanen.",icon:"warning",showCancelButton:true});
   if(!res.isConfirmed) return;
-  try{
-    await deleteDoc(doc(db,"redeem_codes",id));
-    Swal.fire("Dihapus","Voucher berhasil dihapus.","success");
-    await loadVouchers();
-  }catch(err){ console.error(err); Swal.fire("Error",err.message||"Gagal hapus","error"); }
+  await deleteDoc(doc(db,"redeem_codes",id));
+  Swal.fire("Dihapus","Voucher berhasil dihapus.","success");
+  await loadVouchers();
 };
 
-// ===== TOGGLE USED =====
 window.toggleUsed = async (id,current)=>{
   const v = existingVouchers.find(x=>x.id===id);
   if(!current){
-    const { value: usedBy } = await Swal.fire({
-      title:'Tandai sebagai Dipakai',
-      input:'text',
-      inputLabel:'Masukkan email/UID user',
-      showCancelButton:true
-    });
+    const { value: usedBy } = await Swal.fire({title:'Tandai Dipakai',input:'text',inputLabel:'Email/UID user',showCancelButton:true});
     if(usedBy===undefined) return;
     await updateDoc(doc(db,"redeem_codes",id),{used:true,usedBy:usedBy||currentUser.uid,usedAt:serverTimestamp()});
   } else {
-    const res = await Swal.fire({
-      title:'Reset jadi Belum Dipakai?',
-      text:'Voucher akan di-set unused.',
-      icon:'warning',
-      showCancelButton:true,
-      confirmButtonText:'Reset'
-    });
+    const res = await Swal.fire({title:'Reset jadi Belum Dipakai?',icon:'warning',showCancelButton:true});
     if(!res.isConfirmed) return;
     await updateDoc(doc(db,"redeem_codes",id),{used:false,usedBy:null,usedAt:null});
   }
   await loadVouchers();
 };
 
-// ===== PRINT VOUCHER =====
 window.printVoucher = (code)=>{
   const html = `
     <div style="text-align:center; font-family:sans-serif; padding:20px;">
@@ -294,40 +290,104 @@ window.printVoucher = (code)=>{
       <p style="font-size:20px; font-weight:bold;">${code}</p>
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${code}" />
       <p>Scan kode voucher untuk mendapatkan hadiah</p>
-    </div>
-  `;
+    </div>`;
   const w = window.open(); w.document.write(html); w.print(); w.close();
 };
 
-// ===== PRINT ALL =====
 window.printAllVouchers = async ()=>{
   const vouchers = await loadVouchers();
   if(!vouchers.length){ Swal.fire("Info","Tidak ada voucher untuk dicetak","info"); return; }
   const html = `
-    <html>
-      <head>
-        <title>Print Vouchers</title>
-        <style>
-          body{font-family:Arial,sans-serif;padding:20px;}
-          .voucher{border:1px solid #000;width:300px;height:150px;margin:10px;padding:10px;display:inline-block;vertical-align:top;}
-          .voucher-code{font-size:18px;margin-bottom:5px;font-weight:bold;}
-        </style>
-      </head>
-      <body>
-        ${vouchers.map(v=>`
-          <div class="voucher">
-            <div>CraveStreet Redeem</div>
-            <div class="voucher-code">${v.code}</div>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${v.code}" />
-            <div>Scan untuk menyalin kode Redeem</div>
-          </div>
-        `).join("")}
-      </body>
-    </html>
-  `;
-  const w = window.open(); w.document.write(html); w.document.close(); w.focus(); w.print();
+    <html><head><title>Print Vouchers</title><style>body{font-family:Arial;padding:20px;} .voucher{border:1px solid #000;width:300px;height:150px;margin:10px;padding:10px;display:inline-block;vertical-align:top;} .voucher-code{font-size:18px;margin-bottom:5px;font-weight:bold;}</style></head>
+    <body>${vouchers.map(v=>`
+      <div class="voucher">
+        <div>CraveStreet Redeem</div>
+        <div class="voucher-code">${v.code}</div>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${v.code}" />
+        <div>Scan untuk menyalin kode Redeem</div>
+      </div>`).join("")}</body></html>`;
+  const w = window.open(); w.document.write(html); w.print(); w.close();
 };
-</script>
 
+// =======================
+// ===== FINANCE PART ====
+// =======================
+window.loadFinance = async ()=>{
+  const list = document.getElementById("financeList");
+  list.innerHTML = "<p class='text-gray-400 text-sm'>Memuat data...</p>";
+  const snap = await getDocs(query(collection(db,"finance_reports"), orderBy("createdAt","desc")));
+  const arr = [];
+  snap.forEach(d=>arr.push({id:d.id, ...d.data()}));
+  list.innerHTML = "";
+  if(arr.length===0){ list.innerHTML="<p class='text-gray-400 text-sm'>Belum ada laporan.</p>"; return; }
+  arr.forEach(item=>{
+    const div = document.createElement("div");
+    div.className="list-item flex justify-between items-start";
+    div.innerHTML=`
+      <div>
+        <p class="font-semibold ${item.jenis==='pemasukan'?'text-green-400':'text-red-400'}">${item.jenis.toUpperCase()}</p>
+        <p>Rp${item.nominal.toLocaleString("id-ID")}</p>
+        <p class="small-txt">${item.keterangan || '-'}</p>
+        <p class="small-txt">Dibuat oleh: ${item.createdBy || '-'}</p>
+      </div>
+      <div class="flex flex-col gap-1">
+        <button onclick="editTransaksi('${item.id}','${item.jenis}',${item.nominal},'${item.keterangan||''}')" class="px-2 py-1 bg-yellow-500 hover:bg-yellow-600 rounded text-xs">✏️ Edit</button>
+        <button onclick="hapusTransaksi('${item.id}')" class="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">🗑️ Hapus</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+};
+
+window.tambahTransaksi = async ()=>{
+  const jenis=document.getElementById("jenisTransaksi").value;
+  const nominal=parseInt(document.getElementById("nominalTransaksi").value);
+  const keterangan=document.getElementById("keteranganTransaksi").value.trim();
+  if(!nominal){ Swal.fire("Error","Nominal wajib diisi","error"); return; }
+  await addDoc(collection(db,"finance_reports"),{
+    jenis, nominal, keterangan, createdBy:currentUser.displayName||"Admin", createdAt:serverTimestamp()
+  });
+  Swal.fire("Berhasil","Transaksi ditambahkan","success");
+  document.getElementById("nominalTransaksi").value="";
+  document.getElementById("keteranganTransaksi").value="";
+  loadFinance();
+};
+
+window.editTransaksi = async (id,jenis,nominal,keterangan)=>{
+  const { value: formValues } = await Swal.fire({
+    title:"Edit Transaksi",
+    html:`
+      <select id="jenisEdit" class="swal2-input">
+        <option value="pemasukan" ${jenis==='pemasukan'?'selected':''}>Pemasukan</option>
+        <option value="pengeluaran" ${jenis==='pengeluaran'?'selected':''}>Pengeluaran</option>
+      </select>
+      <input id="nominalEdit" type="number" class="swal2-input" value="${nominal}">
+      <input id="ketEdit" type="text" class="swal2-input" value="${keterangan}">
+    `,
+    focusConfirm:false,
+    preConfirm:()=>[
+      document.getElementById("jenisEdit").value,
+      document.getElementById("nominalEdit").value,
+      document.getElementById("ketEdit").value
+    ]
+  });
+  if(!formValues) return;
+  const [j,n,k]=formValues;
+  await updateDoc(doc(db,"finance_reports",id),{
+    jenis:j, nominal:parseInt(n), keterangan:k
+  });
+  Swal.fire("Disimpan","Transaksi diperbarui","success");
+  loadFinance();
+};
+
+window.hapusTransaksi = async (id)=>{
+  const res = await Swal.fire({title:"Hapus transaksi ini?",icon:"warning",showCancelButton:true});
+  if(!res.isConfirmed) return;
+  await deleteDoc(doc(db,"finance_reports",id));
+  Swal.fire("Dihapus","Data berhasil dihapus","success");
+  loadFinance();
+};
+
+</script>
 </body>
 </html>
