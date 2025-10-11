@@ -34,7 +34,7 @@
   </div>
 </header>
 
-<main class="p-4 max-w-3xl mx-auto mt-6">
+<main class="p-4 max-w-4xl mx-auto mt-6">
 
   <div id="dashboardGrid" class="space-y-4"></div>
 
@@ -67,6 +67,9 @@
     <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
     <h2 class="text-xl font-bold mb-3">📊 Laporan Keuangan</h2>
 
+    <!-- SUMMARY CARDS -->
+    <div id="financeSummary" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+
     <!-- Form Tambah -->
     <div class="bg-gray-800/60 p-4 rounded-xl mb-4">
       <h3 class="font-semibold mb-2">Tambah Transaksi</h3>
@@ -94,6 +97,8 @@
   Full final single-file admin dashboard:
   - Voucher CRUD (Create/Read/Update/Delete) + print
   - Finance CRUD with createdAt (waktu ditambahkan) display
+  - Finance summary cards: total pemasukan, total pengeluaran, selisih, persentase P&L
+  - Mobile-friendly responsive card grid
   - Keeps all original voucher functions intact
   - Uses Firebase modular SDK v12 imports
 */
@@ -120,6 +125,7 @@ let currentUser = null;
 let existingVouchers = [];
 
 const voucherListEl = document.getElementById("voucherList");
+const financeSummaryEl = document.getElementById("financeSummary");
 
 // ===== AUTH =====
 onAuthStateChanged(auth, async (user) => {
@@ -349,13 +355,28 @@ window.printAllVouchers = async ()=>{
 // ---------------------------
 window.loadFinance = async ()=>{
   const list = document.getElementById("financeList");
+  financeSummaryEl.innerHTML = ""; // reset summary
   list.innerHTML = "<p class='text-gray-400 text-sm'>Memuat data...</p>";
   try {
     const snap = await getDocs(query(collection(db,"finance_reports"), orderBy("createdAt","desc")));
     const arr = [];
     snap.forEach(d=>arr.push({id:d.id, ...d.data()}));
     list.innerHTML = "";
-    if(arr.length===0){ list.innerHTML="<p class='text-gray-400 text-sm'>Belum ada laporan.</p>"; return; }
+    if(arr.length===0){
+      list.innerHTML="<p class='text-gray-400 text-sm'>Belum ada laporan.</p>";
+      // still render empty summary with zeros
+      renderFinanceSummary(0,0);
+      return;
+    }
+
+    // hitung total pemasukan dan pengeluaran
+    let totalPemasukan = 0;
+    let totalPengeluaran = 0;
+    arr.forEach(it=>{
+      if(it.jenis === 'pemasukan') totalPemasukan += Number(it.nominal || 0);
+      if(it.jenis === 'pengeluaran') totalPengeluaran += Number(it.nominal || 0);
+    });
+    renderFinanceSummary(totalPemasukan, totalPengeluaran);
 
     const formatDate = (ts) => {
       try {
@@ -377,7 +398,7 @@ window.loadFinance = async ()=>{
           <p class="font-semibold ${item.jenis==='pemasukan'?'text-green-400':'text-red-400'}">${item.jenis.toUpperCase()}</p>
           <p>Rp${item.nominal.toLocaleString("id-ID")}</p>
           <p class="small-txt">${item.keterangan || '-'}</p>
-          <p class="small-txt">Ditambahkan: ${waktu}</p>
+          <p class="small-txt">🕒 Ditambahkan: ${waktu}</p>
           <p class="small-txt">Dibuat oleh: ${item.createdBy || '-'}</p>
         </div>
         <div class="flex flex-col gap-1">
@@ -392,6 +413,63 @@ window.loadFinance = async ()=>{
     list.innerHTML = `<p class="text-red-400 text-sm">Gagal memuat laporan.</p>`;
   }
 };
+
+// render summary cards (pemasukan, pengeluaran, selisih, P&L%)
+function renderFinanceSummary(totalPemasukan, totalPengeluaran){
+  const diff = totalPemasukan - totalPengeluaran;
+  // persen = (diff / pemasukan) * 100; handle div by zero:
+  let percent = 0;
+  if(totalPemasukan === 0){
+    percent = totalPengeluaran === 0 ? 0 : -100;
+  } else {
+    percent = (diff / totalPemasukan) * 100;
+  }
+  // format
+  const formatRp = (n) => "Rp" + Number(n).toLocaleString("id-ID");
+  const formatPercent = (p) => {
+    const sign = p > 0 ? "+" : (p < 0 ? "" : "");
+    return sign + Number(p).toFixed(2) + "%";
+  };
+
+  financeSummaryEl.innerHTML = `
+    <div class="p-3 rounded-lg bg-green-700/30 border border-green-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-200">Total Pemasukan</p>
+          <p class="text-lg font-bold">${formatRp(totalPemasukan)}</p>
+        </div>
+        <div class="text-2xl">💚</div>
+      </div>
+    </div>
+    <div class="p-3 rounded-lg bg-red-700/30 border border-red-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-200">Total Pengeluaran</p>
+          <p class="text-lg font-bold">${formatRp(totalPengeluaran)}</p>
+        </div>
+        <div class="text-2xl">🔻</div>
+      </div>
+    </div>
+    <div class="p-3 rounded-lg bg-blue-700/30 border border-blue-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-200">Selisih (P/L)</p>
+          <p class="text-lg font-bold">${formatRp(diff)}</p>
+        </div>
+        <div class="text-2xl">⚖️</div>
+      </div>
+    </div>
+    <div class="p-3 rounded-lg bg-purple-700/30 border border-purple-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-200">Persentase P&L</p>
+          <p class="text-lg font-bold">${formatPercent(percent)}</p>
+        </div>
+        <div class="text-2xl">📈</div>
+      </div>
+    </div>
+  `;
+}
 
 window.tambahTransaksi = async ()=>{
   const jenis=document.getElementById("jenisTransaksi").value;
