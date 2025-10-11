@@ -67,6 +67,9 @@
     <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
     <h2 class="text-xl font-bold mb-3">📊 Laporan Keuangan</h2>
 
+    <!-- SALDO BOX (DI ATAS RINGKASAN) -->
+    <div id="saldoBoxes" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4"></div>
+
     <!-- SUMMARY CARDS -->
     <div id="financeSummary" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
 
@@ -94,18 +97,20 @@
 
 <script type="module">
 /*
-  Full final single-file admin dashboard:
-  - Voucher CRUD (Create/Read/Update/Delete) + print
-  - Finance CRUD with createdAt (waktu ditambahkan) display
-  - Finance summary cards: total pemasukan, total pengeluaran, selisih, persentase P&L
-  - Mobile-friendly responsive card grid
-  - Keeps all original voucher functions intact
-  - Uses Firebase modular SDK v12 imports
+  Full final admin dashboard with:
+  - Voucher CRUD (unchanged)
+  - Finance CRUD + createdAt display
+  - Finance summary cards
+  - SALDO boxes above summary:
+     * Saldo Dapat Ditarik (35% dari laba kotor) + Tarik button active only on 11 & 29 + detail
+     * Saldo Kas (kumulatif) auto-add 30% pada 11 & 29 (once per period) + detail
+  - Firestore collections used:
+     redeem_codes, finance_reports, finance_meta/meta (doc), kas_allocations, withdraw_history
 */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
@@ -126,6 +131,7 @@ let existingVouchers = [];
 
 const voucherListEl = document.getElementById("voucherList");
 const financeSummaryEl = document.getElementById("financeSummary");
+const saldoBoxesEl = document.getElementById("saldoBoxes");
 
 // ===== AUTH =====
 onAuthStateChanged(auth, async (user) => {
@@ -353,30 +359,253 @@ window.printAllVouchers = async ()=>{
 // ---------------------------
 // ===== FINANCE PART ========
 // ---------------------------
+/**
+ * Helper: read meta doc 'finance_meta/meta'
+ * structure:
+ * { saldo_kas: number, lastUpdated: Timestamp }
+ */
+async function getFinanceMeta(){
+  const ref = doc(db, "finance_meta", "meta");
+  const snap = await getDoc(ref);
+  if(!snap.exists()) {
+    // initialize
+    await setDoc(ref, { saldo_kas: 0 });
+    return { saldo_kas: 0, ref };
+  }
+  const data = snap.data();
+  return { ...data, ref };
+}
+
+// helper: check if kas allocation exists for periodKey
+async function kasAllocationExists(periodKey){
+  const snap = await getDocs(query(collection(db,"kas_allocations")));
+  // simple check: find doc with id == periodKey if we store with setDoc; but here we used addDoc
+  // we'll instead query for where periodKey == ...
+  const q = query(collection(db,"kas_allocations"));
+  const all = await getDocs(q);
+  let found = false;
+  all.forEach(d => {
+    const dt = d.data();
+    if(dt.periodKey === periodKey) found = true;
+  });
+  return found;
+}
+
+// helper: withdrawExists for periodKey
+async function withdrawExists(periodKey){
+  const snap = await getDocs(query(collection(db,"withdraw_history")));
+  let found = false;
+  snap.forEach(d=>{
+    const dt = d.data();
+    if(dt.periodKey === periodKey) found = true;
+  });
+  return found;
+}
+
+// create kas allocation (once per period) and update meta
+async function createKasAllocation(periodKey, amount){
+  if(amount <= 0) return;
+  // double-check exists
+  const exists = await kasAllocationExists(periodKey);
+  if(exists) return;
+  await addDoc(collection(db,"kas_allocations"), {
+    periodKey, amount, createdAt: serverTimestamp(), createdBy: currentUser.displayName || "Admin"
+  });
+  // update finance_meta/meta saldo_kas
+  const metaRef = doc(db,"finance_meta","meta");
+  const metaSnap = await getDoc(metaRef);
+  if(!metaSnap.exists()){
+    await setDoc(metaRef, { saldo_kas: amount });
+  } else {
+    const meta = metaSnap.data();
+    const newSaldo = (meta.saldo_kas || 0) + Number(amount || 0);
+    await updateDoc(metaRef, { saldo_kas: newSaldo });
+  }
+}
+
+// render saldo boxes UI
+function renderSaldoBoxesUI(withdrawableAmount, withdrawAllowed, withdrawDisabledReason, saldoKasAmount){
+  const formatRp = (n)=> "Rp" + Number(n||0).toLocaleString("id-ID");
+  const withdrawBtn = withdrawAllowed
+    ? `<button id="btnTarik" onclick="handleWithdraw()" class="mt-2 w-full bg-yellow-500 hover:bg-yellow-600 py-2 rounded font-semibold">Tarik Sekarang</button>`
+    : `<button disabled class="mt-2 w-full bg-yellow-800/40 py-2 rounded font-semibold cursor-not-allowed">${withdrawDisabledReason}</button>`;
+
+  saldoBoxesEl.innerHTML = `
+    <div class="p-3 rounded-lg bg-yellow-700/20 border border-yellow-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-200">Saldo Dapat Ditarik (35% Laba Kotor)</p>
+          <p class="text-2xl font-bold">${formatRp(withdrawableAmount)}</p>
+        </div>
+        <div class="text-2xl">💸</div>
+      </div>
+      <div class="mt-2 flex gap-2">
+        ${withdrawBtn}
+        <button onclick="lihatDetailWithdraw()" class="mt-2 px-3 py-2 bg-gray-700 rounded">Lihat Detail</button>
+      </div>
+    </div>
+
+    <div class="p-3 rounded-lg bg-blue-700/20 border border-blue-600">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-200">Saldo Kas (Usaha)</p>
+          <p class="text-2xl font-bold">${formatRp(saldoKasAmount)}</p>
+        </div>
+        <div class="text-2xl">🏦</div>
+      </div>
+      <div class="mt-2 flex gap-2">
+        <button onclick="lihatDetailKas()" class="mt-2 px-3 py-2 bg-gray-700 rounded">Lihat Detail</button>
+      </div>
+    </div>
+  `;
+}
+
+// handle withdraw click
+async function handleWithdraw(){
+  // compute current withdrawable again and periodKey
+  const today = new Date();
+  const d = today.getDate();
+  if(!(d===11 || d===29)){
+    Swal.fire("Tidak diizinkan","Tarik hanya aktif tanggal 11 & 29","error");
+    return;
+  }
+  // compute laba kotor (diff) from finance_reports
+  const snap = await getDocs(query(collection(db,"finance_reports")));
+  let totalPemasukan = 0, totalPengeluaran = 0;
+  snap.forEach(d=> {
+    const it = d.data();
+    if(it.jenis==='pemasukan') totalPemasukan += Number(it.nominal||0);
+    if(it.jenis==='pengeluaran') totalPengeluaran += Number(it.nominal||0);
+  });
+  const laba = totalPemasukan - totalPengeluaran;
+  const withdrawable = Math.floor(laba * 0.35);
+
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${d}`;
+
+  // check existing withdraw for period
+  const exists = await withdrawExists(periodKey);
+  if(exists){
+    Swal.fire("Sudah ditarik","Periode ini sudah dilakukan penarikan","info");
+    return;
+  }
+  if(withdrawable <= 0){
+    Swal.fire("Tidak ada saldo","Tidak ada laba untuk ditarik saat ini","info");
+    return;
+  }
+
+  const res = await Swal.fire({
+    title: `Tarik ${formatRp(withdrawable)}?`,
+    text: "Konfirmasi penarikan.",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Tarik"
+  });
+  if(!res.isConfirmed) return;
+
+  // add withdraw_history
+  await addDoc(collection(db,"withdraw_history"), {
+    periodKey, amount: withdrawable, createdAt: serverTimestamp(), createdBy: currentUser.displayName || "Admin"
+  });
+
+  Swal.fire("Berhasil","Penarikan disimpan di histori","success");
+  // refresh UI
+  await loadFinance();
+}
+
+// helper untuk format Rp di scope
+function formatRp(n){ return "Rp" + Number(n||0).toLocaleString("id-ID"); }
+
+// lihat detail withdraw history
+async function lihatDetailWithdraw(){
+  const snap = await getDocs(query(collection(db,"withdraw_history")));
+  const rows = [];
+  snap.forEach(d=>{
+    const dt = d.data();
+    const t = dt.createdAt && dt.createdAt.toDate ? dt.createdAt.toDate().toLocaleString("id-ID") : "-";
+    rows.push(`${t} — ${formatRp(dt.amount)} (period: ${dt.periodKey || "-"})`);
+  });
+  if(rows.length===0) return Swal.fire("Riwayat Penarikan","Belum ada riwayat","info");
+  Swal.fire({ title:"Riwayat Penarikan", html: `<pre style="text-align:left">${rows.join("\n")}</pre>`, width:600 });
+}
+
+// lihat detail kas allocations
+async function lihatDetailKas(){
+  const snap = await getDocs(query(collection(db,"kas_allocations")));
+  const rows = [];
+  snap.forEach(d=>{
+    const dt = d.data();
+    const t = dt.createdAt && dt.createdAt.toDate ? dt.createdAt.toDate().toLocaleString("id-ID") : "-";
+    rows.push(`${t} — ${formatRp(dt.amount)} (period: ${dt.periodKey || "-"})`);
+  });
+  if(rows.length===0) return Swal.fire("Riwayat Kas","Belum ada alokasi kas","info");
+  Swal.fire({ title:"Riwayat Kas", html: `<pre style="text-align:left">${rows.join("\n")}</pre>`, width:600 });
+}
+
+// main loadFinance with saldo logic and auto-allocation on dates 11 & 29
 window.loadFinance = async ()=>{
   const list = document.getElementById("financeList");
   financeSummaryEl.innerHTML = ""; // reset summary
+  saldoBoxesEl.innerHTML = ""; // reset saldo
   list.innerHTML = "<p class='text-gray-400 text-sm'>Memuat data...</p>";
+
   try {
     const snap = await getDocs(query(collection(db,"finance_reports"), orderBy("createdAt","desc")));
     const arr = [];
     snap.forEach(d=>arr.push({id:d.id, ...d.data()}));
     list.innerHTML = "";
-    if(arr.length===0){
-      list.innerHTML="<p class='text-gray-400 text-sm'>Belum ada laporan.</p>";
-      // still render empty summary with zeros
-      renderFinanceSummary(0,0);
-      return;
-    }
 
-    // hitung total pemasukan dan pengeluaran
+    // calculate totals
     let totalPemasukan = 0;
     let totalPengeluaran = 0;
     arr.forEach(it=>{
       if(it.jenis === 'pemasukan') totalPemasukan += Number(it.nominal || 0);
       if(it.jenis === 'pengeluaran') totalPengeluaran += Number(it.nominal || 0);
     });
+    const laba = totalPemasukan - totalPengeluaran;
+    const withdrawable = Math.floor(laba * 0.35);
+
+    // handle kas allocation: if today is 11 or 29, create allocation if not exists
+    const today = new Date();
+    const day = today.getDate();
+    const periodKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${day}`;
+    if(day === 11 || day === 29){
+      // create allocation for this period if not exists: 30% of laba
+      const allocExists = await kasAllocationExists(periodKey);
+      if(!allocExists && laba > 0){
+        const allocAmount = Math.floor(laba * 0.30);
+        if(allocAmount > 0){
+          await createKasAllocation(periodKey, allocAmount);
+        }
+      }
+    }
+
+    // read finance_meta/meta
+    const metaRef = doc(db,"finance_meta","meta");
+    const metaSnap = await getDoc(metaRef);
+    const meta = metaSnap.exists() ? metaSnap.data() : { saldo_kas: 0 };
+
+    // determine withdraw button state: allowed only on 11 & 29 and not already withdrawn this period
+    let withdrawAllowed = false;
+    let withdrawDisabledReason = "Tarik hanya aktif tgl 11 & 29";
+    if(day === 11 || day === 29){
+      const exists = await withdrawExists(periodKey);
+      if(!exists && withdrawable > 0){
+        withdrawAllowed = true;
+      } else if (exists) {
+        withdrawDisabledReason = "Sudah ditarik untuk periode ini";
+      } else {
+        withdrawDisabledReason = "Tidak ada saldo untuk ditarik";
+      }
+    }
+
+    // render saldo boxes
+    renderSaldoBoxesUI(withdrawable, withdrawAllowed, withdrawDisabledReason, meta.saldo_kas || 0);
+
+    // render finance summary cards
     renderFinanceSummary(totalPemasukan, totalPengeluaran);
+
+    // render list items
+    if(arr.length===0){ list.innerHTML="<p class='text-gray-400 text-sm'>Belum ada laporan.</p>"; return; }
 
     const formatDate = (ts) => {
       try {
@@ -408,23 +637,22 @@ window.loadFinance = async ()=>{
       `;
       list.appendChild(div);
     });
+
   } catch (e) {
     console.error("loadFinance err:", e);
-    list.innerHTML = `<p class="text-red-400 text-sm">Gagal memuat laporan.</p>`;
+    document.getElementById("financeList").innerHTML = `<p class="text-red-400 text-sm">Gagal memuat laporan.</p>`;
   }
 };
 
 // render summary cards (pemasukan, pengeluaran, selisih, P&L%)
 function renderFinanceSummary(totalPemasukan, totalPengeluaran){
   const diff = totalPemasukan - totalPengeluaran;
-  // persen = (diff / pemasukan) * 100; handle div by zero:
   let percent = 0;
   if(totalPemasukan === 0){
     percent = totalPengeluaran === 0 ? 0 : -100;
   } else {
     percent = (diff / totalPemasukan) * 100;
   }
-  // format
   const formatRp = (n) => "Rp" + Number(n).toLocaleString("id-ID");
   const formatPercent = (p) => {
     const sign = p > 0 ? "+" : (p < 0 ? "" : "");
@@ -471,6 +699,7 @@ function renderFinanceSummary(totalPemasukan, totalPengeluaran){
   `;
 }
 
+// CRUD finance functions
 window.tambahTransaksi = async ()=>{
   const jenis=document.getElementById("jenisTransaksi").value;
   const nominal=parseInt(document.getElementById("nominalTransaksi").value);
