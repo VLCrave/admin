@@ -424,11 +424,9 @@ async function createKasAllocation(periodKey, amount){
 }
 
 // render saldo boxes UI
+// ====== RENDER SALDO BOX (SELALU BISA DIKLIK) ======
 function renderSaldoBoxesUI(withdrawableAmount, withdrawAllowed, withdrawDisabledReason, saldoKasAmount){
   const formatRp = (n)=> "Rp" + Number(n||0).toLocaleString("id-ID");
-  const withdrawBtn = withdrawAllowed
-    ? `<button id="btnTarik" onclick="handleWithdraw()" class="mt-2 w-full bg-yellow-500 hover:bg-yellow-600 py-2 rounded font-semibold">Tarik Sekarang</button>`
-    : `<button disabled class="mt-2 w-full bg-yellow-800/40 py-2 rounded font-semibold cursor-not-allowed">${withdrawDisabledReason}</button>`;
 
   saldoBoxesEl.innerHTML = `
     <div class="p-3 rounded-lg bg-yellow-700/20 border border-yellow-600">
@@ -440,7 +438,7 @@ function renderSaldoBoxesUI(withdrawableAmount, withdrawAllowed, withdrawDisable
         <div class="text-2xl">💸</div>
       </div>
       <div class="mt-2 flex gap-2">
-        ${withdrawBtn}
+        <button id="btnTarik" onclick="handleWithdraw()" class="mt-2 w-full bg-yellow-500 hover:bg-yellow-600 py-2 rounded font-semibold">Tarik Sekarang</button>
         <button onclick="lihatDetailWithdraw()" class="mt-2 px-3 py-2 bg-gray-700 rounded">Lihat Detail</button>
       </div>
     </div>
@@ -460,19 +458,27 @@ function renderSaldoBoxesUI(withdrawableAmount, withdrawAllowed, withdrawDisable
   `;
 }
 
-// handle withdraw click
+// ====== HANDLE WITHDRAW (MUNCUL SWAL JIKA BELUM WAKTUNYA) ======
 async function handleWithdraw(){
-  // compute current withdrawable again and periodKey
   const today = new Date();
   const d = today.getDate();
-  if(!(d===11 || d===29)){
-    Swal.fire("Tidak diizinkan","Tarik hanya aktif tanggal 11 & 29","error");
+  const periodKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${d}`;
+
+  // jika belum tanggal 11 atau 29, muncul swal (bukan disable)
+  if(!(d === 11 || d === 29)){
+    Swal.fire({
+      icon: "info",
+      title: "Belum Waktunya",
+      text: "Penarikan hanya bisa dilakukan pada tanggal 11 dan 29 setiap bulan.",
+      confirmButtonText: "Oke"
+    });
     return;
   }
-  // compute laba kotor (diff) from finance_reports
+
+  // hitung laba kotor
   const snap = await getDocs(query(collection(db,"finance_reports")));
   let totalPemasukan = 0, totalPengeluaran = 0;
-  snap.forEach(d=> {
+  snap.forEach(d=>{
     const it = d.data();
     if(it.jenis==='pemasukan') totalPemasukan += Number(it.nominal||0);
     if(it.jenis==='pengeluaran') totalPengeluaran += Number(it.nominal||0);
@@ -480,35 +486,34 @@ async function handleWithdraw(){
   const laba = totalPemasukan - totalPengeluaran;
   const withdrawable = Math.floor(laba * 0.35);
 
-  const periodKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${d}`;
-
-  // check existing withdraw for period
   const exists = await withdrawExists(periodKey);
   if(exists){
-    Swal.fire("Sudah ditarik","Periode ini sudah dilakukan penarikan","info");
+    Swal.fire("Sudah Ditarik","Penarikan periode ini sudah dilakukan.","info");
     return;
   }
   if(withdrawable <= 0){
-    Swal.fire("Tidak ada saldo","Tidak ada laba untuk ditarik saat ini","info");
+    Swal.fire("Tidak Ada Saldo","Belum ada laba untuk ditarik saat ini.","info");
     return;
   }
 
+  // konfirmasi penarikan
   const res = await Swal.fire({
     title: `Tarik ${formatRp(withdrawable)}?`,
-    text: "Konfirmasi penarikan.",
+    text: "Konfirmasi untuk mencatat penarikan.",
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Tarik"
   });
   if(!res.isConfirmed) return;
 
-  // add withdraw_history
   await addDoc(collection(db,"withdraw_history"), {
-    periodKey, amount: withdrawable, createdAt: serverTimestamp(), createdBy: currentUser.displayName || "Admin"
+    periodKey,
+    amount: withdrawable,
+    createdAt: serverTimestamp(),
+    createdBy: currentUser.displayName || "Admin"
   });
 
-  Swal.fire("Berhasil","Penarikan disimpan di histori","success");
-  // refresh UI
+  Swal.fire("Berhasil","Penarikan disimpan ke histori.","success");
   await loadFinance();
 }
 
@@ -755,3 +760,4 @@ renderDashboard();
 </script>
 </body>
 </html>
+
