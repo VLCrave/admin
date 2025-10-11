@@ -96,21 +96,22 @@
 </main>
 
 <script type="module">
-/*
-  Full final admin dashboard with:
-  - Voucher CRUD (unchanged)
-  - Finance CRUD + createdAt display
-  - Finance summary cards
-  - SALDO boxes above summary:
-     * Saldo Dapat Ditarik (35% dari laba kotor) + Tarik button active only on 11 & 29 + detail
-     * Saldo Kas (kumulatif) auto-add 30% pada 11 & 29 (once per period) + detail
-  - Firestore collections used:
-     redeem_codes, finance_reports, finance_meta/meta (doc), kas_allocations, withdraw_history
+/* FULL FINAL - All functionality integrated and window-exposed
+   - Voucher CRUD unchanged
+   - Finance CRUD + createdAt display
+   - Realtime calculation: total in/out, laba, P&L
+   - Saldo admin (35% each) and saldo kas (30%) updated on every transaction
+   - Withdraw logs & cash history stored
+   - Archive finance_reports to finance_archive on dates 11 & 29 (once per period) and clear reports
+   - Buttons always clickable; Swal appears when needed
 */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import {
+  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc,
+  orderBy, query, serverTimestamp, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
@@ -133,9 +134,9 @@ const voucherListEl = document.getElementById("voucherList");
 const financeSummaryEl = document.getElementById("financeSummary");
 const saldoBoxesEl = document.getElementById("saldoBoxes");
 
-// ===== AUTH =====
+// ====== AUTH ======
 onAuthStateChanged(auth, async (user) => {
-  if(!user) return window.location.href="login.html";
+  if(!user) return window.location.href = "login.html";
   currentUser = user;
   document.getElementById("userName").innerText = user.displayName || "Admin";
   document.getElementById("userRole").innerText = "Admin";
@@ -221,14 +222,7 @@ window.renderVouchers = (filter="all", vouchers=null) => {
   }
 
   const formatDate = (ts) => {
-    try {
-      if(!ts) return "-";
-      const date = ts.toDate ? ts.toDate() : new Date(ts);
-      return date.toLocaleDateString("id-ID", {day:"2-digit", month:"long", year:"numeric"}) + " " +
-             date.toLocaleTimeString("id-ID", {hour:"2-digit", minute:"2-digit"});
-    } catch {
-      return "-";
-    }
+    try { if(!ts) return "-"; const date = ts.toDate ? ts.toDate() : new Date(ts); return date.toLocaleDateString("id-ID", {day:"2-digit", month:"long", year:"numeric"}) + " " + date.toLocaleTimeString("id-ID", {hour:"2-digit", minute:"2-digit"}); } catch { return "-"; }
   };
 
   filtered.forEach(v => {
@@ -359,81 +353,76 @@ window.printAllVouchers = async ()=>{
 // ---------------------------
 // ===== FINANCE PART ========
 // ---------------------------
-/**
- * Helper: read meta doc 'finance_meta/meta'
- * structure:
- * { saldo_kas: number, lastUpdated: Timestamp }
- */
-async function getFinanceMeta(){
-  const ref = doc(db, "finance_meta", "meta");
-  const snap = await getDoc(ref);
-  if(!snap.exists()) {
-    // initialize
-    await setDoc(ref, { saldo_kas: 0 });
-    return { saldo_kas: 0, ref };
-  }
-  const data = snap.data();
-  return { ...data, ref };
-}
 
-// helper: check if kas allocation exists for periodKey
-async function kasAllocationExists(periodKey){
-  const snap = await getDocs(query(collection(db,"kas_allocations")));
-  // simple check: find doc with id == periodKey if we store with setDoc; but here we used addDoc
-  // we'll instead query for where periodKey == ...
-  const q = query(collection(db,"kas_allocations"));
-  const all = await getDocs(q);
-  let found = false;
-  all.forEach(d => {
-    const dt = d.data();
-    if(dt.periodKey === periodKey) found = true;
-  });
-  return found;
-}
-
-// helper: withdrawExists for periodKey
-async function withdrawExists(periodKey){
-  const snap = await getDocs(query(collection(db,"withdraw_history")));
+// helper: archive exists?
+async function archiveExists(periodKey){
+  const snap = await getDocs(query(collection(db,"finance_archive")));
   let found = false;
   snap.forEach(d=>{
-    const dt = d.data();
-    if(dt.periodKey === periodKey) found = true;
+    if(d.data()?.periodKey === periodKey) found = true;
   });
   return found;
 }
 
-// create kas allocation (once per period) and update meta
-async function createKasAllocation(periodKey, amount){
-  if(amount <= 0) return;
-  // double-check exists
-  const exists = await kasAllocationExists(periodKey);
-  if(exists) return;
-  await addDoc(collection(db,"kas_allocations"), {
-    periodKey, amount, createdAt: serverTimestamp(), createdBy: currentUser.displayName || "Admin"
+// helper: withdraw_exists for periodKey
+async function withdrawExists(periodKey){
+  const snap = await getDocs(query(collection(db,"withdraw_logs")));
+  let found = false;
+  snap.forEach(d=>{
+    if(d.data()?.periodKey === periodKey) found = true;
   });
-  // update finance_meta/meta saldo_kas
+  return found;
+}
+
+// helper: update withdraw_balance docs for all existing admin docs (or create if not exist for current user)
+async function updateAllWithdrawBalances(perAdminAmount){
+  // get all docs in withdraw_balance
+  const snap = await getDocs(query(collection(db,"withdraw_balance")));
+  const existing = [];
+  snap.forEach(d=> existing.push({id:d.id, data:d.data()}));
+  // update all existing docs
+  for(const docItem of existing){
+    await updateDoc(doc(db,"withdraw_balance",docItem.id), {
+      balance: perAdminAmount, name: docItem.data.name || "Admin", updatedAt: serverTimestamp()
+    });
+  }
+  // ensure current user has doc
+  if(currentUser){
+    const curRef = doc(db,"withdraw_balance", currentUser.uid);
+    const curSnap = await getDoc(curRef);
+    if(!curSnap.exists()){
+      // create
+      await setDoc(curRef, { name: currentUser.displayName || "Admin", balance: perAdminAmount, updatedAt: serverTimestamp() });
+    }
+  }
+}
+
+// helper: update finance_meta saldo_kas (overwrite to current kas)
+async function updateFinanceMetaKas(kasAmount){
   const metaRef = doc(db,"finance_meta","meta");
   const metaSnap = await getDoc(metaRef);
   if(!metaSnap.exists()){
-    await setDoc(metaRef, { saldo_kas: amount });
+    await setDoc(metaRef, { saldo_kas: kasAmount, updatedAt: serverTimestamp() });
   } else {
-    const meta = metaSnap.data();
-    const newSaldo = (meta.saldo_kas || 0) + Number(amount || 0);
-    await updateDoc(metaRef, { saldo_kas: newSaldo });
+    const prev = metaSnap.data()?.saldo_kas || 0;
+    if(prev !== kasAmount){
+      // write history
+      await addDoc(collection(db,"cash_history"), { amount: kasAmount, prevAmount: prev, createdAt: serverTimestamp(), createdBy: currentUser?.displayName || "Admin" });
+      await updateDoc(metaRef, { saldo_kas: kasAmount, updatedAt: serverTimestamp() });
+    }
   }
 }
 
-// render saldo boxes UI
-// ====== RENDER SALDO BOX (SELALU BISA DIKLIK) ======
-function renderSaldoBoxesUI(withdrawableAmount, withdrawAllowed, withdrawDisabledReason, saldoKasAmount){
+// render saldo boxes UI (button always clickable, swal handling in handler)
+function renderSaldoBoxesUI(perAdminAmount, saldoKasAmount){
   const formatRp = (n)=> "Rp" + Number(n||0).toLocaleString("id-ID");
 
   saldoBoxesEl.innerHTML = `
     <div class="p-3 rounded-lg bg-yellow-700/20 border border-yellow-600">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs text-gray-200">Saldo Dapat Ditarik (35% Laba Kotor)</p>
-          <p class="text-2xl font-bold">${formatRp(withdrawableAmount)}</p>
+          <p class="text-xs text-gray-200">Saldo Dapat Ditarik (35% Laba Kotor per admin)</p>
+          <p class="text-2xl font-bold">${formatRp(perAdminAmount)}</p>
         </div>
         <div class="text-2xl">💸</div>
       </div>
@@ -446,7 +435,7 @@ function renderSaldoBoxesUI(withdrawableAmount, withdrawAllowed, withdrawDisable
     <div class="p-3 rounded-lg bg-blue-700/20 border border-blue-600">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-xs text-gray-200">Saldo Kas (Usaha)</p>
+          <p class="text-xs text-gray-200">Saldo Kas (Usaha) — 30% Laba Kotor</p>
           <p class="text-2xl font-bold">${formatRp(saldoKasAmount)}</p>
         </div>
         <div class="text-2xl">🏦</div>
@@ -458,13 +447,13 @@ function renderSaldoBoxesUI(withdrawableAmount, withdrawAllowed, withdrawDisable
   `;
 }
 
-// ====== HANDLE WITHDRAW (MUNCUL SWAL JIKA BELUM WAKTUNYA) ======
-async function handleWithdraw(){
+// handle withdraw click (global)
+window.handleWithdraw = async function(){
   const today = new Date();
   const d = today.getDate();
   const periodKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${d}`;
 
-  // jika belum tanggal 11 atau 29, muncul swal (bukan disable)
+  // if not 11 or 29 -> swal and exit
   if(!(d === 11 || d === 29)){
     Swal.fire({
       icon: "info",
@@ -475,90 +464,103 @@ async function handleWithdraw(){
     return;
   }
 
-  // hitung laba kotor
+  // compute laba
   const snap = await getDocs(query(collection(db,"finance_reports")));
   let totalPemasukan = 0, totalPengeluaran = 0;
-  snap.forEach(d=>{
-    const it = d.data();
-    if(it.jenis==='pemasukan') totalPemasukan += Number(it.nominal||0);
-    if(it.jenis==='pengeluaran') totalPengeluaran += Number(it.nominal||0);
+  snap.forEach(docSnap=>{
+    const it = docSnap.data();
+    if(it.jenis === 'pemasukan') totalPemasukan += Number(it.nominal||0);
+    if(it.jenis === 'pengeluaran') totalPengeluaran += Number(it.nominal||0);
   });
   const laba = totalPemasukan - totalPengeluaran;
-  const withdrawable = Math.floor(laba * 0.35);
+  const perAdminAmount = Math.floor(laba * 0.35);
 
-  const exists = await withdrawExists(periodKey);
-  if(exists){
-    Swal.fire("Sudah Ditarik","Penarikan periode ini sudah dilakukan.","info");
-    return;
-  }
-  if(withdrawable <= 0){
+  if(perAdminAmount <= 0){
     Swal.fire("Tidak Ada Saldo","Belum ada laba untuk ditarik saat ini.","info");
     return;
   }
 
-  // konfirmasi penarikan
+  // check if this period already withdrawn by this user
+  const wlSnap = await getDocs(query(collection(db,"withdraw_logs")));
+  let already = false;
+  wlSnap.forEach(d=>{
+    const dt = d.data();
+    if(dt.periodKey === periodKey && dt.uid === currentUser.uid) already = true;
+  });
+  if(already){
+    Swal.fire("Sudah Ditarik","Kamu sudah melakukan penarikan untuk periode ini.","info");
+    return;
+  }
+
   const res = await Swal.fire({
-    title: `Tarik ${formatRp(withdrawable)}?`,
-    text: "Konfirmasi untuk mencatat penarikan.",
+    title: `Tarik ${formatRp(perAdminAmount)}?`,
+    text: "Konfirmasi penarikan — saldo admin akan diset 0 untuk periode ini.",
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Tarik"
   });
   if(!res.isConfirmed) return;
 
-  await addDoc(collection(db,"withdraw_history"), {
-    periodKey,
-    amount: withdrawable,
-    createdAt: serverTimestamp(),
-    createdBy: currentUser.displayName || "Admin"
+  // write withdraw log and reset this user's withdraw_balance
+  await addDoc(collection(db,"withdraw_logs"), {
+    periodKey, uid: currentUser.uid, name: currentUser.displayName || "Admin",
+    amount: perAdminAmount, createdAt: serverTimestamp()
   });
 
-  Swal.fire("Berhasil","Penarikan disimpan ke histori.","success");
+  // reset withdraw_balance for this user to 0
+  const wbRef = doc(db,"withdraw_balance", currentUser.uid);
+  const wbSnap = await getDoc(wbRef);
+  if(wbSnap.exists()){
+    await updateDoc(wbRef, { balance: 0, updatedAt: serverTimestamp() });
+  } else {
+    await setDoc(wbRef, { name: currentUser.displayName || "Admin", balance: 0, updatedAt: serverTimestamp() });
+  }
+
+  Swal.fire("Berhasil","Penarikan dicatat dan saldo kamu diset 0.","success");
   await loadFinance();
-}
+};
 
-// helper untuk format Rp di scope
-function formatRp(n){ return "Rp" + Number(n||0).toLocaleString("id-ID"); }
-
-// lihat detail withdraw history
-async function lihatDetailWithdraw(){
-  const snap = await getDocs(query(collection(db,"withdraw_history")));
+// lihatDetailWithdraw (global)
+window.lihatDetailWithdraw = async function(){
+  const snap = await getDocs(query(collection(db,"withdraw_logs"), orderBy("createdAt","desc")));
   const rows = [];
   snap.forEach(d=>{
     const dt = d.data();
     const t = dt.createdAt && dt.createdAt.toDate ? dt.createdAt.toDate().toLocaleString("id-ID") : "-";
-    rows.push(`${t} — ${formatRp(dt.amount)} (period: ${dt.periodKey || "-"})`);
+    rows.push(`${t} — ${dt.name || '-'} — ${formatRp(dt.amount)} (period: ${dt.periodKey || "-"})`);
   });
   if(rows.length===0) return Swal.fire("Riwayat Penarikan","Belum ada riwayat","info");
-  Swal.fire({ title:"Riwayat Penarikan", html: `<pre style="text-align:left">${rows.join("\n")}</pre>`, width:600 });
-}
+  Swal.fire({ title:"Riwayat Penarikan", html: `<pre style="text-align:left">${rows.join("\n")}</pre>`, width:700 });
+};
 
-// lihat detail kas allocations
-async function lihatDetailKas(){
-  const snap = await getDocs(query(collection(db,"kas_allocations")));
+// lihatDetailKas (global)
+window.lihatDetailKas = async function(){
+  const snap = await getDocs(query(collection(db,"cash_history"), orderBy("createdAt","desc")));
   const rows = [];
   snap.forEach(d=>{
     const dt = d.data();
     const t = dt.createdAt && dt.createdAt.toDate ? dt.createdAt.toDate().toLocaleString("id-ID") : "-";
-    rows.push(`${t} — ${formatRp(dt.amount)} (period: ${dt.periodKey || "-"})`);
+    rows.push(`${t} — ${formatRp(dt.amount)} (prev: ${formatRp(dt.prevAmount||0)})`);
   });
-  if(rows.length===0) return Swal.fire("Riwayat Kas","Belum ada alokasi kas","info");
-  Swal.fire({ title:"Riwayat Kas", html: `<pre style="text-align:left">${rows.join("\n")}</pre>`, width:600 });
-}
+  if(rows.length===0) return Swal.fire("Riwayat Kas","Belum ada riwayat kas","info");
+  Swal.fire({ title:"Riwayat Kas", html: `<pre style="text-align:left">${rows.join("\n")}</pre>`, width:700 });
+};
 
-// main loadFinance with saldo logic and auto-allocation on dates 11 & 29
-window.loadFinance = async ()=>{
+// helper formatRp (global)
+function formatRp(n){ return "Rp" + Number(n||0).toLocaleString("id-ID"); }
+
+// ===== MAIN loadFinance (global) =====
+window.loadFinance = async function(){
   const list = document.getElementById("financeList");
-  financeSummaryEl.innerHTML = ""; // reset summary
-  saldoBoxesEl.innerHTML = ""; // reset saldo
+  financeSummaryEl.innerHTML = "";
+  saldoBoxesEl.innerHTML = "";
   list.innerHTML = "<p class='text-gray-400 text-sm'>Memuat data...</p>";
 
-  try {
+  try{
+    // load current finance_reports
     const snap = await getDocs(query(collection(db,"finance_reports"), orderBy("createdAt","desc")));
     const arr = [];
-    snap.forEach(d=>arr.push({id:d.id, ...d.data()}));
-    list.innerHTML = "";
-
+    snap.forEach(d=> arr.push({ id:d.id, ...d.data() }));
     // calculate totals
     let totalPemasukan = 0;
     let totalPengeluaran = 0;
@@ -567,70 +569,55 @@ window.loadFinance = async ()=>{
       if(it.jenis === 'pengeluaran') totalPengeluaran += Number(it.nominal || 0);
     });
     const laba = totalPemasukan - totalPengeluaran;
-    const withdrawable = Math.floor(laba * 0.35);
+    const perAdminAmount = Math.floor(laba * 0.35);
+    const saldoKasAmount = Math.floor(laba * 0.30);
 
-    // handle kas allocation: if today is 11 or 29, create allocation if not exists
+    // check archive/reset logic: if today is 11 or 29 and not archived for this period, archive then clear
     const today = new Date();
     const day = today.getDate();
     const periodKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${day}`;
     if(day === 11 || day === 29){
-      // create allocation for this period if not exists: 30% of laba
-      const allocExists = await kasAllocationExists(periodKey);
-      if(!allocExists && laba > 0){
-        const allocAmount = Math.floor(laba * 0.30);
-        if(allocAmount > 0){
-          await createKasAllocation(periodKey, allocAmount);
+      const alreadyArchived = await archiveExists(periodKey);
+      if(!alreadyArchived && arr.length > 0){
+        // archive each report doc into finance_archive with periodKey
+        for(const item of arr){
+          await addDoc(collection(db,"finance_archive"), { ...item, archivedAt: serverTimestamp(), periodKey });
+          // delete original
+          await deleteDoc(doc(db,"finance_reports", item.id));
         }
+        // after archiving, optionally set some flags / keep finance_reports empty
+        Swal.fire("Arsip Tersimpan","Transaksi periode ini telah diarsipkan.","success");
       }
+      // After archiving, we still keep perAdminAmount & saldoKasAmount based on the just-archived laba
     }
 
-    // read finance_meta/meta
-    const metaRef = doc(db,"finance_meta","meta");
-    const metaSnap = await getDoc(metaRef);
-    const meta = metaSnap.exists() ? metaSnap.data() : { saldo_kas: 0 };
+    // update withdraw_balance for all existing admin docs to perAdminAmount (or create for current user)
+    await updateAllWithdrawBalances(perAdminAmount);
 
-    // determine withdraw button state: allowed only on 11 & 29 and not already withdrawn this period
-    let withdrawAllowed = false;
-    let withdrawDisabledReason = "Tarik hanya aktif tgl 11 & 29";
-    if(day === 11 || day === 29){
-      const exists = await withdrawExists(periodKey);
-      if(!exists && withdrawable > 0){
-        withdrawAllowed = true;
-      } else if (exists) {
-        withdrawDisabledReason = "Sudah ditarik untuk periode ini";
-      } else {
-        withdrawDisabledReason = "Tidak ada saldo untuk ditarik";
-      }
-    }
+    // update finance_meta saldo_kas (and write cash_history if changed)
+    await updateFinanceMetaKas(saldoKasAmount);
 
-    // render saldo boxes
-    renderSaldoBoxesUI(withdrawable, withdrawAllowed, withdrawDisabledReason, meta.saldo_kas || 0);
+    // render saldo boxes (per-admin amount displayed to current user is the perAdminAmount)
+    renderSaldoBoxesUI(perAdminAmount, saldoKasAmount);
 
-    // render finance summary cards
+    // render summary cards
     renderFinanceSummary(totalPemasukan, totalPengeluaran);
 
-    // render list items
-    if(arr.length===0){ list.innerHTML="<p class='text-gray-400 text-sm'>Belum ada laporan.</p>"; return; }
-
-    const formatDate = (ts) => {
-      try {
-        if(!ts) return "-";
-        const date = ts.toDate ? ts.toDate() : new Date(ts);
-        return date.toLocaleDateString("id-ID", { day:"2-digit", month:"short", year:"numeric" }) + " " +
-               date.toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit" });
-      } catch {
-        return "-";
-      }
-    };
-
+    // render list
+    if(arr.length === 0){
+      list.innerHTML = "<p class='text-gray-400 text-sm'>Belum ada laporan.</p>";
+      return;
+    }
+    list.innerHTML = "";
     arr.forEach(item=>{
-      const waktu = formatDate(item.createdAt);
+      const t = item.createdAt && item.createdAt.toDate ? item.createdAt.toDate() : new Date();
+      const waktu = t.toLocaleDateString("id-ID", {day:"2-digit", month:"short", year:"numeric"}) + " " + t.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit"});
       const div = document.createElement("div");
-      div.className="list-item flex justify-between items-start";
-      div.innerHTML=`
+      div.className = "list-item flex justify-between items-start";
+      div.innerHTML = `
         <div>
           <p class="font-semibold ${item.jenis==='pemasukan'?'text-green-400':'text-red-400'}">${item.jenis.toUpperCase()}</p>
-          <p>Rp${item.nominal.toLocaleString("id-ID")}</p>
+          <p>Rp${Number(item.nominal).toLocaleString("id-ID")}</p>
           <p class="small-txt">${item.keterangan || '-'}</p>
           <p class="small-txt">🕒 Ditambahkan: ${waktu}</p>
           <p class="small-txt">Dibuat oleh: ${item.createdBy || '-'}</p>
@@ -643,14 +630,14 @@ window.loadFinance = async ()=>{
       list.appendChild(div);
     });
 
-  } catch (e) {
+  } catch(e){
     console.error("loadFinance err:", e);
     document.getElementById("financeList").innerHTML = `<p class="text-red-400 text-sm">Gagal memuat laporan.</p>`;
   }
 };
 
-// render summary cards (pemasukan, pengeluaran, selisih, P&L%)
-function renderFinanceSummary(totalPemasukan, totalPengeluaran){
+// render finance summary (global)
+window.renderFinanceSummary = function(totalPemasukan, totalPengeluaran){
   const diff = totalPemasukan - totalPengeluaran;
   let percent = 0;
   if(totalPemasukan === 0){
@@ -702,9 +689,9 @@ function renderFinanceSummary(totalPemasukan, totalPengeluaran){
       </div>
     </div>
   `;
-}
+};
 
-// CRUD finance functions
+// CRUD finance functions (exposed)
 window.tambahTransaksi = async ()=>{
   const jenis=document.getElementById("jenisTransaksi").value;
   const nominal=parseInt(document.getElementById("nominalTransaksi").value);
@@ -716,7 +703,7 @@ window.tambahTransaksi = async ()=>{
   Swal.fire("Berhasil","Transaksi ditambahkan","success");
   document.getElementById("nominalTransaksi").value="";
   document.getElementById("keteranganTransaksi").value="";
-  loadFinance();
+  await loadFinance();
 };
 
 window.editTransaksi = async (id,jenis,nominal,keterangan)=>{
@@ -743,7 +730,7 @@ window.editTransaksi = async (id,jenis,nominal,keterangan)=>{
     jenis:j, nominal:parseInt(n), keterangan:k
   });
   Swal.fire("Disimpan","Transaksi diperbarui","success");
-  loadFinance();
+  await loadFinance();
 };
 
 window.hapusTransaksi = async (id)=>{
@@ -751,13 +738,18 @@ window.hapusTransaksi = async (id)=>{
   if(!res.isConfirmed) return;
   await deleteDoc(doc(db,"finance_reports",id));
   Swal.fire("Dihapus","Data berhasil dihapus","success");
-  loadFinance();
+  await loadFinance();
 };
 
-// initial UI setup: show dashboard modules
+// expose helpers to window (so inline onclick works)
+window.renderSaldoBoxesUI = renderSaldoBoxesUI;
+window.lihatDetailWithdraw = window.lihatDetailWithdraw;
+window.lihatDetailKas = window.lihatDetailKas;
+window.handleWithdraw = window.handleWithdraw;
+
+// initial UI
 renderDashboard();
 
 </script>
 </body>
 </html>
-
