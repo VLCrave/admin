@@ -158,49 +158,37 @@ document.getElementById("spinButton").addEventListener("click", async () => {
     hasSpun = true;
     document.getElementById("spinButton").disabled = true;
 
-    // Ambil jumlah spin sebelumnya dari localStorage
     let spinCount = parseInt(localStorage.getItem("spinCount") || "0");
+    let selectedReward;
 
-    let index;
     if (spinCount < 9) {
-        // Sebelum putaran ke-10, pilih 1K atau 2K saja
+        // Sebelum putaran ke-10, pilih 1K atau 2K
         const smallRewards = wheelRewards.filter(r => r.text === "1K" || r.text === "2K");
-        const choice = Math.floor(Math.random() * smallRewards.length);
-        index = wheelRewards.findIndex(r => r.text === smallRewards[choice].text);
-    } else if (spinCount === 9) {
-        // Putaran ke-10, bisa muncul semua reward termasuk 5K & 10K
-        index = Math.floor(Math.random() * wheelRewards.length);
+        selectedReward = smallRewards[Math.floor(Math.random() * smallRewards.length)];
     } else {
-        // Setelah putaran ke-10, random normal
-        index = Math.floor(Math.random() * wheelRewards.length);
+        // Putaran ke-10, pilih dari semua reward
+        selectedReward = wheelRewards[Math.floor(Math.random() * wheelRewards.length)];
     }
 
-    // Tambah jumlah spin
-    spinCount++;
-    localStorage.setItem("spinCount", spinCount);
+    // Dapatkan index reward di array wheelRewards
+    const index = wheelRewards.findIndex(r => r.text === selectedReward.text);
 
+    // Hitung sudut spin
     const stopAngle = 360 * 5 + index * segmentAngle + segmentAngle / 2;
     spinnerWheel.style.transform = `rotate(${stopAngle}deg)`;
     rewardText.classList.remove("show");
 
+    spinCount++;
+    localStorage.setItem("spinCount", spinCount);
+
     setTimeout(async () => {
-        const reward = wheelRewards[index].text;
+        const reward = selectedReward.text;
         currentReward = reward;
         rewardText.innerText = `🎉 Anda mendapatkan ${reward}!`;
         rewardText.classList.add("show");
 
-        // Confetti jika hadiah besar
-        if (reward === "5K" || reward === "10K") {
-            for (let i = 0; i < 30; i++) {
-                const c = document.createElement('div');
-                c.className = 'confetti';
-                c.style.left = Math.random() * 100 + '%';
-                c.style.top = '-10px';
-                c.style.background = reward === "10K" ? "#eab308" : "#f43f5e";
-                document.body.appendChild(c);
-                setTimeout(() => c.remove(), 3000);
-            }
-        }
+        // Confetti untuk 5K atau 10K
+        if (reward === "5K" || reward === "10K") createConfetti();
 
         const name = localStorage.getItem("redeemName") || "Anonymous";
         const wa = localStorage.getItem("redeemWA") || "0000000000";
@@ -238,6 +226,7 @@ document.getElementById("spinButton").addEventListener("click", async () => {
         document.getElementById("spinButton").disabled = false;
     }, 5200);
 });
+
 
 
 document.getElementById("claimButton").addEventListener("click",async()=>{
