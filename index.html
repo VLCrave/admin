@@ -62,46 +62,6 @@
     <div id="voucherList" class="space-y-3 max-h-96 overflow-y-auto pb-6"></div>
   </div>
 
-  <!-- ================= SPINWHEEL CONTAINER ================= -->
-  <div id="spinContainer" class="hidden mt-6 text-white">
-    <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
-    <h2 class="text-xl font-bold mb-3">🎡 Kelola Spin Wheel</h2>
-
-    <!-- Form Tambah Hadiah -->
-    <div class="bg-gray-800/60 p-4 rounded-xl mb-3">
-      <h3 class="font-semibold mb-2">Tambah Hadiah</h3>
-      <div class="grid grid-cols-3 gap-2">
-        <input id="prizeName" type="text" placeholder="Nama hadiah" class="bg-gray-700 rounded-lg p-2 col-span-1" />
-        <input id="prizeChance" type="number" min="0" max="100" placeholder="Chance (weight / %)" class="bg-gray-700 rounded-lg p-2 col-span-1" />
-        <input id="prizeTotal" type="number" min="0" placeholder="Total kuota (0 = unlimited)" class="bg-gray-700 rounded-lg p-2 col-span-1" />
-      </div>
-      <div class="mt-3 flex gap-2">
-        <button onclick="addPrize()" class="bg-green-600 hover:bg-green-700 px-3 py-2 rounded-lg font-semibold">➕ Tambah Hadiah</button>
-        <button onclick="loadSpinPrizes()" class="bg-gray-700 px-3 py-2 rounded-lg">🔄 Refresh</button>
-      </div>
-    </div>
-
-    <!-- Prize list -->
-    <div class="mb-2">
-      <h4 class="text-sm text-gray-300 mb-2">Daftar Hadiah</h4>
-      <div id="prizeList" class="space-y-3 max-h-72 overflow-y-auto pb-6"></div>
-    </div>
-
-    <!-- Winners -->
-    <div class="mt-6">
-      <h3 class="font-semibold mb-2">📥 Data Pemenang</h3>
-      <div class="bg-gray-800/60 p-3 rounded-xl mb-2">
-        <div class="flex gap-2">
-          <button onclick="loadSpinWinners('pending')" class="bg-yellow-500 px-3 py-2 rounded">Pending</button>
-          <button onclick="loadSpinWinners('approved')" class="bg-green-600 px-3 py-2 rounded">Approved</button>
-          <button onclick="loadSpinWinners('rejected')" class="bg-red-600 px-3 py-2 rounded">Rejected</button>
-          <button onclick="loadSpinWinners('all')" class="bg-gray-700 px-3 py-2 rounded">All</button>
-        </div>
-      </div>
-      <div id="winnersList" class="space-y-3 max-h-80 overflow-y-auto pb-6"></div>
-    </div>
-  </div>
-
   <!-- ================= FINANCE CONTAINER ================= -->
   <div id="financeContainer" class="hidden mt-6 text-white">
     <button onclick="backToDashboard()" class="mb-3 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">← Kembali ke Dashboard</button>
@@ -217,7 +177,6 @@ function renderDashboard() {
   // ===== DAFTAR MODUL =====
   const modules = [
     { key: "voucher", icon: "🎟️", title: "Kelola Voucher", desc: "Generate & kelola voucher redeem." },
-    { key: "spin", icon: "🎡", title: "Spin Wheel", desc: "Kelola hadiah spin & verifikasi pemenang." },
     { key: "finance", icon: "📊", title: "Laporan Keuangan", desc: "Catat pemasukan & pengeluaran bisnis." }
   ];
 
@@ -266,11 +225,6 @@ window.showSection = function (key) {
   } else if (key === "finance") {
     document.getElementById("financeContainer").classList.remove("hidden");
     loadFinance();
-  } else if (key === "spin") {
-    document.getElementById("spinContainer").classList.remove("hidden");
-    loadSpinPrizes();
-    loadSpinWinners("pending");
-  }
 };
 
 // ===== ANIMASI HALUS =====
@@ -448,202 +402,6 @@ window.printAllVouchers = async ()=>{
       </div>`).join("")}</body></html>`;
   const w = window.open(); w.document.write(html); w.print(); w.close();
 };
-
-// ---------------------------
-// ===== SPINWHEEL PART ======
-// ---------------------------
-
-window.loadSpinPrizes = async () => {
-  prizeListEl.innerHTML = "<p class='text-gray-400 text-sm'>Memuat hadiah...</p>";
-  try {
-    const snap = await getDocs(query(collection(db, "spin_prizes"), orderBy("createdAt","desc")));
-    existingPrizes = [];
-    snap.forEach(d=> existingPrizes.push({id:d.id, ...d.data()}));
-    renderSpinPrizes(existingPrizes);
-    return existingPrizes;
-  } catch (e) {
-    console.error("loadSpinPrizes err:", e);
-    prizeListEl.innerHTML = `<p class="text-red-400 text-sm">Gagal memuat hadiah.</p>`;
-    return [];
-  }
-};
-
-function renderSpinPrizes(arr){
-  prizeListEl.innerHTML = "";
-  if(!arr || arr.length === 0){
-    prizeListEl.innerHTML = `<p class="text-gray-400 text-sm">Belum ada hadiah.</p>`;
-    return;
-  }
-  arr.forEach(p=>{
-    const div = document.createElement("div");
-    div.className = "list-item flex justify-between items-center";
-    div.innerHTML = `
-      <div>
-        <p class="font-semibold text-blue-200">${p.name}</p>
-        <p class="small-txt">Chance: ${p.chance} — Total: ${p.total === 0 ? 'Unlimited' : p.total}</p>
-        <p class="small-txt">Dibuat: ${p.createdAt && p.createdAt.toDate ? p.createdAt.toDate().toLocaleString("id-ID") : '-'}</p>
-      </div>
-      <div class="flex flex-col gap-1">
-        <button data-id="${p.id}" class="btn-edit px-2 py-1 bg-yellow-500 hover:bg-yellow-600 rounded text-xs">✏️ Edit</button>
-        <button data-id="${p.id}" class="btn-delete px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs">🗑️ Hapus</button>
-      </div>
-    `;
-    prizeListEl.appendChild(div);
-  });
-
-  // attach listeners
-  const editBtns = prizeListEl.querySelectorAll(".btn-edit");
-  editBtns.forEach(b=> b.addEventListener("click", async (e)=>{
-    const id = e.currentTarget.dataset.id;
-    await editPrize(id);
-  }));
-  const delBtns = prizeListEl.querySelectorAll(".btn-delete");
-  delBtns.forEach(b=> b.addEventListener("click", async (e)=>{
-    const id = e.currentTarget.dataset.id;
-    await deletePrize(id);
-  }));
-}
-
-window.addPrize = async ()=>{
-  const name = (document.getElementById("prizeName").value||"").trim();
-  const chance = Number(document.getElementById("prizeChance").value||0);
-  const total = Number(document.getElementById("prizeTotal").value||0);
-
-  if(!name){ Swal.fire("Error","Nama hadiah wajib diisi","error"); return; }
-  if(isNaN(chance) || chance < 0){ Swal.fire("Error","Chance harus berupa angka >= 0","error"); return; }
-  if(isNaN(total) || total < 0){ Swal.fire("Error","Total harus >= 0","error"); return; }
-
-  try {
-    await addDoc(collection(db,"spin_prizes"), {
-      name, chance, total, createdAt: serverTimestamp(), createdBy: currentUser.displayName || currentUser.uid
-    });
-    Swal.fire("Berhasil","Hadiah ditambahkan","success");
-    document.getElementById("prizeName").value="";
-    document.getElementById("prizeChance").value="";
-    document.getElementById("prizeTotal").value="";
-    await loadSpinPrizes();
-  } catch (e) {
-    console.error("addPrize err:", e);
-    Swal.fire("Error","Gagal tambah hadiah","error");
-  }
-};
-
-async function editPrize(id){
-  try {
-    const docRef = doc(db,"spin_prizes", id);
-    const snap = await getDoc(docRef);
-    if(!snap.exists()) { Swal.fire("Error","Hadiah tidak ditemukan","error"); return; }
-    const data = snap.data();
-    const { value: formValues } = await Swal.fire({
-      title:"Edit Hadiah",
-      html:`
-        <input id="editName" class="swal2-input" placeholder="Nama" value="${(data.name||'').replace(/"/g,'&quot;')}" />
-        <input id="editChance" type="number" class="swal2-input" placeholder="Chance" value="${data.chance||0}" />
-        <input id="editTotal" type="number" class="swal2-input" placeholder="Total (0 unlimited)" value="${data.total||0}" />
-      `,
-      focusConfirm:false,
-      preConfirm: ()=>[
-        document.getElementById("editName").value,
-        document.getElementById("editChance").value,
-        document.getElementById("editTotal").value
-      ]
-    });
-    if(!formValues) return;
-    const [name, chance, total] = formValues;
-    await updateDoc(docRef, { name: name.trim(), chance: Number(chance), total: Number(total) });
-    Swal.fire("Disimpan","Perubahan tersimpan","success");
-    await loadSpinPrizes();
-  } catch (e) {
-    console.error("editPrize err:", e);
-    Swal.fire("Error","Gagal edit hadiah","error");
-  }
-}
-
-async function deletePrize(id){
-  const p = existingPrizes.find(x=>x.id===id);
-  const res = await Swal.fire({ title:`Hapus hadiah "${p?.name||''}"?`, text:"Data akan dihapus permanen.", icon:"warning", showCancelButton:true, confirmButtonText:"Hapus" });
-  if(!res.isConfirmed) return;
-  try {
-    await deleteDoc(doc(db,"spin_prizes", id));
-    Swal.fire("Dihapus","Hadiah dihapus","success");
-    await loadSpinPrizes();
-  } catch (e) {
-    console.error("deletePrize err:", e);
-    Swal.fire("Error","Gagal menghapus hadiah","error");
-  }
-}
-
-// ---------------------------
-// ===== SPIN WINNERS ========
-// ---------------------------
-
-window.loadSpinWinners = async (filter='pending')=>{
-  winnersListEl.innerHTML = "<p class='text-gray-400 text-sm'>Memuat pemenang...</p>";
-  try{
-    const snap = await getDocs(query(collection(db,"spin_winners"), orderBy("createdAt","desc")));
-    const arr = [];
-    snap.forEach(d=> arr.push({ id:d.id, ...d.data() }));
-    renderSpinWinners(arr, filter);
-  } catch(e){
-    console.error("loadSpinWinners err:", e);
-    winnersListEl.innerHTML = `<p class="text-red-400 text-sm">Gagal memuat pemenang.</p>`;
-  }
-};
-
-function renderSpinWinners(arr, filter){
-  winnersListEl.innerHTML = "";
-  let filtered = arr;
-  if(filter && filter !== 'all') filtered = arr.filter(x => (x.status||'pending') === filter);
-  if(filtered.length === 0){
-    winnersListEl.innerHTML = `<p class="text-gray-400 text-sm">Belum ada pemenang untuk filter ini.</p>`;
-    return;
-  }
-  filtered.forEach(w=>{
-    const div = document.createElement("div");
-    div.className = "list-item flex justify-between items-start";
-    const created = w.createdAt && w.createdAt.toDate ? w.createdAt.toDate().toLocaleString("id-ID") : '-';
-    div.innerHTML = `
-      <div>
-        <p class="font-semibold">${w.name || w.uid}</p>
-        <p class="small-txt">Prize: ${w.prizeName || w.prizeId || '-'} — Status: <span class="font-medium">${w.status||'pending'}</span></p>
-        <p class="small-txt">Waktu: ${created}</p>
-      </div>
-      <div class="flex flex-col gap-1">
-        <button data-id="${w.id}" class="btn-approve px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs ${w.status === 'approved' ? 'opacity-60 pointer-events-none' : ''}">✔️ Approve</button>
-        <button data-id="${w.id}" class="btn-reject px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-xs ${w.status === 'rejected' ? 'opacity-60 pointer-events-none' : ''}">✖️ Tolak</button>
-      </div>
-    `;
-    winnersListEl.appendChild(div);
-  });
-
-  // attach listeners
-  const aBtns = winnersListEl.querySelectorAll(".btn-approve");
-  aBtns.forEach(b => b.addEventListener("click", async (e)=>{
-    const id = e.currentTarget.dataset.id;
-    await reviewWinner(id, 'approved');
-  }));
-  const rBtns = winnersListEl.querySelectorAll(".btn-reject");
-  rBtns.forEach(b => b.addEventListener("click", async (e)=>{
-    const id = e.currentTarget.dataset.id;
-    await reviewWinner(id, 'rejected');
-  }));
-}
-
-async function reviewWinner(id, action){
-  const nameAction = action === 'approved' ? 'Approve' : 'Tolak';
-  const res = await Swal.fire({ title:`${nameAction} pemenang ini?`, showCancelButton:true, confirmButtonText: nameAction });
-  if(!res.isConfirmed) return;
-  try{
-    await updateDoc(doc(db,"spin_winners", id), {
-      status: action, reviewedBy: currentUser.uid, reviewedAt: serverTimestamp()
-    });
-    Swal.fire("Sukses", `Pemenang telah ${action}`, "success");
-    await loadSpinWinners('pending');
-  } catch(e){
-    console.error("reviewWinner err:", e);
-    Swal.fire("Error","Gagal update status pemenang","error");
-  }
-}
 
 // ---------------------------
 // ===== FINANCE PART ========
