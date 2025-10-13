@@ -184,247 +184,71 @@ onAuthStateChanged(auth, async (user) => {
   await loadSpinWinners('pending');
 });
 
-window.logout = ()=>signOut(auth).then(()=>window.location.href="// ===== DASHBOARD =====
-function renderDashboard(){
+window.logout = ()=>signOut(auth).then(()=>window.location.href="login.html");
+
+// ===== DASHBOARD =====
+function renderDashboard() {
   document.getElementById("voucherContainer").classList.add("hidden");
   document.getElementById("financeContainer").classList.add("hidden");
   document.getElementById("spinContainer").classList.add("hidden");
+
   const grid = document.getElementById("dashboardGrid");
   grid.innerHTML = "";
-  
-  // Welcome Section
-  const welcomeDiv = document.createElement("div");
-  welcomeDiv.className = "bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-2xl p-6 mb-6 backdrop-blur-sm";
-  welcomeDiv.innerHTML = `
-    <div class="flex items-center gap-4">
-      <div class="bg-blue-500/20 p-4 rounded-full">
-        <svg class="w-12 h-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-        </svg>
-      </div>
-      <div class="flex-1">
-        <h2 class="text-2xl font-bold text-white mb-1">Selamat Datang, <span id="welcomeName" class="text-blue-400"></span>! 👋</h2>
-        <p class="text-gray-300">Kelola bisnis Crave Street dengan mudah melalui dashboard admin</p>
-      </div>
-    </div>
-  `;
-  grid.appendChild(welcomeDiv);
-  
+
   const modules = [
-    {
-      key:"voucher", 
-      title:"Kelola Voucher", 
-      icon:"🎟️",
-      desc:"Generate, kelola, dan pantau voucher redeem untuk pelanggan",
-      color:"from-green-600/20 to-emerald-600/20",
-      border:"border-green-500/30",
-      btnColor:"bg-green-600 hover:bg-green-700"
-    },
-    {
-      key:"spin", 
-      title:"Spin Wheel", 
-      icon:"🎡",
-      desc:"Atur hadiah spin wheel dan verifikasi pemenang undian",
-      color:"from-purple-600/20 to-pink-600/20",
-      border:"border-purple-500/30",
-      btnColor:"bg-purple-600 hover:bg-purple-700"
-    },
-    {
-      key:"finance", 
-      title:"Laporan Keuangan", 
-      icon:"📊",
-      desc:"Catat transaksi, pantau pemasukan dan pengeluaran bisnis",
-      color:"from-blue-600/20 to-cyan-600/20",
-      border:"border-blue-500/30",
-      btnColor:"bg-blue-600 hover:bg-blue-700"
-    }
+    { key: "voucher", icon: "🎟️", title: "Kelola Voucher", desc: "Generate & kelola voucher redeem." },
+    { key: "spin", icon: "🎡", title: "Spin Wheel", desc: "Kelola hadiah spin & verifikasi pemenang." },
+    { key: "finance", icon: "📊", title: "Laporan Keuangan", desc: "Catat pemasukan & pengeluaran bisnis." }
   ];
-  
-  const cardsContainer = document.createElement("div");
-  cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
-  
-  modules.forEach(mod=>{
+
+  grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"; // tata letak modern
+
+  modules.forEach(mod => {
     const card = document.createElement("div");
-    card.className=`bg-gradient-to-br ${mod.color} ${mod.border} border rounded-2xl p-6 backdrop-blur-sm hover:scale-105 transition-transform duration-300 cursor-pointer group`;
-    card.innerHTML=`
-      <div class="flex flex-col h-full">
-        <div class="flex items-start justify-between mb-4">
-          <div class="bg-white/10 p-3 rounded-xl group-hover:scale-110 transition-transform">
-            <span class="text-4xl">${mod.icon}</span>
-          </div>
-          <div class="bg-white/5 px-2 py-1 rounded-full">
-            <span class="text-xs text-gray-300">Module</span>
-          </div>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-xl font-bold text-white mb-2">${mod.title}</h3>
-          <p class="text-sm text-gray-300 leading-relaxed">${mod.desc}</p>
-        </div>
-        <button onclick="showSection('${mod.key}')" class="mt-4 w-full ${mod.btnColor} py-3 rounded-xl font-semibold text-white flex items-center justify-center gap-2 group-hover:shadow-lg transition-all">
-          <span>Buka Module</span>
-          <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-          </svg>
+    card.className = `
+      bg-gray-800/60 backdrop-blur-md rounded-2xl shadow-xl 
+      hover:shadow-blue-500/30 hover:scale-[1.03] 
+      transition-all duration-300 ease-out p-6 flex flex-col justify-between group
+      border border-gray-700/50
+    `;
+
+    card.innerHTML = `
+      <div class="flex flex-col items-center text-center space-y-3">
+        <div class="text-5xl group-hover:scale-110 transition-transform duration-300">${mod.icon}</div>
+        <h3 class="text-lg font-bold text-white group-hover:text-blue-400">${mod.title}</h3>
+        <p class="text-sm text-gray-400 leading-snug">${mod.desc}</p>
+      </div>
+      <div class="mt-5">
+        <button onclick="showSection('${mod.key}')"
+          class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 
+          py-2.5 rounded-lg font-semibold text-sm text-white shadow-md hover:shadow-blue-500/30 
+          transition-all duration-300">
+          Buka Modul
         </button>
       </div>
     `;
-    cardsContainer.appendChild(card);
+
+    grid.appendChild(card);
   });
-  
-  grid.appendChild(cardsContainer);
-  
-  // Announcement & Update Logs Section
-  const infoSection = document.createElement("div");
-  infoSection.className = "grid grid-cols-1 lg:grid-cols-2 gap-4 mt-6";
-  
-  // Announcement Board
-  const announcementDiv = document.createElement("div");
-  announcementDiv.className = "bg-gradient-to-br from-orange-600/20 to-red-600/20 border border-orange-500/30 rounded-2xl p-6 backdrop-blur-sm";
-  announcementDiv.innerHTML = `
-    <div class="flex items-center gap-3 mb-4">
-      <div class="bg-orange-500/20 p-2 rounded-lg">
-        <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
-        </svg>
-      </div>
-      <h3 class="text-xl font-bold text-white">📢 Papan Pengumuman</h3>
-    </div>
-    <div class="space-y-3 max-h-64 overflow-y-auto pr-2" id="announcementList">
-      <div class="bg-white/5 rounded-xl p-4 border border-orange-500/20">
-        <div class="flex items-start gap-3">
-          <span class="text-2xl">🎉</span>
-          <div class="flex-1">
-            <div class="flex items-center justify-between mb-1">
-              <h4 class="font-semibold text-orange-300">Selamat Datang!</h4>
-              <span class="text-xs text-gray-400">Hari ini</span>
-            </div>
-            <p class="text-sm text-gray-300">Sistem admin Crave Street telah siap digunakan. Kelola voucher, spin wheel, dan keuangan dengan mudah.</p>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white/5 rounded-xl p-4 border border-orange-500/20">
-        <div class="flex items-start gap-3">
-          <span class="text-2xl">⚠️</span>
-          <div class="flex-1">
-            <div class="flex items-center justify-between mb-1">
-              <h4 class="font-semibold text-yellow-300">Penting!</h4>
-              <span class="text-xs text-gray-400">Baru</span>
-            </div>
-            <p class="text-sm text-gray-300">Penarikan saldo hanya dapat dilakukan pada tanggal 11 dan 29 setiap bulan. Pastikan data keuangan akurat.</p>
-          </div>
-        </div>
-      </div>
-      <div class="bg-white/5 rounded-xl p-4 border border-orange-500/20">
-        <div class="flex items-start gap-3">
-          <span class="text-2xl">💡</span>
-          <div class="flex-1">
-            <div class="flex items-center justify-between mb-1">
-              <h4 class="font-semibold text-blue-300">Tips</h4>
-              <span class="text-xs text-gray-400">Info</span>
-            </div>
-            <p class="text-sm text-gray-300">Gunakan fitur print untuk mencetak voucher secara batch. Refresh data secara berkala untuk informasi terkini.</p>
-          </div>
-        </div>
-      </div>
-    </div>
+
+  // Header tambahan UX (opsional tapi mempercantik pengalaman)
+  const header = document.createElement("div");
+  header.className = "text-center mb-6 animate-fadeInUp";
+  header.innerHTML = `
+    <h2 class="text-2xl font-bold text-white mb-1">📋 Dashboard Admin</h2>
+    <p class="text-gray-400 text-sm">Pilih modul untuk mulai mengelola data</p>
   `;
-  
-  // Update Logs
-  const updateLogsDiv = document.createElement("div");
-  updateLogsDiv.className = "bg-gradient-to-br from-indigo-600/20 to-blue-600/20 border border-indigo-500/30 rounded-2xl p-6 backdrop-blur-sm";
-  updateLogsDiv.innerHTML = `
-    <div class="flex items-center gap-3 mb-4">
-      <div class="bg-indigo-500/20 p-2 rounded-lg">
-        <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-      </div>
-      <h3 class="text-xl font-bold text-white">🔄 Log Update</h3>
-    </div>
-    <div class="space-y-3 max-h-64 overflow-y-auto pr-2" id="updateLogsList">
-      <div class="bg-white/5 rounded-xl p-3 border-l-4 border-green-500">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-green-400 uppercase">v2.1.0 - Latest</span>
-          <span class="text-xs text-gray-400">13 Okt 2025</span>
-        </div>
-        <ul class="text-sm text-gray-300 space-y-1 ml-3">
-          <li class="flex items-start gap-2">
-            <span class="text-green-400 mt-1">•</span>
-            <span>Tambah papan pengumuman & log update</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-green-400 mt-1">•</span>
-            <span>Perbaikan UI/UX dashboard utama</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-green-400 mt-1">•</span>
-            <span>Optimasi performa loading data</span>
-          </li>
-        </ul>
-      </div>
-      <div class="bg-white/5 rounded-xl p-3 border-l-4 border-blue-500">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-blue-400 uppercase">v2.0.5</span>
-          <span class="text-xs text-gray-400">10 Okt 2025</span>
-        </div>
-        <ul class="text-sm text-gray-300 space-y-1 ml-3">
-          <li class="flex items-start gap-2">
-            <span class="text-blue-400 mt-1">•</span>
-            <span>Fitur approval spin wheel winners</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-blue-400 mt-1">•</span>
-            <span>Sistem arsip keuangan otomatis</span>
-          </li>
-        </ul>
-      </div>
-      <div class="bg-white/5 rounded-xl p-3 border-l-4 border-purple-500">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-purple-400 uppercase">v2.0.0</span>
-          <span class="text-xs text-gray-400">5 Okt 2025</span>
-        </div>
-        <ul class="text-sm text-gray-300 space-y-1 ml-3">
-          <li class="flex items-start gap-2">
-            <span class="text-purple-400 mt-1">•</span>
-            <span>Rilis sistem manajemen spin wheel</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-purple-400 mt-1">•</span>
-            <span>Integrasi pengelolaan hadiah & pemenang</span>
-          </li>
-        </ul>
-      </div>
-      <div class="bg-white/5 rounded-xl p-3 border-l-4 border-yellow-500">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-yellow-400 uppercase">v1.5.0</span>
-          <span class="text-xs text-gray-400">1 Okt 2025</span>
-        </div>
-        <ul class="text-sm text-gray-300 space-y-1 ml-3">
-          <li class="flex items-start gap-2">
-            <span class="text-yellow-400 mt-1">•</span>
-            <span>Fitur print voucher batch & QR code</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-yellow-400 mt-1">•</span>
-            <span>Sistem filter voucher (used/unused)</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  `;
-  
-  infoSection.appendChild(announcementDiv);
-  infoSection.appendChild(updateLogsDiv);
-  grid.appendChild(infoSection);
-  
-  // Set welcome name
-  setTimeout(()=>{
-    const nameEl = document.getElementById("welcomeName");
-    if(nameEl && currentUser){
-      nameEl.textContent = currentUser.displayName || "Admin";
-    }
-  }, 100);
+  grid.prepend(header);
 }
+
+
+window.backToDashboard = function(){
+  document.getElementById("voucherContainer").classList.add("hidden");
+  document.getElementById("financeContainer").classList.add("hidden");
+  document.getElementById("spinContainer").classList.add("hidden");
+  document.getElementById("dashboardGrid").classList.remove("hidden");
+};
+
 // ---------------------------
 // ===== VOUCHER PART (CRUD) =
 // ---------------------------
@@ -581,8 +405,8 @@ window.printAllVouchers = async ()=>{
       </div>`).join("")}</body></html>`;
   const w = window.open(); w.document.write(html); w.print(); w.close();
 };
-
-// ---------------------------
+  
+  // ---------------------------
 // ===== SPINWHEEL PART ======
 // ---------------------------
 
@@ -1181,5 +1005,3 @@ renderDashboard();
 </script>
 </body>
 </html>
-
-
