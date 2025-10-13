@@ -187,16 +187,17 @@ onAuthStateChanged(auth, async (user) => {
 window.logout = ()=>signOut(auth).then(()=>window.location.href="login.html");
 
 // ===== DASHBOARD =====
+// ===== DASHBOARD (UI/UX MODERN FINAL) =====
 function renderDashboard() {
-  // Sembunyikan container lain
+  // Sembunyikan semua modul lain
   document.getElementById("voucherContainer").classList.add("hidden");
   document.getElementById("financeContainer").classList.add("hidden");
-  document.getElementById("spinContainer")?.classList.add("hidden");
+  document.getElementById("spinContainer").classList.add("hidden");
 
   const grid = document.getElementById("dashboardGrid");
   grid.innerHTML = "";
 
-  // ==== GREETING DINAMIS ====
+  // ===== GREETING DINAMIS =====
   const now = new Date();
   const hour = now.getHours();
   let greetingText = "Selamat Datang";
@@ -211,43 +212,24 @@ function renderDashboard() {
     <h2 class="text-2xl font-bold text-white mb-1">${greetingText}, Admin!</h2>
     <p class="text-gray-400 text-sm">Semoga harimu menyenangkan & produktif 💪</p>
   `;
+  grid.appendChild(greeting);
 
-  // ==== PENGUMUMAN ====
-  const announcement = document.createElement("div");
-  announcement.className = `
-    card mb-6 text-center border border-blue-500/30 
-    bg-blue-950/30 backdrop-blur-lg animate-fadeInUp rounded-xl p-5
-  `;
-  announcement.innerHTML = `
-    <h3 class="text-lg font-semibold text-blue-400 mb-2">📢 Papan Pengumuman</h3>
-    <p id="announcementText" class="text-gray-300 text-sm">
-      Tidak ada pengumuman saat ini.
-    </p>
-    <div class="mt-3 flex justify-center gap-2">
-      <button onclick="editAnnouncement()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm font-semibold">
-        Edit Pengumuman
-      </button>
-      <button onclick="clearAnnouncement()" class="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm font-semibold">
-        Hapus
-      </button>
-    </div>
-  `;
-
-  // ==== DAFTAR MODUL ====
+  // ===== DAFTAR MODUL =====
   const modules = [
     { key: "voucher", icon: "🎟️", title: "Kelola Voucher", desc: "Generate & kelola voucher redeem." },
+    { key: "spin", icon: "🎡", title: "Spin Wheel", desc: "Kelola hadiah spin & verifikasi pemenang." },
     { key: "finance", icon: "📊", title: "Laporan Keuangan", desc: "Catat pemasukan & pengeluaran bisnis." }
   ];
 
-  grid.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
+  const wrapper = document.createElement("div");
+  wrapper.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeInUp";
 
   modules.forEach(mod => {
     const card = document.createElement("div");
     card.className = `
-      bg-gray-800/60 backdrop-blur-md rounded-2xl shadow-xl 
-      hover:shadow-blue-500/30 hover:scale-[1.03] 
+      bg-gray-800/60 backdrop-blur-md rounded-2xl border border-gray-700/50 
+      shadow-lg hover:shadow-blue-500/30 hover:scale-[1.03] 
       transition-all duration-300 ease-out p-6 flex flex-col justify-between group
-      border border-gray-700/50
     `;
     card.innerHTML = `
       <div class="flex flex-col items-center text-center space-y-3">
@@ -255,8 +237,9 @@ function renderDashboard() {
         <h3 class="text-lg font-bold text-white group-hover:text-blue-400">${mod.title}</h3>
         <p class="text-sm text-gray-400 leading-snug">${mod.desc}</p>
       </div>
-      <div class="mt-5">
-        <button onclick="showSection('${mod.key}')"
+      <div class="mt-5 w-full">
+        <button 
+          onclick="showSection('${mod.key}')"
           class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 
           py-2.5 rounded-lg font-semibold text-sm text-white shadow-md hover:shadow-blue-500/30 
           transition-all duration-300">
@@ -264,13 +247,43 @@ function renderDashboard() {
         </button>
       </div>
     `;
-    grid.appendChild(card);
+    wrapper.appendChild(card);
   });
 
-  // ==== TAMPILKAN KE HALAMAN ====
-  grid.prepend(announcement);
-  grid.prepend(greeting);
+  grid.appendChild(wrapper);
 }
+
+// ===== NAVIGASI ANTAR MODUL =====
+window.showSection = function (key) {
+  document.getElementById("dashboardGrid").classList.add("hidden");
+  document.getElementById("voucherContainer").classList.add("hidden");
+  document.getElementById("financeContainer").classList.add("hidden");
+  document.getElementById("spinContainer").classList.add("hidden");
+
+  if (key === "voucher") {
+    document.getElementById("voucherContainer").classList.remove("hidden");
+    renderVouchers("all");
+  } else if (key === "finance") {
+    document.getElementById("financeContainer").classList.remove("hidden");
+    loadFinance();
+  } else if (key === "spin") {
+    document.getElementById("spinContainer").classList.remove("hidden");
+    loadSpinPrizes();
+    loadSpinWinners("pending");
+  }
+};
+
+// ===== ANIMASI HALUS =====
+const style = document.createElement("style");
+style.innerHTML = `
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInUp { animation: fadeInUp 0.5s ease-out; }
+`;
+document.head.appendChild(style);
+
 
 window.backToDashboard = function(){
   document.getElementById("voucherContainer").classList.add("hidden");
@@ -1035,4 +1048,3 @@ renderDashboard();
 </script>
 </body>
 </html>
-
