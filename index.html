@@ -545,7 +545,7 @@ window.loadAdminSettings = function(){
   window.loadAdminLogs();
 };
 
-window.resetAdminPassword = async function(){
+window.resetAdminPassword = async function() {
   if(!currentUser){
     Swal.fire("Error", "User tidak ditemukan", "error");
     return;
@@ -563,11 +563,15 @@ window.resetAdminPassword = async function(){
   if(!res.isConfirmed) return;
 
   try{
+    // Kirim email reset
     await sendPasswordResetEmail(auth, currentUser.email);
-    
-    await addDoc(collection(db,"admin_logs"),{
-      action: "Request reset password",
-      createdBy: window.currentAdminName,
+
+    // Catat ke admin_logs
+    const adminId = window.currentAdminId || null; // sesuaikan jika ada variable adminId
+    await addDoc(collection(db, "admin_logs"), {
+      adminId,
+      aksi: "Request reset password",
+      keterangan: `Email reset dikirim ke ${currentUser.email}`,
       createdAt: serverTimestamp()
     });
 
@@ -577,7 +581,7 @@ window.resetAdminPassword = async function(){
       text: "Silakan cek email Anda untuk reset password",
       confirmButtonColor: "#3b82f6"
     });
-  }catch(err){
+  } catch(err) {
     Swal.fire("Error", err.message || "Gagal mengirim email", "error");
   }
 };
@@ -769,13 +773,25 @@ window.generateVouchers = async function() {
 
   try{
     for(const v of batch){
-      await addDoc(collection(db,"redeem_codes"),v);
+      await addDoc(collection(db,"redeem_codes"), v);
     }
 
-    // --- Simpan log admin ---
-    const adminId = localStorage.getItem("adminId") || null;
+    // Ambil nama admin
+    const adminId = localStorage.getItem("adminId") || currentAdminData?.id || null;
+    let adminName = "Admin";
+    if (adminId) {
+      try {
+        const adminSnap = await getDoc(doc(db, "admins", adminId));
+        if (adminSnap.exists()) adminName = adminSnap.data().nama || "Admin";
+      } catch(err) {
+        console.error("Gagal ambil nama admin:", err);
+      }
+    }
+
+    // Simpan log admin
     await addDoc(collection(db,"admin_logs"),{
       adminId,
+      createdBy: adminName,
       aksi: `Menambahkan ${count} voucher${count>1?"s":""}`,
       keterangan: `Voucher dibuat otomatis (${count} kode)`,
       createdAt: serverTimestamp()
@@ -785,10 +801,12 @@ window.generateVouchers = async function() {
     document.getElementById("voucherJumlah").value = "";
     await window.loadVouchers();
     window.filterVouchers(window.activeVoucherFilter || "all");
+
   }catch(err){
     Swal.fire("Error", err.message || "Gagal generate voucher","error");
   }
 };
+
 
 
 // ===== COPY VOUCHER =====
