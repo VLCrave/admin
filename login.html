@@ -1,15 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login</title>
-
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- SweetAlert2 -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen flex items-center justify-center px-4">
   <div class="bg-gray-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-sm">
@@ -27,15 +23,18 @@
         Login
       </button>
     </form>
+    <p class="text-gray-400 text-sm text-center mt-4">
+      <a href="#" onclick="forgotPassword()" class="text-blue-400 hover:underline">Lupa Password?</a>
+    </p>
     <p class="text-gray-400 text-sm text-center mt-6">© 2025 Crave Street Admin Panel</p>
   </div>
 
-  <!-- Firebase Setup -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-    // ✅ Config baru crave-street-id
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
       authDomain: "crave-street-id.firebaseapp.com",
@@ -46,37 +45,131 @@
       measurementId: "G-WCRQGLW47B"
     };
 
-    // Init Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+window.loginAdmin = async function(event) {
+  event.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-    // ✅ Fungsi Login
-    window.loginAdmin = function(event) {
-      event.preventDefault();
+  try {
+    // Login via Firebase Auth
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
 
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+    // Ambil data admin dari Firestore
+    const q = query(collection(db, "admins"), where("email", "==", email));
+    const querySnapshot = await getDocs(q);
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          Swal.fire({
-            icon: "success",
-            title: "Login Berhasil",
-            text: "Selamat datang " + user.email,
-            confirmButtonColor: "#2563eb"
-          }).then(() => {
-            window.location.href = "index.html"; // redirect setelah login
+    let adminData;
+    if (querySnapshot.empty) {
+      // Jika belum ada nama, minta input nama
+      const { value: nama } = await Swal.fire({
+        title: "Masukkan Nama Anda",
+        input: "text",
+        inputPlaceholder: "Nama lengkap",
+        allowOutsideClick: false,
+        inputValidator: value => !value && 'Nama wajib diisi'
+      });
+
+      // Simpan ke Firestore
+      const docRef = await addDoc(collection(db, "admins"), { email, nama, createdAt: serverTimestamp() });
+      adminData = { id: docRef.id, nama, email };
+
+    } else {
+      querySnapshot.forEach(doc => {
+        adminData = { id: doc.id, ...doc.data() };
+      });
+    }
+
+    // Simpan session
+    sessionStorage.setItem("currentAdmin", JSON.stringify(adminData));
+
+    // --- Simpan log admin login ---
+    if (adminData.id) {
+      await addDoc(collection(db, "admin_logs"), {
+        adminId: adminData.id,
+        aksi: "Login ke dashboard",
+        keterangan: "Login berhasil",
+        createdAt: serverTimestamp()
+      });
+    }
+
+    Swal.fire({
+      icon: "success",
+      title: "Login Berhasil",
+      text: "Selamat datang " + adminData.nama,
+      confirmButtonColor: "#2563eb"
+    }).then(() => window.location.href = "index.html");
+
+  } catch (err) {
+    if(err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
+      Swal.fire({
+        icon: "error",
+        title: "Password Salah",
+        text: "Silakan periksa kembali password Anda",
+        confirmButtonText: "Kirim email reset",
+        showCancelButton: true,
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#2563eb",
+        cancelButtonColor: "#ef4444"
+      }).then(result => {
+        if(result.isConfirmed) forgotPassword();
+      });
+    } else if(err.code === "auth/user-not-found") {
+      Swal.fire({
+        icon: "error",
+        title: "Email Tidak Terdaftar",
+        text: "Email yang Anda masukkan belum terdaftar sebagai admin",
+        confirmButtonColor: "#ef4444"
+      });
+    } else if(err.code === "auth/invalid-email") {
+      Swal.fire({
+        icon: "error",
+        title: "Email Tidak Valid",
+        text: "Format email yang Anda masukkan tidak valid",
+        confirmButtonColor: "#ef4444"
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Login Gagal",
+        text: err.message,
+        confirmButtonColor: "#ef4444"
+      });
+    }
+  }
+}
+
+    window.forgotPassword = async function() {
+      const { value: email } = await Swal.fire({
+        title: "Lupa Password",
+        input: "email",
+        inputLabel: "Masukkan email Anda",
+        inputPlaceholder: "admin@email.com",
+        inputValidator: value => !value && 'Email wajib diisi'
+      });
+
+      if(email) {
+        sendPasswordResetEmail(auth, email)
+          .then(() => {
+            Swal.fire({
+              icon: "success",
+              title: "Email Terkirim",
+              text: "Cek email Anda untuk reset password",
+              confirmButtonColor: "#2563eb"
+            });
+          })
+          .catch(err => {
+            Swal.fire({
+              icon: "error",
+              title: "Gagal Mengirim Email",
+              text: err.message,
+              confirmButtonColor: "#ef4444"
+            });
           });
-        })
-        .catch((error) => {
-          Swal.fire({
-            icon: "error",
-            title: "Login Gagal",
-            text: error.message,
-            confirmButtonColor: "#ef4444"
-          });
-        });
+      }
     }
   </script>
 </body>
