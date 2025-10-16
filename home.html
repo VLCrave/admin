@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Delivery Service</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: white;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+.swal2-popup.swal2-popup-custom {
+    padding: 1rem !important;
+}
+.swal2-popup.swal2-popup-custom .swal2-input {
+    font-size: 14px !important;
+}
+
+        
+        @media (min-width: 768px) {
+            .mobile-nav { display: none; }
+        }
+        
+        @media (max-width: 767px) {
+            .desktop-sidebar { display: none; }
+            .main-content { padding-bottom: 80px; }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay hidden">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-gray-600">Loading...</p>
+        </div>
+    </div>
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Desktop Sidebar -->
+        <aside class="desktop-sidebar w-64 gradient-bg text-white flex-shrink-0">
+            <div class="p-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <i class="fas fa-shipping-fast text-3xl"></i>
+                    <h1 class="text-xl font-bold">DeliveryPro</h1>
+                </div>
+                <nav class="space-y-2">
+                    <a href="#" onclick="showSection('dashboard')" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition" id="nav-dashboard-desktop">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" onclick="showSection('transactions')" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-white/20 transition" id="nav-transactions-desktop">
+                        <i class="fas fa-receipt"></i>
+                        <span>Transaksi</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-y-auto main-content">
+            <!-- Header -->
+            <header class="bg-white shadow-sm sticky top-0 z-10">
+                <div class="flex items-center justify-between px-4 md:px-8 py-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-shipping-fast text-2xl text-purple-600 md:hidden"></i>
+                        <div>
+                            <h2 class="text-lg md:text-2xl font-bold text-gray-800" id="page-title">Dashboard</h2>
+                            <p class="text-xs text-gray-500 md:hidden">Admin Panel</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button class="relative p-2 text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-bell text-lg md:text-xl"></i>
+                            <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                        </button>
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=667eea&color=fff" class="w-8 h-8 md:w-10 md:h-10 rounded-full">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="p-4 md:p-8">
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+                    <div class="bg-white rounded-xl p-4 md:p-6 card-hover shadow-sm">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="text-gray-500 text-xs md:text-sm mb-1">Total Transaksi</p>
+                                <h3 class="text-2xl md:text-3xl font-bold text-gray-800" id="total-transactions">0</h3>
+                            </div>
+                            <div class="w-10 h-10 md:w-14 md:h-14 bg-blue-100 rounded-full flex items-center justify-center mt-2 md:mt-0">
+                                <i class="fas fa-receipt text-blue-600 text-base md:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 md:p-6 card-hover shadow-sm">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="text-gray-500 text-xs md:text-sm mb-1">Pending</p>
+                                <h3 class="text-2xl md:text-3xl font-bold text-yellow-600" id="pending-count">0</h3>
+                            </div>
+                            <div class="w-10 h-10 md:w-14 md:h-14 bg-yellow-100 rounded-full flex items-center justify-center mt-2 md:mt-0">
+                                <i class="fas fa-clock text-yellow-600 text-base md:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 md:p-6 card-hover shadow-sm">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="text-gray-500 text-xs md:text-sm mb-1">Selesai</p>
+                                <h3 class="text-2xl md:text-3xl font-bold text-green-600" id="completed-count">0</h3>
+                            </div>
+                            <div class="w-10 h-10 md:w-14 md:h-14 bg-green-100 rounded-full flex items-center justify-center mt-2 md:mt-0">
+                                <i class="fas fa-check-circle text-green-600 text-base md:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 md:p-6 card-hover shadow-sm">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="text-gray-500 text-xs md:text-sm mb-1">Total Pendapatan</p>
+                                <h3 class="text-xl md:text-2xl font-bold text-gray-800" id="total-revenue">Rp 0</h3>
+                            </div>
+                            <div class="w-10 h-10 md:w-14 md:h-14 bg-purple-100 rounded-full flex items-center justify-center mt-2 md:mt-0">
+                                <i class="fas fa-money-bill-wave text-purple-600 text-base md:text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-6">
+                    <div class="bg-white rounded-xl p-4 md:p-6 shadow-sm">
+                        <h3 class="text-base md:text-lg font-semibold mb-4">Transaksi Terbaru</h3>
+                        <div class="space-y-3" id="recent-transactions">
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <i class="fas fa-clock text-gray-400"></i>
+                                <span class="text-xs md:text-sm text-gray-500">Memuat transaksi...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-4 md:p-6 shadow-sm">
+                        <h3 class="text-base md:text-lg font-semibold mb-4">Quick Actions</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="showSection('transactions'); addTransaction()" class="p-3 md:p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition">
+                                <i class="fas fa-plus mb-2"></i>
+                                <p class="text-xs md:text-sm">Tambah Transaksi</p>
+                            </button>
+                            <button onclick="exportTransactions()" class="p-3 md:p-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition">
+                                <i class="fas fa-download mb-2"></i>
+                                <p class="text-xs md:text-sm">Export Data</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Section -->
+            <div id="transactions-section" class="p-4 md:p-8 hidden">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-6 gap-3">
+                    <div>
+                        <h3 class="text-lg md:text-xl font-bold text-gray-800">Manajemen Transaksi</h3>
+                        <p class="text-gray-600 text-xs md:text-sm">Kelola semua transaksi delivery</p>
+                    </div>
+                    <button onclick="addTransaction()" class="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition shadow-lg text-sm md:text-base">
+                        <i class="fas fa-plus mr-2"></i>Tambah Transaksi
+                    </button>
+                </div>
+                
+                <!-- Filter -->
+                <div class="bg-white rounded-xl p-4 mb-4 shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <select id="filter-status" onchange="filterTransactions()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="all">Semua Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">Dalam Perjalanan</option>
+                            <option value="completed">Selesai</option>
+                            <option value="cancelled">Dibatalkan</option>
+                        </select>
+                        <input type="date" id="filter-date" onchange="filterTransactions()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <input type="text" id="search-customer" onchange="filterTransactions()" placeholder="Cari customer..." class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        <button onclick="resetFilters()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            <i class="fas fa-redo mr-2"></i>Reset Filter
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Mobile Card View -->
+                <div class="md:hidden space-y-3" id="transactions-mobile">
+                </div>
+
+                <!-- Desktop Table View -->
+                <div class="hidden md:block bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50 border-b border-gray-200">
+                                <tr>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">ID Order</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Customer</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Alamat</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Total</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                    <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">Tanggal</th>
+                                    <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-table" class="divide-y divide-gray-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+        <div class="grid grid-cols-2 gap-1 p-2">
+            <button onclick="showSection('dashboard')" class="flex flex-col items-center justify-center py-3 rounded-lg transition" id="nav-dashboard-mobile">
+                <i class="fas fa-chart-line text-xl mb-1"></i>
+                <span class="text-xs">Dashboard</span>
+            </button>
+            <button onclick="showSection('transactions')" class="flex flex-col items-center justify-center py-3 rounded-lg transition" id="nav-transactions-mobile">
+                <i class="fas fa-receipt text-xl mb-1"></i>
+                <span class="text-xs">Transaksi</span>
+            </button>
+        </div>
+    </nav>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, orderBy, limit, onSnapshot, where } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+
+    // ===== Firebase Config Baru =====
+    const firebaseConfig = {
+        apiKey: "AIzaSyA1kevuJ9mRJ8le8uPXin11uUqJ6sOLopY",
+        authDomain: "vlcrave-whatsapp-order.firebaseapp.com",
+        projectId: "vlcrave-whatsapp-order",
+        storageBucket: "vlcrave-whatsapp-order.firebasestorage.app",
+        messagingSenderId: "796602954067",
+        appId: "1:796602954067:web:e10a110ae904decdc471a6",
+        measurementId: "G-XLWNDN39ZD"
+    };
+
+    // ===== Inisialisasi Firebase =====
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+        let transactions = [];
+        let filteredTransactions = [];
+
+        // Loading functions
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            showLoading();
+            await loadData();
+            setupRealtimeListeners();
+            hideLoading();
+        });
+
+        // Setup realtime listeners
+        function setupRealtimeListeners() {
+            const transactionsQuery = query(collection(db, "transactions"), orderBy("createdAt", "desc"));
+            onSnapshot(transactionsQuery, (snapshot) => {
+                transactions = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                filteredTransactions = [...transactions];
+                renderTransactions();
+                updateStats();
+            });
+        }
+
+        // Load initial data
+        async function loadData() {
+            try {
+                const transactionsQuery = query(collection(db, "transactions"), orderBy("createdAt", "desc"));
+                const transactionsSnapshot = await getDocs(transactionsQuery);
+                transactions = transactionsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                filteredTransactions = [...transactions];
+                renderTransactions();
+                updateStats();
+            } catch (error) {
+                console.error("Error loading data:", error);
+                Swal.fire('Error!', 'Gagal memuat data dari server', 'error');
+            }
+        }
+
+        window.showSection = function(section) {
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('transactions-section').classList.add('hidden');
+            
+            document.querySelectorAll('aside a, .mobile-nav button').forEach(el => {
+                el.classList.remove('bg-white/20', 'bg-purple-100', 'text-purple-600');
+                el.classList.add('text-gray-600');
+
+
+            });
+            
+            if(section === 'dashboard') {
+                document.getElementById('dashboard-section').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'Dashboard';
+                document.getElementById('nav-dashboard-desktop')?.classList.add('bg-white/20');
+                const mobileNav = document.getElementById('nav-dashboard-mobile');
+                mobileNav.classList.add('bg-purple-100', 'text-purple-600');
+                mobileNav.classList.remove('text-gray-600');
+            } else if(section === 'transactions') {
+                document.getElementById('transactions-section').classList.remove('hidden');
+                document.getElementById('page-title').textContent = 'Manajemen Transaksi';
+                document.getElementById('nav-transactions-desktop')?.classList.add('bg-white/20');
+                const mobileNav = document.getElementById('nav-transactions-mobile');
+                mobileNav.classList.add('bg-purple-100', 'text-purple-600');
+                mobileNav.classList.remove('text-gray-600');
+            }
+        }
+async function updateStats() {
+    if (!Array.isArray(transactions)) return;
+
+    // Hitung statistik
+    const totalTransactions = transactions.length;
+    const pendingCount = transactions.filter(t => t.status === 'pending').length;
+    const inProgressCount = transactions.filter(t => t.status === 'in_progress').length;
+    const completedCount = transactions.filter(t => t.status === 'completed').length;
+    const cancelledCount = transactions.filter(t => t.status === 'cancelled').length;
+
+    const totalRevenue = transactions.reduce((sum, t) => {
+        if (t.status !== 'completed') return sum;
+        return sum + Number(t.total || 0);
+    }, 0);
+
+    // Elemen DOM
+    const elems = {
+        totalTransactions: document.getElementById('total-transactions'),
+        pending: document.getElementById('pending-count'),
+        inProgress: document.getElementById('in-progress-count'),
+        completed: document.getElementById('completed-count'),
+        cancelled: document.getElementById('cancelled-count'),
+        totalRevenue: document.getElementById('total-revenue'),
+        recentContainer: document.getElementById('recent-transactions')
+    };
+
+    // Update statistik
+    if (elems.totalTransactions) elems.totalTransactions.textContent = totalTransactions;
+    if (elems.pending) elems.pending.textContent = pendingCount;
+    if (elems.inProgress) elems.inProgress.textContent = inProgressCount;
+    if (elems.completed) elems.completed.textContent = completedCount;
+    if (elems.cancelled) elems.cancelled.textContent = cancelledCount;
+    if (elems.totalRevenue) elems.totalRevenue.textContent = 'Rp ' + totalRevenue.toLocaleString('id-ID');
+
+    // Recent transactions (max 5)
+    if (!elems.recentContainer) return;
+
+    const recent = transactions.slice(0, 5);
+
+    if (recent.length === 0) {
+        elems.recentContainer.innerHTML = `
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <i class="fas fa-info-circle text-gray-400"></i>
+                <span class="text-xs md:text-sm text-gray-500">Belum ada transaksi</span>
+            </div>
+        `;
+        return;
+    }
+
+    elems.recentContainer.innerHTML = recent.map(t => {
+        const statusColors = {
+            pending: 'text-yellow-600',
+            in_progress: 'text-blue-600',
+            completed: 'text-green-600',
+            cancelled: 'text-red-600'
+        };
+        const statusIcons = {
+            pending: 'fa-clock',
+            in_progress: 'fa-truck',
+            completed: 'fa-check-circle',
+            cancelled: 'fa-times-circle'
+        };
+
+        const totalFormatted = Math.abs(Number(t.total || 0)).toLocaleString('id-ID');
+        const displayTotal = t.type === 'pengeluaran' ? `- Rp ${totalFormatted}` : `Rp ${totalFormatted}`;
+        const dateFormatted = t.date ? new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+        return `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fas ${statusIcons[t.status] || 'fa-receipt'} ${statusColors[t.status] || 'text-gray-400'}"></i>
+                    <div>
+                        <p class="text-xs md:text-sm font-semibold text-gray-800">${t.customerName || '-'}</p>
+                        <p class="text-xs text-gray-500">${t.itemDescription || '-'}</p>
+                    </div>
+                </div>
+                <span class="text-xs md:text-sm font-bold text-gray-700">${displayTotal}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// Pastikan DOM sudah siap sebelum dijalankan
+document.addEventListener('DOMContentLoaded', updateStats);
+
+
+
+function renderRecentTransactions() {
+    const recentContainer = document.getElementById('recent-transactions');
+    if (!recentContainer) return;
+
+    const recent = (transactions || []).slice(0, 5);
+
+    if (recent.length === 0) {
+        recentContainer.innerHTML = `
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <i class="fas fa-info-circle text-gray-400"></i>
+                <span class="text-xs md:text-sm text-gray-500">Belum ada transaksi</span>
+            </div>
+        `;
+    } else {
+        recentContainer.innerHTML = recent.map(t => {
+            const statusColors = {
+                pending: 'text-yellow-600',
+                in_progress: 'text-blue-600',
+                completed: 'text-green-600',
+                cancelled: 'text-red-600'
+            };
+            const statusIcons = {
+                pending: 'fa-clock',
+                in_progress: 'fa-truck',
+                completed: 'fa-check-circle',
+                cancelled: 'fa-times-circle'
+            };
+
+            const totalFormatted = Math.abs(Number(t.total || 0)).toLocaleString('id-ID');
+            const displayTotal = t.type === 'pengeluaran' ? `- Rp ${totalFormatted}` : `Rp ${totalFormatted}`;
+            const dateFormatted = t.date ? new Date(t.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+            return `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <i class="fas ${statusIcons[t.status] || 'fa-receipt'} ${statusColors[t.status] || 'text-gray-400'}"></i>
+                        <div>
+                            <p class="text-xs md:text-sm font-semibold text-gray-800">${t.customerName || '-'}</p>
+                            <p class="text-xs text-gray-500">${t.itemDescription || '-'}</p>
+                            <p class="text-xs text-gray-400">${dateFormatted}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs md:text-sm font-bold text-gray-700">${displayTotal}</span>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+// panggil fungsinya
+document.addEventListener('DOMContentLoaded', renderRecentTransactions);
+
+
+
+
+        // Transactions CRUD
+window.addTransaction = async function() {
+    const { value: formValues } = await Swal.fire({
+        title: "Tambah Transaksi",
+        html: `
+            <input id="customer-name" class="swal2-input" placeholder="Nama Pelanggan">
+            <input id="item-description" class="swal2-input" placeholder="Detail Transaksi">
+            <input id="item-price" type="number" class="swal2-input" placeholder="Harga Barang" disabled>
+            <select id="transaction-type" class="swal2-input">
+                <option value="pemasukan">Pemasukan</option>
+                <option value="pengeluaran">Pengeluaran</option>
+            </select>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: "Simpan",
+        width: window.innerWidth < 768 ? '90%' : '500px',
+        customClass: { popup: 'swal2-popup-custom' },
+        preConfirm: () => {
+            const customerName = document.getElementById("customer-name").value.trim();
+            const itemDescription = document.getElementById("item-description").value.trim();
+            const itemPrice = Number(document.getElementById("item-price").value) || 0;
+            const type = document.getElementById("transaction-type").value;
+
+            if (!customerName || !itemDescription || !type) {
+                Swal.showValidationMessage("Mohon lengkapi semua field dengan benar");
+                return false;
+            }
+
+            // Input ongkir via prompt
+            const ongkir = Number(prompt("Masukkan ongkir untuk transaksi ini:")) || 0;
+
+            // Total untuk database: + untuk pemasukan, - untuk pengeluaran
+            const total = type === "pemasukan" ? ongkir : -ongkir;
+
+            const status = "completed";
+
+            return { customerName, itemDescription, itemPrice, ongkir, total, type, status };
+        }
+    });
+
+    if (formValues) {
+        showLoading();
+        try {
+            // Tambahkan transaksi
+            const docRef = await addDoc(collection(db, "transactions"), {
+                ...formValues,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+
+            // --- Update saldo kas ---
+            const saldoRef = doc(db, "saldo", "kasUtama"); // misal dokumen "kasUtama"
+            const saldoSnap = await getDoc(saldoRef);
+            let currentSaldo = 0;
+            if (saldoSnap.exists()) {
+                currentSaldo = Number(saldoSnap.data().saldo || 0);
+            }
+
+            // Hitung saldo baru
+            const newSaldo = currentSaldo + formValues.total; // pengeluaran otomatis - karena total sudah negatif
+
+            // Simpan saldo baru
+            await setDoc(saldoRef, { saldo: newSaldo }, { merge: true });
+
+            hideLoading();
+            Swal.fire("Berhasil!", "Transaksi ditambahkan dan saldo diperbarui.", "success");
+
+        } catch (error) {
+            hideLoading();
+            console.error(error);
+            Swal.fire("Error!", "Gagal menambahkan transaksi", "error");
+        }
+    }
+}
+
+
+window.editTransaction = async function(id) {
+    showLoading();
+    try {
+        // Ambil data transaksi dulu
+        const docRef = doc(db, "transactions", id);
+        const docSnap = await getDoc(docRef);
+        hideLoading();
+
+        if (!docSnap.exists()) {
+            Swal.fire('Error!', 'Transaksi tidak ditemukan', 'error');
+            return;
+        }
+
+        const data = docSnap.data();
+
+        // Tampilkan Swal untuk edit
+        const { value: formValues } = await Swal.fire({
+            title: "Edit Transaksi",
+            html: `
+                <input id="customer-name" class="swal2-input" placeholder="Nama Pelanggan" value="${data.customerName || ''}">
+                <input id="item-description" class="swal2-input" placeholder="Detail Transaksi" value="${data.itemDescription || ''}">
+                <input id="shipping-cost" type="number" class="swal2-input" placeholder="Ongkir" value="${data.ongkir || 0}">
+                <select id="transaction-type" class="swal2-input">
+                    <option value="pemasukan" ${data.type === 'pemasukan' ? 'selected' : ''}>Pemasukan</option>
+                    <option value="pengeluaran" ${data.type === 'pengeluaran' ? 'selected' : ''}>Pengeluaran</option>
+                </select>
+            `,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: "Simpan",
+            width: window.innerWidth < 768 ? '90%' : '500px',
+            customClass: { popup: 'swal2-popup-custom' },
+            preConfirm: () => {
+                const customerName = document.getElementById("customer-name").value.trim();
+                const itemDescription = document.getElementById("item-description").value.trim();
+                const ongkir = Number(document.getElementById("shipping-cost").value);
+                const type = document.getElementById("transaction-type").value;
+
+                if(!customerName || !itemDescription || isNaN(ongkir) || !type) {
+                    Swal.showValidationMessage("Mohon lengkapi semua field dengan benar");
+                    return false;
+                }
+
+                // Total = hanya ongkir masuk ke statistik
+                const total = type === 'pemasukan' ? ongkir : -ongkir;
+
+                // Status pengeluaran langsung completed
+                const status = type === 'pengeluaran' ? 'completed' : 'pending';
+
+                return { customerName, itemDescription, ongkir, total, type, status };
+            }
+        });
+
+        if (formValues) {
+            showLoading();
+            await updateDoc(docRef, {
+                ...formValues,
+                updatedAt: new Date()
+            });
+            hideLoading();
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Transaksi berhasil diperbarui.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+
+    } catch (error) {
+        hideLoading();
+        console.error("Error editing transaction:", error);
+        Swal.fire('Error!', 'Gagal memperbarui transaksi', 'error');
+    }
+}
+
+
+        window.deleteTransaction = async function(id) {
+            const confirmed = await Swal.fire({
+                title: 'Hapus Transaksi?',
+                text: 'Data yang dihapus tidak dapat dikembalikan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal'
+            });
+
+            if (confirmed.isConfirmed) {
+                showLoading();
+                try {
+                    await deleteDoc(doc(db, "transactions", id));
+                    hideLoading();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Terhapus!',
+                        text: 'Transaksi berhasil dihapus.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                } catch (error) {
+                    hideLoading();
+                    console.error("Error deleting transaction:", error);
+                    Swal.fire('Error!', 'Gagal menghapus transaksi', 'error');
+                }
+            }
+        }
+// Render transactions (desktop table + mobile cards) dengan itemDescription
+function renderTransactions() {
+    const tbody = document.getElementById('transactions-table');
+    const mobileContainer = document.getElementById('transactions-mobile');
+    tbody.innerHTML = '';
+    mobileContainer.innerHTML = '';
+
+    const list = filteredTransactions || [];
+
+    if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">Tidak ada transaksi</td></tr>';
+        mobileContainer.innerHTML = '<div class="bg-white rounded-xl p-6 text-center text-gray-500">Tidak ada transaksi</div>';
+        return;
+    }
+
+    list.forEach(t => {
+        const tanggal = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate() : (t.createdAt instanceof Date ? t.createdAt : null);
+        const tanggalText = tanggal ? tanggal.toLocaleString('id-ID') : '-';
+        const itemDescription = t.itemDescription && t.itemDescription !== '-' ? t.itemDescription : '';
+
+        // Tampilkan total sesuai tipe
+        const amountNumber = Number(t.total || 0);
+        const displayTotal = t.type === 'pengeluaran'
+            ? `-Rp ${Math.abs(amountNumber).toLocaleString('id-ID')}`
+            : `Rp ${Math.abs(amountNumber).toLocaleString('id-ID')}`;
+
+        // --- Desktop row ---
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 transition';
+        tr.innerHTML = `
+            <td class="px-6 py-4 text-sm text-gray-800 font-medium">${t.customerName || '-'}</td>
+            <td class="px-6 py-4 text-sm text-gray-600">${itemDescription}</td>
+            <td class="px-6 py-4 text-sm font-semibold text-gray-800">${displayTotal}</td>
+            <td class="px-6 py-4 text-sm">
+                <span class="status-badge ${t.type === 'pengeluaran' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}">
+                    ${t.type === 'pengeluaran' ? 'Pengeluaran' : 'Pemasukan'}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-500">${tanggalText}</td>
+            <td class="px-6 py-4 text-center text-sm">
+                <div class="flex items-center justify-center gap-2">
+                    <button onclick="editTransaction('${t.id}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteTransaction('${t.id}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
+        `;
+        tbody.appendChild(tr);
+
+        // --- Mobile card ---
+        const card = document.createElement('div');
+        card.className = "bg-white p-4 rounded-xl shadow-sm mb-3";
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <h4 class="font-semibold text-gray-800">${t.customerName || '-'}</h4>
+                    <p class="text-xs text-gray-500">${itemDescription}</p>
+                </div>
+                <div class="text-right">
+                    <div class="font-bold text-gray-800">${displayTotal}</div>
+                    <div class="text-xs text-gray-500">${tanggalText}</div>
+                </div>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="status-badge ${t.type === 'pengeluaran' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}">
+                    ${t.type === 'pengeluaran' ? 'Pengeluaran' : 'Pemasukan'}
+                </span>
+                <div class="flex gap-2">
+                    <button onclick="editTransaction('${t.id}')" class="text-blue-600 text-sm"><i class="fas fa-edit"></i></button>
+                    <button onclick="deleteTransaction('${t.id}')" class="text-red-600 text-sm"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+        mobileContainer.appendChild(card);
+    });
+}
+
+
+
+
+        // Filtering & search
+        window.filterTransactions = function() {
+            const status = document.getElementById('filter-status').value;
+            const date = document.getElementById('filter-date').value; // format YYYY-MM-DD
+            const keyword = document.getElementById('search-customer').value?.trim().toLowerCase() || '';
+
+            filteredTransactions = transactions.filter(t => {
+                let ok = true;
+                if (status && status !== 'all') ok = ok && (t.status === status);
+                if (date) {
+                    const created = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate() : (t.createdAt instanceof Date ? t.createdAt : null);
+                    if (created) {
+                        const createdDateStr = created.toISOString().split('T')[0];
+                        ok = ok && (createdDateStr === date);
+                    } else {
+                        ok = false;
+                    }
+                }
+                if (keyword) {
+                    const name = (t.customerName || '').toLowerCase();
+                    const orderId = (t.orderId || '').toLowerCase();
+                    ok = ok && (name.includes(keyword) || orderId.includes(keyword));
+                }
+                return ok;
+            });
+
+            renderTransactions();
+        }
+
+        window.resetFilters = function() {
+            document.getElementById('filter-status').value = 'all';
+            document.getElementById('filter-date').value = '';
+            document.getElementById('search-customer').value = '';
+            filteredTransactions = [...transactions];
+            renderTransactions();
+        }
+
+        // Export filtered transactions to CSV
+        window.exportTransactions = function() {
+            const list = filteredTransactions.length ? filteredTransactions : transactions;
+            if (!list || list.length === 0) {
+                Swal.fire('Info', 'Tidak ada data untuk diekspor', 'info');
+                return;
+            }
+
+            const headers = ['orderId','customerName','customerPhone','deliveryAddress','itemDescription','total','status','createdAt','updatedAt','notes'];
+            const rows = list.map(t => {
+                const created = t.createdAt && t.createdAt.toDate ? t.createdAt.toDate() : (t.createdAt instanceof Date ? t.createdAt : null);
+                const updated = t.updatedAt && t.updatedAt.toDate ? t.updatedAt.toDate() : (t.updatedAt instanceof Date ? t.updatedAt : null);
+                return [
+                    `"${(t.orderId||'').replace(/"/g,'""')}"`,
+                    `"${(t.customerName||'').replace(/"/g,'""')}"`,
+                    `"${(t.customerPhone||'').replace(/"/g,'""')}"`,
+                    `"${(t.deliveryAddress||'').replace(/"/g,'""')}"`,
+                    `"${(t.itemDescription||'').replace(/"/g,'""')}"`,
+                    `${Number(t.total||0)}`,
+                    `"${(t.status||'').replace(/"/g,'""')}"`,
+                    `"${created ? created.toISOString() : ''}"`,
+                    `"${updated ? updated.toISOString() : ''}"`,
+                    `"${(t.notes||'').replace(/"/g,'""')}"`
+                ].join(',');
+            });
+
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const datePart = new Date().toISOString().split('T')[0];
+            a.download = `transactions_${datePart}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        // Ensure initial section visible
+        window.addEventListener('DOMContentLoaded', () => {
+            showSection('dashboard');
+        });
+    </script>
+</body>
+</html>
