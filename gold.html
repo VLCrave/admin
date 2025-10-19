@@ -2,45 +2,36 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>VL GOLD - Harga Emas Realtime</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    html, body {
-      scroll-behavior: smooth;
-      -webkit-font-smoothing: antialiased;
-    }
+    html, body { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
   </style>
 </head>
-<body class="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-10">
+<body class="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white flex flex-col items-center min-h-screen p-4 sm:p-6 md:p-10">
 
   <!-- Header -->
   <header class="text-center mb-8 sm:mb-10">
     <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-yellow-400 drop-shadow-lg">
       💎 VL GOLD - Harga Emas Realtime
     </h1>
-    <p class="text-gray-400 text-sm sm:text-base mt-2">Data diperbarui otomatis setiap 1 menit</p>
+    <p class="text-gray-400 text-sm sm:text-base mt-2">Update otomatis setiap 1 menit</p>
   </header>
 
-  <!-- Card Harga -->
-  <section class="w-full max-w-sm sm:max-w-md md:max-w-lg bg-gray-900 rounded-2xl shadow-2xl border border-yellow-500 overflow-hidden transform transition hover:scale-[1.01]">
-    <table class="w-full text-center text-sm sm:text-base md:text-lg">
+  <!-- Tabel Harga -->
+  <section class="w-full max-w-3xl bg-gray-900 rounded-2xl shadow-2xl border border-yellow-500 overflow-hidden">
+    <table class="w-full text-center text-xs sm:text-sm md:text-base">
       <thead class="bg-yellow-500 text-black font-semibold">
         <tr>
-          <th class="py-3 sm:py-4">Tipe</th>
-          <th class="py-3 sm:py-4">Harga (Rupiah / gram)</th>
+          <th class="py-3 sm:py-4">Karat</th>
+          <th class="py-3 sm:py-4">Harga Beli</th>
+          <th class="py-3 sm:py-4">BuyBack (-5%)</th>
         </tr>
       </thead>
-      <tbody>
-        <tr class="border-b border-yellow-600">
-          <td class="py-3 sm:py-4 font-medium">Beli</td>
-          <td id="price" class="py-3 sm:py-4 text-yellow-300">Memuat...</td>
-        </tr>
-        <tr>
-          <td class="py-3 sm:py-4 font-medium">Buyback (-5%)</td>
-          <td id="buyback" class="py-3 sm:py-4 text-yellow-200">Memuat...</td>
-        </tr>
+      <tbody id="goldTable" class="divide-y divide-yellow-700">
+        <tr><td colspan="3" class="py-4 text-gray-400">Memuat data...</td></tr>
       </tbody>
     </table>
   </section>
@@ -68,9 +59,9 @@
   </section>
 
   <!-- Footer -->
-  <footer class="text-center text-gray-400 text-xs sm:text-sm mt-8 sm:mt-10">
-    <p id="update-time" class="transition-opacity duration-300">⏳ Mengambil data...</p>
-    <p class="mt-2 opacity-70">© 2025 VL GOLD | Powered by apised.com</p>
+  <footer class="text-center text-gray-400 text-xs sm:text-sm mt-8 sm:mt-10 pb-4">
+    <p id="update-time" class="transition-opacity duration-300 mb-1">⏳ Mengambil data...</p>
+    <p class="opacity-80">Powered by <span class="text-yellow-400 font-semibold">VLCRAVE❤️</span></p>
   </footer>
 
   <script>
@@ -96,15 +87,34 @@
         );
         const result = await response.json();
 
-        const priceUSD = result?.data?.metal_prices?.XAU?.price;
-        const kursIDR = result?.data?.currency_rates?.IDR;
-        if (!priceUSD || !kursIDR) throw new Error("Data tidak tersedia");
+        const data = result?.data;
+        const metal = data?.metal_prices?.XAU;
+        const kursIDR = data?.currency_rates?.IDR;
+        if (!metal || !kursIDR) throw new Error("Data tidak tersedia");
 
-        hargaEmas = priceUSD * kursIDR;
-        const buyback = hargaEmas * 0.95;
+        // Hitung harga tiap karat dalam Rupiah
+        const karatData = [
+          { karat: "24K", harga: metal.price_24k * kursIDR },
+          { karat: "22K", harga: metal.price_22k * kursIDR },
+          { karat: "21K", harga: metal.price_21k * kursIDR },
+          { karat: "20K", harga: metal.price_20k * kursIDR },
+          { karat: "18K", harga: metal.price_18k * kursIDR },
+          { karat: "16K", harga: metal.price_16k * kursIDR },
+          { karat: "14K", harga: metal.price_14k * kursIDR },
+          { karat: "10K", harga: metal.price_10k * kursIDR },
+        ];
 
-        document.getElementById("price").textContent = formatRupiah(hargaEmas);
-        document.getElementById("buyback").textContent = formatRupiah(buyback);
+        hargaEmas = karatData[0].harga;
+
+        const tbody = document.getElementById("goldTable");
+        tbody.innerHTML = karatData.map(item => `
+          <tr class="hover:bg-yellow-500/10 transition">
+            <td class="py-3 sm:py-4 font-medium">${item.karat}</td>
+            <td class="py-3 sm:py-4 text-yellow-300">${formatRupiah(item.harga)}</td>
+            <td class="py-3 sm:py-4 text-yellow-200">${formatRupiah(item.harga * 0.95)}</td>
+          </tr>
+        `).join("");
+
         document.getElementById("update-time").textContent =
           "Terakhir diperbarui: " + new Date().toLocaleTimeString("id-ID");
 
@@ -147,10 +157,7 @@
       document.getElementById("result").classList.remove("hidden");
     }
 
-    // Load pertama
     getGoldPrice();
-
-    // Auto update tiap 1 menit
     setInterval(() => getGoldPrice(true), 60000);
   </script>
 </body>
