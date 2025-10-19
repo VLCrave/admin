@@ -3,23 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Harga Emas Real-time - VL Gold</title>
+  <title>VL Gold - Harga Emas Real-time</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      background: linear-gradient(160deg, #fff9c4, #fde68a);
+      font-family: 'Poppins', sans-serif;
+    }
+    .title-glow {
+      background: linear-gradient(to right, #facc15, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-yellow-50 to-yellow-100 min-h-screen flex flex-col items-center p-4">
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
 
-  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-6 mt-6">
-    <h1 class="text-2xl md:text-3xl font-bold text-center text-yellow-700 mb-2">💰 Harga Emas Real-time</h1>
-    <p class="text-center text-gray-600 mb-6">Data otomatis diperbarui dari API Apised</p>
+  <!-- Header -->
+  <h1 class="text-3xl md:text-4xl font-extrabold text-center title-glow mb-2">💰 Harga Emas Real-time</h1>
+  <p class="text-center text-gray-600 mb-8">Powered by <span class="text-yellow-600 font-semibold">VLCRAVE ❤️</span></p>
+
+  <!-- Card utama -->
+  <div class="w-full max-w-3xl bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl p-6 md:p-8">
+
+    <!-- Tabel Harga -->
+    <div class="mb-8">
+      <h2 class="text-xl font-semibold text-yellow-700 mb-4">📊 Tabel Harga Emas</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-center border border-yellow-300 rounded-xl overflow-hidden shadow-md">
+          <thead class="bg-yellow-300 text-yellow-900">
+            <tr>
+              <th class="py-3 px-4">Karat</th>
+              <th class="py-3 px-4">Harga Beli (Rp)</th>
+              <th class="py-3 px-4">Harga Jual (Rp)</th>
+            </tr>
+          </thead>
+          <tbody id="hargaTabel" class="bg-white/80 text-gray-800"></tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- Kalkulator -->
-    <div class="bg-yellow-50 p-4 rounded-lg mb-6">
-      <h2 class="text-lg font-semibold text-yellow-700 mb-3">🔢 Kalkulator Emas</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-5">
+      <h2 class="text-xl font-semibold text-yellow-700 mb-4">🔢 Kalkulator Emas</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label class="block text-sm text-gray-600">Karat</label>
-          <select id="karatSelect" class="w-full border border-yellow-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+          <label class="block text-sm text-gray-700 mb-1">Karat</label>
+          <select id="karatSelect" class="w-full border border-yellow-300 rounded-lg p-2.5 focus:ring-2 focus:ring-yellow-400">
             <option value="24">24K</option>
             <option value="22">22K</option>
             <option value="21">21K</option>
@@ -31,47 +62,36 @@
           </select>
         </div>
         <div>
-          <label class="block text-sm text-gray-600">Berat (gram)</label>
-          <input type="number" id="beratInput" placeholder="contoh: 10" class="w-full border border-yellow-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+          <label class="block text-sm text-gray-700 mb-1">Berat (gram)</label>
+          <input id="beratInput" type="number" placeholder="contoh: 10" class="w-full border border-yellow-300 rounded-lg p-2.5 focus:ring-2 focus:ring-yellow-400">
         </div>
         <div class="flex items-end">
-          <button onclick="hitungTotal()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 rounded-lg">Hitung Total</button>
+          <button onclick="hitungTotal()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all">
+            Hitung Total
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Tabel Harga -->
-    <div class="overflow-x-auto">
-      <table class="w-full text-center border border-yellow-200 rounded-lg">
-        <thead class="bg-yellow-200 text-yellow-900">
-          <tr>
-            <th class="py-2 px-3">Karat</th>
-            <th class="py-2 px-3">Harga Beli (Rp)</th>
-            <th class="py-2 px-3">Harga Jual (Rp)</th>
-          </tr>
-        </thead>
-        <tbody id="hargaTabel" class="text-gray-700"></tbody>
-      </table>
-    </div>
   </div>
 
-  <p class="mt-4 text-sm text-gray-500 text-center">Powered by <span class="text-yellow-600 font-semibold">VLCRAVE ❤️</span></p>
+  <p class="mt-6 text-sm text-gray-600">Update otomatis setiap 2 menit ⏱️</p>
 
   <script>
     const API_KEY = "sk_B548040a24c6C7B84065Fc21c667112E229525E5564D83Dc";
     const API_URL = "https://gold.g.apised.com/v1/latest?metals=XAU&base_currency=USD&currencies=IDR&weight_unit=gram";
+    let hargaData = {};
 
     async function ambilHarga() {
       try {
-        const response = await fetch(API_URL, {
-          headers: { "x-api-key": API_KEY },
-        });
+        const response = await fetch(API_URL, { headers: { "x-api-key": API_KEY } });
         const result = await response.json();
 
         if (result.status !== "success") throw new Error("Data tidak valid");
 
         const data = result.data.metal_prices.XAU;
         const kurs = result.data.currency_rates.IDR;
+
         const karatList = [
           { k: 24, v: data.price_24k },
           { k: 22, v: data.price_22k },
@@ -84,24 +104,27 @@
         ];
 
         let html = "";
+        hargaData = {};
         karatList.forEach(i => {
           const hargaBeli = i.v * kurs;
-          const hargaJual = hargaBeli * 0.95; // buyback -5%
+          const hargaJual = hargaBeli * 0.95; // jual = potongan 5%
+          hargaData[i.k] = hargaBeli;
           html += `
-            <tr class="border-t border-yellow-100">
-              <td class="py-2">${i.k}K</td>
-              <td class="py-2 font-semibold text-yellow-700">Rp ${hargaBeli.toLocaleString("id-ID")}</td>
-              <td class="py-2 text-gray-600">Rp ${hargaJual.toLocaleString("id-ID")}</td>
+            <tr class="hover:bg-yellow-50 border-t border-yellow-100 transition">
+              <td class="py-3 font-medium">${i.k}K</td>
+              <td class="py-3 text-yellow-700 font-semibold">Rp ${hargaBeli.toLocaleString("id-ID")}</td>
+              <td class="py-3 text-gray-600">Rp ${hargaJual.toLocaleString("id-ID")}</td>
             </tr>
           `;
         });
 
         document.getElementById("hargaTabel").innerHTML = html;
-      } catch (e) {
+
+      } catch (err) {
         Swal.fire({
           icon: "error",
           title: "Gagal Memuat Data",
-          text: "Silakan coba lagi nanti.",
+          text: "Pastikan koneksi internet stabil.",
           confirmButtonColor: "#facc15"
         });
       }
@@ -110,7 +133,6 @@
     function hitungTotal() {
       const berat = parseFloat(document.getElementById("beratInput").value);
       const karat = document.getElementById("karatSelect").value;
-      const tabel = document.getElementById("hargaTabel").getElementsByTagName("tr");
 
       if (!berat || berat <= 0) {
         Swal.fire({
@@ -121,23 +143,28 @@
         return;
       }
 
-      for (let row of tabel) {
-        const colKarat = row.cells[0].textContent.replace("K", "");
-        if (colKarat === karat) {
-          const hargaBeli = parseInt(row.cells[1].textContent.replace(/[^0-9]/g, ""));
-          const total = hargaBeli * berat;
-          Swal.fire({
-            icon: "success",
-            title: `${berat} gram ${karat}K`,
-            html: `<b>Total Nilai:</b> Rp ${total.toLocaleString("id-ID")}`,
-            confirmButtonColor: "#facc15"
-          });
-          break;
-        }
+      const hargaPerGram = hargaData[karat];
+      if (!hargaPerGram) {
+        Swal.fire({
+          icon: "error",
+          title: "Data harga belum tersedia!",
+          confirmButtonColor: "#facc15"
+        });
+        return;
       }
+
+      const total = hargaPerGram * berat;
+      Swal.fire({
+        icon: "success",
+        title: `${berat} gram ${karat}K`,
+        html: `<b>Total Harga:</b> Rp ${total.toLocaleString("id-ID")}`,
+        confirmButtonColor: "#facc15"
+      });
     }
 
     ambilHarga();
+    setInterval(ambilHarga, 120000); // auto-refresh tiap 2 menit
   </script>
+
 </body>
 </html>
