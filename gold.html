@@ -1,56 +1,77 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VL GOLD - Realtime Harga Emas</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>VL GOLD - Harga Emas Realtime</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    html, body {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-5">
+<body class="bg-gradient-to-br from-black via-gray-900 to-gray-800 text-white flex flex-col items-center justify-center min-h-screen p-4 sm:p-6 md:p-10">
 
-  <h1 class="text-3xl font-bold text-yellow-400 mb-6 drop-shadow-lg">💎 VL GOLD - Realtime Harga Emas</h1>
+  <!-- Header -->
+  <header class="text-center mb-8 sm:mb-10">
+    <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-yellow-400 drop-shadow-lg">
+      💎 VL GOLD - Harga Emas Realtime
+    </h1>
+    <p class="text-gray-400 text-sm sm:text-base mt-2">Data diperbarui otomatis setiap 1 menit</p>
+  </header>
 
-  <div class="w-full max-w-md bg-gray-900 rounded-2xl shadow-2xl border border-yellow-500 overflow-hidden">
-    <table class="w-full text-center text-lg">
+  <!-- Card Harga -->
+  <section class="w-full max-w-sm sm:max-w-md md:max-w-lg bg-gray-900 rounded-2xl shadow-2xl border border-yellow-500 overflow-hidden transform transition hover:scale-[1.01]">
+    <table class="w-full text-center text-sm sm:text-base md:text-lg">
       <thead class="bg-yellow-500 text-black font-semibold">
         <tr>
-          <th class="py-3">Tipe</th>
-          <th class="py-3">Harga (Rupiah / gram)</th>
+          <th class="py-3 sm:py-4">Tipe</th>
+          <th class="py-3 sm:py-4">Harga (Rupiah / gram)</th>
         </tr>
       </thead>
       <tbody>
         <tr class="border-b border-yellow-600">
-          <td class="py-4 font-medium">Beli</td>
-          <td id="price" class="py-4 text-yellow-300">Memuat...</td>
+          <td class="py-3 sm:py-4 font-medium">Beli</td>
+          <td id="price" class="py-3 sm:py-4 text-yellow-300">Memuat...</td>
         </tr>
         <tr>
-          <td class="py-4 font-medium">Buyback (-5%)</td>
-          <td id="buyback" class="py-4 text-yellow-200">Memuat...</td>
+          <td class="py-3 sm:py-4 font-medium">Buyback (-5%)</td>
+          <td id="buyback" class="py-3 sm:py-4 text-yellow-200">Memuat...</td>
         </tr>
       </tbody>
     </table>
-  </div>
+  </section>
 
-  <div class="w-full max-w-md bg-gray-900 rounded-xl mt-8 p-6 border border-yellow-500 shadow-lg">
-    <h2 class="text-xl font-semibold text-yellow-400 mb-4">💰 Kalkulator Emas</h2>
-    <label for="gram" class="block text-gray-300 mb-2">Masukkan berat emas (gram):</label>
+  <!-- Kalkulator -->
+  <section class="w-full max-w-sm sm:max-w-md md:max-w-lg bg-gray-900 rounded-xl mt-8 sm:mt-10 p-5 sm:p-6 md:p-8 border border-yellow-500 shadow-lg">
+    <h2 class="text-lg sm:text-xl md:text-2xl font-semibold text-yellow-400 mb-4 text-center">
+      💰 Kalkulator Emas
+    </h2>
+
+    <label for="gram" class="block text-gray-300 mb-2 text-sm sm:text-base">Masukkan berat emas (gram):</label>
     <input id="gram" type="number" min="0" step="0.01"
-           class="w-full p-3 rounded-lg text-black font-medium focus:ring-2 focus:ring-yellow-500 outline-none"
+           class="w-full p-3 rounded-lg text-black font-medium focus:ring-2 focus:ring-yellow-500 outline-none text-base sm:text-lg"
            placeholder="Contoh: 5" />
 
     <button onclick="calculateTotal()"
-            class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 mt-4 rounded-lg transition">
+            class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-semibold py-3 sm:py-4 mt-4 rounded-lg transition active:scale-95">
       Hitung Total
     </button>
 
-    <div id="result" class="mt-5 text-center text-lg hidden">
+    <div id="result" class="mt-5 sm:mt-6 text-center text-sm sm:text-base md:text-lg hidden">
       <p>💎 Total Harga Beli: <span id="totalBuy" class="text-yellow-300 font-semibold"></span></p>
       <p>💵 Total Buyback: <span id="totalSell" class="text-yellow-200 font-semibold"></span></p>
     </div>
-  </div>
+  </section>
 
-  <p id="update-time" class="text-sm text-gray-400 mt-5">⏳ Mengambil data...</p>
+  <!-- Footer -->
+  <footer class="text-center text-gray-400 text-xs sm:text-sm mt-8 sm:mt-10">
+    <p id="update-time" class="transition-opacity duration-300">⏳ Mengambil data...</p>
+    <p class="mt-2 opacity-70">© 2025 VL GOLD | Powered by apised.com</p>
+  </footer>
 
   <script>
     const apiKey = "sk_63303748Bc577F24EE368E1Cdb3C60e5Fe6Cb6e90E2F27dB";
@@ -74,13 +95,15 @@
           { method: "GET", headers: headers }
         );
         const result = await response.json();
-        const xau = result?.rates?.XAU?.IDR?.price;
-        if (!xau) throw new Error("Data tidak tersedia");
 
-        hargaEmas = xau;
-        const buyback = xau * 0.95;
+        const priceUSD = result?.data?.metal_prices?.XAU?.price;
+        const kursIDR = result?.data?.currency_rates?.IDR;
+        if (!priceUSD || !kursIDR) throw new Error("Data tidak tersedia");
 
-        document.getElementById("price").textContent = formatRupiah(xau);
+        hargaEmas = priceUSD * kursIDR;
+        const buyback = hargaEmas * 0.95;
+
+        document.getElementById("price").textContent = formatRupiah(hargaEmas);
         document.getElementById("buyback").textContent = formatRupiah(buyback);
         document.getElementById("update-time").textContent =
           "Terakhir diperbarui: " + new Date().toLocaleTimeString("id-ID");
@@ -127,7 +150,7 @@
     // Load pertama
     getGoldPrice();
 
-    // Update otomatis tiap 1 menit
+    // Auto update tiap 1 menit
     setInterval(() => getGoldPrice(true), 60000);
   </script>
 </body>
