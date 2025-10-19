@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cek API Gold</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white p-5 font-mono">
+  <h1 class="text-yellow-400 text-xl mb-3 font-bold">🔍 Cek Data API Emas</h1>
+  <pre id="output" class="bg-gray-900 p-3 rounded-lg overflow-auto text-sm"></pre>
+
+  <script>
+    const headers = new Headers();
+    headers.append("x-api-key", "sk_63303748Bc577F24EE368E1Cdb3C60e5Fe6Cb6e90E2F27dB");
+
+    fetch("https://gold.g.apised.com/v1/latest?metals=XAU&base_currency=USD&currencies=IDR&weight_unit=gram", {
+      method: "GET",
+      headers
+    })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        document.getElementById("output").textContent = "Error: " + err;
+      });
+  </script>
+</body>
+</html>
