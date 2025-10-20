@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>MT5 Dashboard - VLCRAVE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-start p-6">
+  <div class="w-full max-w-6xl mx-auto space-y-6">
+    <header class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">VLCRAVE Trading Dashboard</h1>
+      <div>
+        <button id="refreshBtn" class="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded mr-2">Refresh</button>
+        <button id="halfProfitBtn" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded mr-2">Close Half Profit</button>
+        <button id="halfLossBtn" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded">Close Half Loss</button>
+      </div>
+    </header>
+
+    <div class="bg-gray-800 rounded-lg p-4">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <div class="text-sm text-gray-400">Total Floating (pips)</div>
+          <div id="totalPips" class="text-2xl font-bold text-green-400">0 pips</div>
+        </div>
+        <div id="lastUpdated" class="text-sm text-gray-400">—</div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full table-auto text-sm">
+          <thead class="bg-gray-700 text-gray-200">
+            <tr>
+              <th class="px-3 py-2">Ticket</th>
+              <th class="px-3 py-2">Symbol</th>
+              <th class="px-3 py-2">Type</th>
+              <th class="px-3 py-2">Volume</th>
+              <th class="px-3 py-2">Open</th>
+              <th class="px-3 py-2">Now</th>
+              <th class="px-3 py-2">Profit (USD)</th>
+              <th class="px-3 py-2">Profit (pips)</th>
+              <th class="px-3 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="posBody" class="text-center"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_BASE = "http://localhost:5000"; // sesuaikan jika server di IP lain
+
+async function fetchPositions() {
+  try {
+    const r = await fetch(API_BASE + "/positions");
+    const j = await r.json();
+    if (j.status !== "ok") throw new Error(j.message || "failed");
+    renderPositions(j.positions, j.total_pips);
+  } catch (err) {
+    console.error(err);
+    Swal.fire({ icon:'error', title:'Error', text: err.message || 'Failed' });
+  }
+}
+
+function renderPositions(positions, total_pips) {
+  const tbody = document.getElementById("posBody");
+  tbody.innerHTML = "";
+  if (!positions || positions.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='9' class='py-6 text-gray-400'>No open positions</td></tr>";
+    document.getElementById("totalPips").textContent = "0 pips";
+    return;
+  }
+  let total = 0;
+  positions.forEach(p => {
+    total += (p.pips || 0);
+    const profitClass = p.profit >= 0 ? 'text-green-400' : 'text-red-400';
+    const pipsClass = (p.pips >= 0) ? 'text-green-400' : 'text-red-400';
+    tbody.innerHTML += `
+      <tr class="border-b border-gray-700">
+        <td class="px-3 py-2">${p.ticket}</td>
+        <td class="px-3 py-2 font-medium">${p.symbol}</td>
+        <td class="px-3 py-2">${p.type}</td>
+        <td class="px-3 py-2">${p.volume}</td>
+        <td class="px-3 py-2">${p.price_open}</td>
+        <td class="px-3 py-2">${p.current_price ?? '-'}</td>
+        <td class="px-3 py-2 ${profitClass}">${Number(p.profit).toFixed(2)}</td>
+        <td class="px-3 py-2 ${pipsClass}">${p.pips ?? '-'}</td>
+        <td class="px-3 py-2">
+          <button onclick="closeFull(${p.ticket})" class="bg-red-500 px-2 py-1 rounded mr-1">Close</button>
+          <button onclick="closeHalfTicket(${p.ticket})" class="bg-yellow-500 px-2 py-1 rounded">Close Half</button>
+        </td>
+      </tr>
+    `;
+  });
+  document.getElementById("totalPips").textContent = (total>=0? '+' : '') + total.toFixed(2) + " pips";
+  document.getElementById("lastUpdated").textContent = new Date().toLocaleTimeString();
+}
+
+async function closeFull(ticket) {
+  const {value:confirmed} = await Swal.fire({
+    title: 'Close Full?',
+    text: 'Tutup posisi penuh?',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, close',
+    icon: 'warning'
+  });
+  if (!confirmed) return;
+  const res = await fetch(API_BASE + "/close", { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ticket})});
+  const j = await res.json();
+  Swal.fire({icon: j.status==='ok' ? 'success' : 'error', title: j.status==='ok' ? 'Closed' : 'Error', text: JSON.stringify(j.result||j.message)});
+  fetchPositions();
+}
+
+async function closeHalfTicket(ticket) {
+  const {value:confirmed} = await Swal.fire({
+    title: 'Close Half for this ticket?',
+    text: 'Close 50% volume of this position?',
+    showCancelButton: true,
+    confirmButtonText: 'Yes',
+    icon: 'question'
+  });
+  if (!confirmed) return;
+  const res = await fetch(API_BASE + "/close_partial", { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ticket, fraction: 0.5})});
+  const j = await res.json();
+  Swal.fire({icon: j.status==='ok' ? 'success' : 'error', title: j.status==='ok' ? 'Partial Closed' : 'Error', text: j.message || JSON.stringify(j.result||j)});
+  fetchPositions();
+}
+
+document.getElementById("refreshBtn").addEventListener("click", fetchPositions);
+document.getElementById("halfProfitBtn").addEventListener("click", async ()=>{
+  const r = await Swal.fire({title:'Close Half Profit?', text:'Close half from smallest-profit to largest-profit', showCancelButton:true, icon:'question'});
+  if (!r.isConfirmed) return;
+  const res = await fetch(API_BASE + "/close_half_profit", {method:'POST'});
+  const j = await res.json();
+  if (j.status === 'ok') Swal.fire({icon:'success', title:'Done', text: 'Actions: ' + j.actions.length});
+  else Swal.fire({icon:'error', title:'Error', text: j.message});
+  fetchPositions();
+});
+document.getElementById("halfLossBtn").addEventListener("click", async ()=>{
+  const r = await Swal.fire({title:'Close Half Loss?', text:'Cut half from largest-loss to smallest', showCancelButton:true, icon:'warning'});
+  if (!r.isConfirmed) return;
+  const res = await fetch(API_BASE + "/close_half_loss", {method:'POST'});
+  const j = await res.json();
+  if (j.status === 'ok') Swal.fire({icon:'success', title:'Done', text: 'Actions: ' + j.actions.length});
+  else Swal.fire({icon:'error', title:'Error', text: j.message});
+  fetchPositions();
+});
+
+// initial
+fetchPositions();
+setInterval(fetchPositions, 5000); // poll every 5s
+</script>
+</body>
+</html>
