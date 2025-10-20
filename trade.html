@@ -1,155 +1,118 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="id">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>MT5 Dashboard - VLCRAVE</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trading Dashboard - MT5</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    html, body { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-start p-6">
-  <div class="w-full max-w-6xl mx-auto space-y-6">
-    <header class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold">VLCRAVE Trading Dashboard</h1>
-      <div>
-        <button id="refreshBtn" class="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded mr-2">Refresh</button>
-        <button id="halfProfitBtn" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded mr-2">Close Half Profit</button>
-        <button id="halfLossBtn" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded">Close Half Loss</button>
-      </div>
-    </header>
+<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white min-h-screen p-4 sm:p-6 flex flex-col items-center">
 
-    <div class="bg-gray-800 rounded-lg p-4">
-      <div class="flex justify-between items-center mb-4">
-        <div>
-          <div class="text-sm text-gray-400">Total Floating (pips)</div>
-          <div id="totalPips" class="text-2xl font-bold text-green-400">0 pips</div>
-        </div>
-        <div id="lastUpdated" class="text-sm text-gray-400">—</div>
-      </div>
+  <!-- Header -->
+  <header class="w-full max-w-4xl text-center mb-8">
+    <h1 class="text-2xl sm:text-4xl font-bold text-yellow-400 drop-shadow-lg">
+      💹 VL Trade Monitor
+    </h1>
+    <p class="text-gray-400 mt-2 text-sm sm:text-base">Terhubung ke MetaTrader 5 — Real-time Order Overview</p>
+  </header>
 
-      <div class="overflow-x-auto">
-        <table class="w-full table-auto text-sm">
-          <thead class="bg-gray-700 text-gray-200">
-            <tr>
-              <th class="px-3 py-2">Ticket</th>
-              <th class="px-3 py-2">Symbol</th>
-              <th class="px-3 py-2">Type</th>
-              <th class="px-3 py-2">Volume</th>
-              <th class="px-3 py-2">Open</th>
-              <th class="px-3 py-2">Now</th>
-              <th class="px-3 py-2">Profit (USD)</th>
-              <th class="px-3 py-2">Profit (pips)</th>
-              <th class="px-3 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="posBody" class="text-center"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+  <!-- Total Profit/Loss -->
+  <section class="w-full max-w-3xl bg-gray-900 border border-yellow-500 rounded-2xl shadow-lg p-5 sm:p-6 mb-6 text-center">
+    <h2 class="text-lg sm:text-xl font-semibold text-yellow-400 mb-2">Total Profit/Loss</h2>
+    <p id="totalPL" class="text-3xl sm:text-4xl font-extrabold">+0.00 pips</p>
+  </section>
 
-<script>
-const API_BASE = "http://localhost:5000"; // sesuaikan jika server di IP lain
+  <!-- Table Open Orders -->
+  <section class="w-full max-w-4xl bg-gray-900 border border-yellow-500 rounded-2xl shadow-lg overflow-hidden">
+    <table class="w-full text-xs sm:text-sm md:text-base text-center">
+      <thead class="bg-yellow-500 text-black font-semibold">
+        <tr>
+          <th class="py-3">Symbol</th>
+          <th class="py-3">Type</th>
+          <th class="py-3">Lot</th>
+          <th class="py-3">Open Price</th>
+          <th class="py-3">Current</th>
+          <th class="py-3">P/L (pips)</th>
+        </tr>
+      </thead>
+      <tbody id="ordersTable" class="divide-y divide-yellow-700">
+        <tr><td colspan="6" class="py-4 text-gray-400">Memuat data...</td></tr>
+      </tbody>
+    </table>
+  </section>
 
-async function fetchPositions() {
-  try {
-    const r = await fetch(API_BASE + "/positions");
-    const j = await r.json();
-    if (j.status !== "ok") throw new Error(j.message || "failed");
-    renderPositions(j.positions, j.total_pips);
-  } catch (err) {
-    console.error(err);
-    Swal.fire({ icon:'error', title:'Error', text: err.message || 'Failed' });
-  }
-}
+  <!-- Actions -->
+  <section class="w-full max-w-4xl flex flex-col sm:flex-row justify-center gap-3 sm:gap-5 mt-6">
+    <button onclick="closeAll()" class="bg-red-600 hover:bg-red-500 text-white font-semibold px-5 py-3 rounded-lg shadow active:scale-95 transition">🚫 Close All</button>
+    <button onclick="closeHalfProfit()" class="bg-green-600 hover:bg-green-500 text-white font-semibold px-5 py-3 rounded-lg shadow active:scale-95 transition">💰 Close Half Profit</button>
+    <button onclick="closeHalfLoss()" class="bg-yellow-600 hover:bg-yellow-500 text-white font-semibold px-5 py-3 rounded-lg shadow active:scale-95 transition">📉 Close Half Loss</button>
+  </section>
 
-function renderPositions(positions, total_pips) {
-  const tbody = document.getElementById("posBody");
-  tbody.innerHTML = "";
-  if (!positions || positions.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='9' class='py-6 text-gray-400'>No open positions</td></tr>";
-    document.getElementById("totalPips").textContent = "0 pips";
-    return;
-  }
-  let total = 0;
-  positions.forEach(p => {
-    total += (p.pips || 0);
-    const profitClass = p.profit >= 0 ? 'text-green-400' : 'text-red-400';
-    const pipsClass = (p.pips >= 0) ? 'text-green-400' : 'text-red-400';
-    tbody.innerHTML += `
-      <tr class="border-b border-gray-700">
-        <td class="px-3 py-2">${p.ticket}</td>
-        <td class="px-3 py-2 font-medium">${p.symbol}</td>
-        <td class="px-3 py-2">${p.type}</td>
-        <td class="px-3 py-2">${p.volume}</td>
-        <td class="px-3 py-2">${p.price_open}</td>
-        <td class="px-3 py-2">${p.current_price ?? '-'}</td>
-        <td class="px-3 py-2 ${profitClass}">${Number(p.profit).toFixed(2)}</td>
-        <td class="px-3 py-2 ${pipsClass}">${p.pips ?? '-'}</td>
-        <td class="px-3 py-2">
-          <button onclick="closeFull(${p.ticket})" class="bg-red-500 px-2 py-1 rounded mr-1">Close</button>
-          <button onclick="closeHalfTicket(${p.ticket})" class="bg-yellow-500 px-2 py-1 rounded">Close Half</button>
-        </td>
-      </tr>
-    `;
-  });
-  document.getElementById("totalPips").textContent = (total>=0? '+' : '') + total.toFixed(2) + " pips";
-  document.getElementById("lastUpdated").textContent = new Date().toLocaleTimeString();
-}
+  <!-- Footer -->
+  <footer class="text-center text-gray-400 text-xs sm:text-sm mt-10">
+    <p>Powered by <span class="text-yellow-400 font-semibold">VLCRAVE ❤️</span></p>
+  </footer>
 
-async function closeFull(ticket) {
-  const {value:confirmed} = await Swal.fire({
-    title: 'Close Full?',
-    text: 'Tutup posisi penuh?',
-    showCancelButton: true,
-    confirmButtonText: 'Yes, close',
-    icon: 'warning'
-  });
-  if (!confirmed) return;
-  const res = await fetch(API_BASE + "/close", { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ticket})});
-  const j = await res.json();
-  Swal.fire({icon: j.status==='ok' ? 'success' : 'error', title: j.status==='ok' ? 'Closed' : 'Error', text: JSON.stringify(j.result||j.message)});
-  fetchPositions();
-}
+  <script>
+    // Simulasi data (nanti diganti real API dari MT5)
+    const orders = [
+      { symbol: "XAUUSD", type: "BUY", lot: 0.10, open: 2400.50, current: 2403.00, pl: +25.0 },
+      { symbol: "EURUSD", type: "SELL", lot: 0.20, open: 1.0800, current: 1.0825, pl: -25.0 },
+      { symbol: "GBPUSD", type: "BUY", lot: 0.15, open: 1.2700, current: 1.2755, pl: +55.0 },
+      { symbol: "USDJPY", type: "SELL", lot: 0.10, open: 150.50, current: 150.80, pl: -30.0 },
+    ];
 
-async function closeHalfTicket(ticket) {
-  const {value:confirmed} = await Swal.fire({
-    title: 'Close Half for this ticket?',
-    text: 'Close 50% volume of this position?',
-    showCancelButton: true,
-    confirmButtonText: 'Yes',
-    icon: 'question'
-  });
-  if (!confirmed) return;
-  const res = await fetch(API_BASE + "/close_partial", { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ticket, fraction: 0.5})});
-  const j = await res.json();
-  Swal.fire({icon: j.status==='ok' ? 'success' : 'error', title: j.status==='ok' ? 'Partial Closed' : 'Error', text: j.message || JSON.stringify(j.result||j)});
-  fetchPositions();
-}
+    function renderOrders() {
+      const tbody = document.getElementById("ordersTable");
+      const totalPL = orders.reduce((a, b) => a + b.pl, 0);
+      document.getElementById("totalPL").textContent =
+        `${totalPL >= 0 ? "+" : ""}${totalPL.toFixed(2)} pips`;
 
-document.getElementById("refreshBtn").addEventListener("click", fetchPositions);
-document.getElementById("halfProfitBtn").addEventListener("click", async ()=>{
-  const r = await Swal.fire({title:'Close Half Profit?', text:'Close half from smallest-profit to largest-profit', showCancelButton:true, icon:'question'});
-  if (!r.isConfirmed) return;
-  const res = await fetch(API_BASE + "/close_half_profit", {method:'POST'});
-  const j = await res.json();
-  if (j.status === 'ok') Swal.fire({icon:'success', title:'Done', text: 'Actions: ' + j.actions.length});
-  else Swal.fire({icon:'error', title:'Error', text: j.message});
-  fetchPositions();
-});
-document.getElementById("halfLossBtn").addEventListener("click", async ()=>{
-  const r = await Swal.fire({title:'Close Half Loss?', text:'Cut half from largest-loss to smallest', showCancelButton:true, icon:'warning'});
-  if (!r.isConfirmed) return;
-  const res = await fetch(API_BASE + "/close_half_loss", {method:'POST'});
-  const j = await res.json();
-  if (j.status === 'ok') Swal.fire({icon:'success', title:'Done', text: 'Actions: ' + j.actions.length});
-  else Swal.fire({icon:'error', title:'Error', text: j.message});
-  fetchPositions();
-});
+      tbody.innerHTML = orders.map(o => `
+        <tr class="hover:bg-yellow-500/10 transition">
+          <td class="py-3">${o.symbol}</td>
+          <td class="py-3 ${o.type === 'BUY' ? 'text-green-400' : 'text-red-400'}">${o.type}</td>
+          <td class="py-3">${o.lot.toFixed(2)}</td>
+          <td class="py-3">${o.open}</td>
+          <td class="py-3">${o.current}</td>
+          <td class="py-3 font-bold ${o.pl >= 0 ? 'text-green-400' : 'text-red-400'}">${o.pl.toFixed(1)}</td>
+        </tr>
+      `).join("");
+    }
 
-// initial
-fetchPositions();
-setInterval(fetchPositions, 5000); // poll every 5s
-</script>
+    function closeAll() {
+      Swal.fire({
+        title: "Tutup Semua Posisi?",
+        text: "Semua order akan ditutup.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#9ca3af",
+        confirmButtonText: "Ya, tutup semua",
+      }).then((r) => {
+        if (r.isConfirmed) {
+          Swal.fire("Berhasil!", "Semua posisi telah ditutup.", "success");
+        }
+      });
+    }
+
+    function closeHalfProfit() {
+      const profitOrders = orders.filter(o => o.pl > 0).sort((a, b) => a.pl - b.pl);
+      const toClose = profitOrders.slice(0, Math.ceil(profitOrders.length / 2));
+      Swal.fire("✅ Half Profit Closed", `${toClose.length} posisi profit ditutup.`, "success");
+    }
+
+    function closeHalfLoss() {
+      const lossOrders = orders.filter(o => o.pl < 0).sort((a, b) => a.pl - b.pl).reverse();
+      const toClose = lossOrders.slice(0, Math.ceil(lossOrders.length / 2));
+      Swal.fire("⚠️ Half Loss Closed", `${toClose.length} posisi loss ditutup.`, "info");
+    }
+
+    renderOrders();
+  </script>
 </body>
 </html>
