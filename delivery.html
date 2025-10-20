@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLCrave Express - Layanan Delivery Terpercaya</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .active-nav {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .price-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .price-table th, .price-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        .price-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        .price-table tr:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .address-display {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-shipping-fast text-2xl"></i>
+                <h1 class="text-xl font-bold">VLCrave Express</h1>
+            </div>
+            <button id="menu-toggle" class="md:hidden text-xl">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav id="main-nav" class="hidden md:flex space-x-6">
+                <a href="#harga" class="nav-link px-3 py-2 rounded">Harga Ongkir</a>
+                <a href="#area" class="nav-link px-3 py-2 rounded">Area Layanan</a>
+                <a href="#jam" class="nav-link px-3 py-2 rounded">Jam Operasional</a>
+                <a href="#layanan" class="nav-link px-3 py-2 rounded">Daftar Layanan</a>
+                <a href="#kontak" class="nav-link px-3 py-2 rounded">Kontak</a>
+            </nav>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-blue-700 px-4 py-2">
+            <div class="flex flex-col space-y-2">
+                <a href="#harga" class="nav-link px-3 py-2 rounded">Harga Ongkir</a>
+                <a href="#area" class="nav-link px-3 py-2 rounded">Area Layanan</a>
+                <a href="#jam" class="nav-link px-3 py-2 rounded">Jam Operasional</a>
+                <a href="#layanan" class="nav-link px-3 py-2 rounded">Daftar Layanan</a>
+                <a href="#kontak" class="nav-link px-3 py-2 rounded">Kontak</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-500 to-purple-600 text-white py-16 md:py-24">
+        <div class="container mx-auto px-4 text-center fade-in">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4">VLCrave Express</h1>
+            <p class="text-xl md:text-2xl mb-8">Layanan Delivery Terpercaya di Wilayah Anda</p>
+            <button id="cta-button" class="bg-white text-blue-600 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-100 transition duration-300 transform hover:scale-105">
+                Pesan Sekarang <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-12">
+        <!-- Harga Ongkir Section -->
+        <section id="harga" class="mb-16 fade-in">
+            <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Daftar Harga Ongkir</h2>
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                <div class="overflow-x-auto">
+                    <table class="price-table">
+                        <thead class="bg-blue-500 text-white">
+                            <tr>
+                                <th class="py-4 px-6 text-left">Tujuan</th>
+                                <th class="py-4 px-6 text-right">Harga</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="py-4 px-6">Air Asam</td>
+                                <td class="py-4 px-6 text-right font-semibold text-blue-600">Rp 7,000</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-4 px-6">Mantung</td>
+                                <td class="py-4 px-6 text-right font-semibold text-blue-600">Rp 12,000</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-4 px-6">Jalan Lurus</td>
+                                <td class="py-4 px-6 text-right font-semibold text-blue-600">Rp 6,000</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-4 px-6">Gunung Muda</td>
+                                <td class="py-4 px-6 text-right font-semibold text-blue-600">Rp 12,000</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-4 px-6">Shincong</td>
+                                <td class="py-4 px-6 text-right font-semibold text-blue-600">Rp 10,000</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-4 px-6">Bukit Tani</td>
+                                <td class="py-4 px-6 text-right font-semibold text-blue-600">Rp 6,000</td>
+                            </tr>
+                            <tr>
+                                <td class="py-4 px-6">Pahlawan 12</td>
+                                <td class="py-4 px-6 text-right font-semibold text-blue-600">Rp 5,000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 bg-blue-50 text-center">
+                    <p class="text-blue-700">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Harga dapat berubah sewaktu-waktu. Informasi lebih lanjut hubungi kami.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Cek Ongkir Otomatis -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Tidak ada alamatmu di tabel?</h3>
+                    <p class="text-gray-600">Cek ongkir otomatis berdasarkan lokasi Anda saat ini</p>
+                </div>
+                
+                <div class="max-w-md mx-auto">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Alamat:</label>
+                        <div id="address-display" class="address-display">
+                            <span id="address-text" class="text-gray-500">Klik tombol untuk mendeteksi lokasi</span>
+                        </div>
+                    </div>
+                    
+                    <button id="check-shipping" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i> Deteksi Lokasi & Cek Ongkir
+                    </button>
+                    
+                    <div id="shipping-result" class="mt-6 p-4 bg-gray-50 rounded-lg hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700">Alamat:</span>
+                            <span id="result-address" class="font-semibold text-right max-w-xs"></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700">Jarak:</span>
+                            <span id="result-distance" class="font-semibold"></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Harga:</span>
+                            <span id="result-price" class="font-semibold text-blue-600 text-lg"></span>
+                        </div>
+                        
+                        <button id="negotiate-button" class="w-full mt-4 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition duration-300 hidden">
+                            <i class="fas fa-comments mr-2"></i> Ongkir Tidak cocok? Nego dengan driver
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Area Layanan Section -->
+        <section id="area" class="mb-16 fade-in">
+            <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Area Layanan</h2>
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-lg">Kecamatan Belinyu</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-lg">Kecamatan Gunung Muda</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-lg">Kecamatan Telang</span>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-lg">Kecamatan Riding Panjang</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            <span class="text-lg">Desa Kumpai</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-plus-circle text-blue-500 mr-3"></i>
+                            <span class="text-lg">Dan wilayah lainnya</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600">Kami terus memperluas jangkauan layanan untuk menjangkau lebih banyak wilayah</p>
+                </div>
+            </div>
+
+            <!-- Cek Layanan -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Cek Layanan di Lokasi Anda</h3>
+                    <p class="text-gray-600">Periksa apakah lokasi Anda termasuk dalam area layanan kami</p>
+                </div>
+                
+                <div class="max-w-md mx-auto">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Alamat:</label>
+                        <div id="service-address-display" class="address-display">
+                            <span id="service-address-text" class="text-gray-500">Klik tombol untuk mendeteksi lokasi</span>
+                        </div>
+                    </div>
+                    
+                    <button id="check-service" class="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i> Deteksi Lokasi & Cek Layanan
+                    </button>
+                    
+                    <div id="service-result" class="mt-6 p-4 rounded-lg hidden">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700">Alamat:</span>
+                            <span id="result-service-address" class="font-semibold text-right max-w-xs"></span>
+                        </div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-gray-700">Jarak:</span>
+                            <span id="result-service-distance" class="font-semibold"></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Status Layanan:</span>
+                            <span id="result-service-status" class="font-semibold text-lg"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Jam Operasional Section -->
+        <section id="jam" class="mb-16 fade-in">
+            <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Jam Operasional</h2>
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-blue-50">
+                            <tr>
+                                <th class="py-3 px-4 font-semibold">Hari</th>
+                                <th class="py-3 px-4 font-semibold">Jam Operasional</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Senin</td>
+                                <td class="py-3 px-4">09.30 - 14.00 dan 18.30 - 22.30</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Selasa</td>
+                                <td class="py-3 px-4">09.30 - 14.00 dan 18.30 - 22.30</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Rabu</td>
+                                <td class="py-3 px-4">09.30 - 14.00 dan 18.30 - 22.30</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Kamis</td>
+                                <td class="py-3 px-4">09.30 - 14.00 dan 18.30 - 22.30</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Jum'at</td>
+                                <td class="py-3 px-4">09.30 - 14.00 dan 18.30 - 22.30</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-3 px-4">Sabtu</td>
+                                <td class="py-3 px-4">09.30 - 14.00 dan 18.30 - 22.30</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">Minggu</td>
+                                <td class="py-3 px-4">09.30 - 14.00 dan 18.30 - 22.30</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <p class="text-yellow-700 text-center">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Layanan dapat tutup sewaktu-waktu tanpa pemberitahuan awal
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Daftar Layanan Section -->
+        <section id="layanan" class="mb-16 fade-in">
+            <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Daftar Layanan</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white rounded-lg shadow-md p-6 text-center card-hover">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-utensils text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Delivery Makanan</h3>
+                    <p class="text-gray-600">Antar makanan favorit Anda dengan cepat dan aman</p>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 text-center card-hover">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-coffee text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Delivery Minuman</h3>
+                    <p class="text-gray-600">Minuman segar langsung diantar ke tempat Anda</p>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 text-center card-hover">
+                    <div class="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-shopping-bag text-orange-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Delivery Alfamart / Indomaret</h3>
+                    <p class="text-gray-600">*S&K Berlaku</p>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6 text-center card-hover">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-tshirt text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Antar/Jemput Laundry</h3>
+                    <p class="text-gray-600">Layanan antar jemput laundry praktis</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kontak Section -->
+        <section id="kontak" class="mb-16 fade-in">
+            <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Kontak Kami</h2>
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-12">
+                    <div class="flex items-center">
+                        <div class="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                            <i class="fab fa-whatsapp text-green-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">WhatsApp</p>
+                            <p class="text-lg font-semibold">0857-0945-8101</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mr-4">
+                            <i class="fab fa-facebook text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Facebook</p>
+                            <p class="text-lg font-semibold">VLCrave Express</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 text-center">
+                    <button id="contact-button" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition duration-300">
+                        <i class="fab fa-whatsapp mr-2"></i> Hubungi via WhatsApp
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-shipping-fast text-2xl"></i>
+                        <h2 class="text-xl font-bold">VLCrave Express</h2>
+                    </div>
+                    <p class="mt-2 text-gray-400">Layanan Delivery Terpercaya</p>
+                </div>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-facebook text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-whatsapp text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fab fa-instagram text-xl"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="mt-6 pt-6 border-t border-gray-700 text-center text-gray-400">
+                <p>&copy; 2023 VLCrave Express. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+                
+                // Close mobile menu after clicking a link
+                document.getElementById('mobile-menu').classList.add('hidden');
+            });
+        });
+
+        // Active navigation highlighting
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop && pageYOffset < sectionTop + sectionHeight) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active-nav');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.add('active-nav');
+                }
+            });
+        });
+
+        // CTA Button with SweetAlert
+        document.getElementById('cta-button').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Pesan Sekarang!',
+                text: 'Hubungi kami via WhatsApp untuk memesan layanan delivery',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Hubungi WhatsApp',
+                cancelButtonText: 'Nanti Saja'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.open('https://wa.me/6285709458101', '_blank');
+                }
+            });
+        });
+
+        // Contact Button with SweetAlert
+        document.getElementById('contact-button').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Hubungi VLCrave Express',
+                text: 'Klik OK untuk membuka WhatsApp',
+                icon: 'success',
+                showCancelButton: true,
+                confirmButtonColor: '#25D366',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Buka WhatsApp',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.open('https://wa.me/6285709458101', '_blank');
+                }
+            });
+        });
+
+        // Add animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Geolocation for VLCrave Express (titik awal/pusat)
+        const vlCraveLocation = {
+            lat: -1.683333,  // Latitude Belinyu, Bangka Belitung
+            lng: 105.700000  // Longitude Belinyu, Bangka Belitung
+        };
+
+        // Variables to store user location data
+        let userLocation = null;
+        let userAddress = '';
+        let shippingDistance = 0;
+        let shippingCost = 0;
+
+        // Calculate distance between two coordinates (Haversine formula)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the earth in km
+            const dLat = deg2rad(lat2 - lat1);
+            const dLon = deg2rad(lon2 - lon1);
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2); 
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+            const distance = R * c; // Distance in km
+            return distance;
+        }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI/180);
+        }
+
+        // Calculate shipping cost based on distance
+        function calculateShippingCost(distance) {
+            // Convert to integer, rounding up for decimal values
+            const roundedDistance = Math.ceil(distance);
+            
+            // KM 1-2: Rp 5,000
+            if (roundedDistance <= 2) {
+                return 5000;
+            } 
+            // KM berikutnya: +Rp 1,000 per KM
+            else {
+                return 5000 + ((roundedDistance - 2) * 1000);
+            }
+        }
+
+        // Get user's current location
+        function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error('Geolocation tidak didukung oleh browser ini'));
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const userCoords = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        resolve(userCoords);
+                    },
+                    (error) => {
+                        let errorMessage = 'Gagal mendapatkan lokasi';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'Akses lokasi ditolak. Silakan izinkan akses lokasi untuk menggunakan fitur ini.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Informasi lokasi tidak tersedia.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'Permintaan lokasi timeout.';
+                                break;
+                        }
+                        reject(new Error(errorMessage));
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            });
+        }
+
+        // Reverse geocode coordinates to get address
+        function reverseGeocode(lat, lng) {
+            // In a real application, you would use a geocoding service like Google Maps Geocoding API
+            // This is a simplified simulation
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // Simulate getting an address based on coordinates
+                    const addresses = [
+                        "Jl. Raya Belinyu, Air Asam, Kec. Belinyu, Kabupaten Bangka, Kepulauan Bangka Belitung",
+                        "Jl. Mentok, Mantung, Kec. Belinyu, Kabupaten Bangka, Kepulauan Bangka Belitung", 
+                        "Jl. Jenderal Sudirman, Gunung Muda, Kec. Gunung Muda, Kabupaten Bangka, Kepulauan Bangka Belitung",
+                        "Jl. Pemuda, Riding Panjang, Kec. Riding Panjang, Kabupaten Bangka, Kepulauan Bangka Belitung",
+                        "Jl. Pelabuhan, Telang, Kec. Telang, Kabupaten Bangka, Kepulauan Bangka Belitung"
+                    ];
+                    
+                    const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
+                    resolve(randomAddress);
+                }, 1500);
+            });
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error('Gagal menyimpan ke localStorage:', e);
+            }
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (e) {
+                console.error('Gagal memuat dari localStorage:', e);
+                return null;
+            }
+        }
+
+        // Check shipping cost
+        document.getElementById('check-shipping').addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            // Show loading
+            button.innerHTML = '<div class="loading"></div> Mendeteksi lokasi...';
+            button.disabled = true;
+            
+            try {
+                // Get user location
+                userLocation = await getUserLocation();
+                
+                // Get address from coordinates
+                userAddress = await reverseGeocode(userLocation.lat, userLocation.lng);
+                
+                // Display address
+                document.getElementById('address-text').textContent = userAddress;
+                document.getElementById('address-text').className = 'text-gray-800';
+                
+                // Calculate distance
+                shippingDistance = calculateDistance(
+                    vlCraveLocation.lat, vlCraveLocation.lng,
+                    userLocation.lat, userLocation.lng
+                );
+                
+                // Calculate shipping cost
+                shippingCost = calculateShippingCost(shippingDistance);
+                
+                // Save to localStorage
+                saveToLocalStorage('vlcrave_user_location', {
+                    coords: userLocation,
+                    address: userAddress,
+                    distance: shippingDistance,
+                    cost: shippingCost,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Display result
+                document.getElementById('result-address').textContent = userAddress;
+                document.getElementById('result-distance').textContent = `${shippingDistance.toFixed(1)} km`;
+                document.getElementById('result-price').textContent = `Rp ${shippingCost.toLocaleString('id-ID')}`;
+                
+                // Show negotiate button
+                document.getElementById('negotiate-button').classList.remove('hidden');
+                
+                document.getElementById('shipping-result').classList.remove('hidden');
+                
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6'
+                });
+            } finally {
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        });
+
+        // Check service availability
+        document.getElementById('check-service').addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.innerHTML;
+            
+            // Show loading
+            button.innerHTML = '<div class="loading"></div> Mendeteksi lokasi...';
+            button.disabled = true;
+            
+            try {
+                // Get user location
+                userLocation = await getUserLocation();
+                
+                // Get address from coordinates
+                userAddress = await reverseGeocode(userLocation.lat, userLocation.lng);
+                
+                // Display address
+                document.getElementById('service-address-text').textContent = userAddress;
+                document.getElementById('service-address-text').className = 'text-gray-800';
+                
+                // Calculate distance
+                const distance = calculateDistance(
+                    vlCraveLocation.lat, vlCraveLocation.lng,
+                    userLocation.lat, userLocation.lng
+                );
+                
+                // Check if service is available (within 15 km)
+                const isServiceAvailable = distance <= 15;
+                
+                // Save to localStorage
+                saveToLocalStorage('vlcrave_service_check', {
+                    coords: userLocation,
+                    address: userAddress,
+                    distance: distance,
+                    serviceAvailable: isServiceAvailable,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // Display result
+                document.getElementById('result-service-address').textContent = userAddress;
+                document.getElementById('result-service-distance').textContent = `${distance.toFixed(1)} km`;
+                
+                const statusElement = document.getElementById('result-service-status');
+                const serviceResult = document.getElementById('service-result');
+                
+                if (isServiceAvailable) {
+                    statusElement.textContent = 'Layanan Tersedia';
+                    statusElement.className = 'font-semibold text-lg text-green-600';
+                    serviceResult.className = 'mt-6 p-4 bg-green-50 rounded-lg';
+                } else {
+                    statusElement.textContent = 'Layanan Tidak Tersedia';
+                    statusElement.className = 'font-semibold text-lg text-red-600';
+                    serviceResult.className = 'mt-6 p-4 bg-red-50 rounded-lg';
+                }
+                
+                serviceResult.classList.remove('hidden');
+                
+            } catch (error) {
+                Swal.fire({
+                    title: 'Error',
+                    text: error.message,
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6'
+                });
+            } finally {
+                // Reset button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        });
+
+        // Negotiate with driver button
+        document.getElementById('negotiate-button').addEventListener('click', function() {
+            if (!userLocation || !userAddress) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Data lokasi tidak tersedia. Silakan cek ongkir terlebih dahulu.',
+                    icon: 'error',
+                    confirmButtonColor: '#3085d6'
+                });
+                return;
+            }
+            
+            const message = `Halo VLCrave Express, saya ingin nego ongkir delivery:\n\n` +
+                           `Alamat: ${userAddress}\n` +
+                           `Jarak: ${shippingDistance.toFixed(1)} km\n` +
+                           `Ongkir sistem: Rp ${shippingCost.toLocaleString('id-ID')}\n\n` +
+                           `Apakah bisa nego ongkirnya?`;
+            
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/6285709458101?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank');
+        });
+
+        // Load saved data on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            const savedLocation = loadFromLocalStorage('vlcrave_user_location');
+            if (savedLocation) {
+                document.getElementById('address-text').textContent = savedLocation.address;
+                document.getElementById('address-text').className = 'text-gray-800';
+                
+                // You could also pre-fill the results if needed
+            }
+            
+            const savedService = loadFromLocalStorage('vlcrave_service_check');
+            if (savedService) {
+                document.getElementById('service-address-text').textContent = savedService.address;
+                document.getElementById('service-address-text').className = 'text-gray-800';
+            }
+        });
+    </script>
+</body>
+</html>
