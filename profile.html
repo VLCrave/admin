@@ -13,11 +13,22 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Font Awesome -->
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        :root {
+            --font-primary: 'Inter', sans-serif;
+            --font-heading: 'Plus Jakarta Sans', sans-serif;
+        }
         
         * {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-primary);
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-heading);
         }
         
         .gradient-bg {
@@ -25,7 +36,7 @@
         }
         
         .dark-gradient {
-            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
         }
         
         .glass-effect {
@@ -38,6 +49,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .hover-lift {
@@ -63,9 +75,53 @@
             transition: width 2s ease-in-out;
         }
         
-        .admin-nav-item.active {
-            background: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
+        /* Improved Typography */
+        .text-display {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            line-height: 1.1;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        
+        .text-heading {
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.2;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+        }
+        
+        .text-subheading {
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            line-height: 1.3;
+            font-weight: 600;
+        }
+        
+        .text-body {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            font-weight: 400;
+        }
+        
+        .text-body-sm {
+            font-size: 1rem;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+        
+        .text-caption {
+            font-size: 0.875rem;
+            line-height: 1.5;
+            font-weight: 400;
+        }
+        
+        /* Enhanced readability */
+        .readable-text {
+            max-width: 65ch;
+        }
+        
+        .section-padding {
+            padding-top: 5rem;
+            padding-bottom: 5rem;
         }
         
         /* Custom scrollbar */
@@ -91,30 +147,27 @@
     <!-- Navigation -->
     <nav class="fixed w-full z-50 glass-effect py-4">
         <div class="container mx-auto px-4 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <span class="text-white font-bold">VL</span>
+                    <span class="text-white font-bold text-body-sm">VL</span>
                 </div>
-                <span class="text-xl font-bold text-white">Vicky Satria Lindy</span>
+                <span class="text-body font-semibold text-white">Vicky Satria Lindy</span>
             </div>
             
             <div class="hidden md:flex space-x-8">
-                <a href="#home" class="text-white hover:text-blue-200 transition">Home</a>
-                <a href="#about" class="text-white hover:text-blue-200 transition">About</a>
-                <a href="#skills" class="text-white hover:text-blue-200 transition">Skills</a>
-                <a href="#experience" class="text-white hover:text-blue-200 transition">Experience</a>
-                <a href="#contact" class="text-white hover:text-blue-200 transition">Contact</a>
+                <a href="#home" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Home</a>
+                <a href="#about" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">About</a>
+                <a href="#skills" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Skills</a>
+                <a href="#experience" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Experience</a>
+                <a href="#contact" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Contact</a>
             </div>
             
             <div class="flex items-center space-x-4">
-                <button id="themeToggle" class="text-white p-2 rounded-full hover:bg-white/20 transition">
-                    <i class="fas fa-moon"></i>
-                </button>
-                <button id="adminToggle" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition">
-                    Admin
+                <button id="themeToggle" class="text-white p-2 rounded-full hover:bg-white/20 transition-colors duration-200">
+                    <i class="fas fa-moon text-body-sm"></i>
                 </button>
                 <button id="mobileMenu" class="md:hidden text-white p-2">
-                    <i class="fas fa-bars text-xl"></i>
+                    <i class="fas fa-bars text-body"></i>
                 </button>
             </div>
         </div>
@@ -122,11 +175,11 @@
         <!-- Mobile Menu -->
         <div id="mobileMenuContent" class="md:hidden glass-effect mt-4 p-4 hidden">
             <div class="flex flex-col space-y-4">
-                <a href="#home" class="text-white hover:text-blue-200 transition">Home</a>
-                <a href="#about" class="text-white hover:text-blue-200 transition">About</a>
-                <a href="#skills" class="text-white hover:text-blue-200 transition">Skills</a>
-                <a href="#experience" class="text-white hover:text-blue-200 transition">Experience</a>
-                <a href="#contact" class="text-white hover:text-blue-200 transition">Contact</a>
+                <a href="#home" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Home</a>
+                <a href="#about" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">About</a>
+                <a href="#skills" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Skills</a>
+                <a href="#experience" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Experience</a>
+                <a href="#contact" class="text-body-sm text-white hover:text-blue-200 transition-colors duration-200 font-medium">Contact</a>
             </div>
         </div>
     </nav>
@@ -134,31 +187,32 @@
     <!-- Main Content -->
     <div id="mainContent">
         <!-- Hero Section -->
-        <section id="home" class="min-h-screen gradient-bg flex items-center pt-16">
-            <div class="container mx-auto px-4 py-20">
+        <section id="home" class="min-h-screen gradient-bg flex items-center pt-16 section-padding">
+            <div class="container mx-auto px-4">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                    <div data-aos="fade-right">
-                        <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                    <div data-aos="fade-right" class="readable-text">
+                        <h1 class="text-display text-white mb-6">
                             Hi, I'm <span class="text-gradient">Vicky Satria Lindy</span>
                         </h1>
-                        <p class="text-xl text-blue-100 mb-8">
-                            Multitalented Professional with expertise in AI Operations, Web Development, and Business Management. Passionate about creating innovative solutions.
+                        <p class="text-body text-blue-100 mb-8 opacity-90">
+                            Multitalented Professional with expertise in AI Operations, Web Development, and Business Management. Passionate about creating innovative solutions that drive real impact.
                         </p>
                         <div class="flex flex-wrap gap-4">
-                            <button class="bg-white text-blue-600 px-8 py-3 rounded-lg font-bold hover-lift">
+                            <button class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover-lift text-body-sm">
                                 View My Work
                             </button>
-                            <button class="border-2 border-white text-white px-8 py-3 rounded-lg font-bold hover-lift">
+                            <button class="border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover-lift text-body-sm">
                                 Contact Me
                             </button>
                         </div>
                     </div>
                     <div data-aos="fade-left" class="flex justify-center">
                         <div class="relative">
-                            <div class="w-80 h-80 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-float flex items-center justify-center">
-                                <i class="fas fa-user text-white text-8xl opacity-70"></i>
+                            <div class="w-80 h-80 bg-white/10 rounded-3xl flex items-center justify-center backdrop-blur-sm border border-white/20 animate-float">
+                                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" 
+                                     alt="Vicky Satria Lindy" class="w-64 h-64 rounded-2xl object-cover">
                             </div>
-                            <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 animate-pulse"></div>
+                            <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-3xl opacity-20 animate-pulse -z-10"></div>
                         </div>
                     </div>
                 </div>
@@ -166,71 +220,84 @@
         </section>
 
         <!-- About Section -->
-        <section id="about" class="py-20 bg-white dark:bg-gray-800">
+        <section id="about" class="section-padding bg-white dark:bg-gray-800">
             <div class="container mx-auto px-4">
-                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-16" data-aos="fade-up">
+                <h2 class="text-heading text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
                     About <span class="text-gradient">Me</span>
                 </h2>
+                <p class="text-body text-center text-gray-600 dark:text-gray-400 mb-16 max-w-3xl mx-auto readable-text" data-aos="fade-up">
+                    Get to know more about my background, skills, and professional journey
+                </p>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                     <div data-aos="fade-right">
-                        <div class="bg-gray-100 dark:bg-gray-700 p-8 rounded-2xl">
-                            <div class="space-y-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl">
+                            <div class="space-y-6">
                                 <div class="flex items-center">
-                                    <i class="fas fa-user text-blue-500 w-8"></i>
+                                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-user text-blue-600 dark:text-blue-400 text-body"></i>
+                                    </div>
                                     <div>
-                                        <span class="font-semibold">Nama:</span>
-                                        <span class="ml-2">Vicky Satria Lindy</span>
+                                        <span class="text-body-sm font-semibold text-gray-600 dark:text-gray-300">Nama:</span>
+                                        <span class="text-body font-medium text-gray-800 dark:text-white ml-2">Vicky Satria Lindy</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center">
-                                    <i class="fas fa-birthday-cake text-blue-500 w-8"></i>
+                                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-birthday-cake text-green-600 dark:text-green-400 text-body"></i>
+                                    </div>
                                     <div>
-                                        <span class="font-semibold">Umur:</span>
-                                        <span class="ml-2">20 Tahun</span>
+                                        <span class="text-body-sm font-semibold text-gray-600 dark:text-gray-300">Umur:</span>
+                                        <span class="text-body font-medium text-gray-800 dark:text-white ml-2">20 Tahun</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center">
-                                    <i class="fas fa-map-marker-alt text-blue-500 w-8"></i>
+                                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-map-marker-alt text-purple-600 dark:text-purple-400 text-body"></i>
+                                    </div>
                                     <div>
-                                        <span class="font-semibold">Alamat:</span>
-                                        <span class="ml-2">Belinyu, Bangka Belitung</span>
+                                        <span class="text-body-sm font-semibold text-gray-600 dark:text-gray-300">Alamat:</span>
+                                        <span class="text-body font-medium text-gray-800 dark:text-white ml-2">Belinyu, Bangka Belitung</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center">
-                                    <i class="fas fa-language text-blue-500 w-8"></i>
+                                    <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-language text-orange-600 dark:text-orange-400 text-body"></i>
+                                    </div>
                                     <div>
-                                        <span class="font-semibold">Bahasa:</span>
-                                        <span class="ml-2">Indonesia, Sunda, Inggris</span>
+                                        <span class="text-body-sm font-semibold text-gray-600 dark:text-gray-300">Bahasa:</span>
+                                        <span class="text-body font-medium text-gray-800 dark:text-white ml-2">Indonesia, Sunda, Inggris</span>
                                     </div>
                                 </div>
                                 <div class="flex items-center">
-                                    <i class="fas fa-briefcase text-blue-500 w-8"></i>
+                                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-xl flex items-center justify-center mr-4">
+                                        <i class="fas fa-briefcase text-red-600 dark:text-red-400 text-body"></i>
+                                    </div>
                                     <div>
-                                        <span class="font-semibold">Pekerjaan:</span>
-                                        <span class="ml-2">Kurir Delivery, Web Development, Pengusaha</span>
+                                        <span class="text-body-sm font-semibold text-gray-600 dark:text-gray-300">Pekerjaan:</span>
+                                        <span class="text-body font-medium text-gray-800 dark:text-white ml-2">Kurir Delivery, Web Development, Pengusaha</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div data-aos="fade-left">
-                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+                    <div data-aos="fade-left" class="readable-text">
+                        <h3 class="text-subheading text-gray-800 dark:text-white mb-6">
                             Professional Journey
                         </h3>
-                        <p class="text-gray-600 dark:text-gray-300 mb-6">
+                        <p class="text-body text-gray-600 dark:text-gray-300 mb-6">
                             Saya adalah profesional muda yang energik dengan kemampuan adaptasi yang tinggi. 
                             Memiliki pengalaman di berbagai bidang mulai dari customer service, teknologi, 
                             hingga bisnis. Keahlian khusus saya dalam mengoperasikan Artificial Intelligence 
                             membantu dalam menciptakan solusi inovatif untuk berbagai tantangan bisnis.
                         </p>
-                        <p class="text-gray-600 dark:text-gray-300 mb-6">
+                        <p class="text-body text-gray-600 dark:text-gray-300 mb-8">
                             Sebagai seorang pengusaha, saya memahami pentingnya memberikan nilai tambah 
                             dan pengalaman terbaik kepada klien. Kombinasi skill teknis dan bisnis membuat 
                             saya dapat berkontribusi secara maksimal dalam berbagai proyek.
                         </p>
                         
-                        <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-bold hover-lift">
+                        <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold hover-lift text-body-sm">
                             Download CV
                         </button>
                     </div>
@@ -239,46 +306,46 @@
         </section>
 
         <!-- Skills Section -->
-        <section id="skills" class="py-20 bg-gray-50 dark:bg-gray-900">
+        <section id="skills" class="section-padding bg-gray-50 dark:bg-gray-900">
             <div class="container mx-auto px-4">
-                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
+                <h2 class="text-heading text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
                     My <span class="text-gradient">Skills</span>
                 </h2>
-                <p class="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto" data-aos="fade-up">
+                <p class="text-body text-center text-gray-600 dark:text-gray-400 mb-16 max-w-3xl mx-auto readable-text" data-aos="fade-up">
                     Berbagai keahlian yang saya kuasai untuk mendukung karir profesional
                 </p>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 max-w-6xl mx-auto">
                     <!-- Technical Skills -->
                     <div data-aos="fade-right">
-                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Technical Skills</h3>
-                        <div class="space-y-6">
+                        <h3 class="text-subheading text-gray-800 dark:text-white mb-8">Technical Skills</h3>
+                        <div class="space-y-8">
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Artificial Intelligence</span>
-                                    <span class="text-gray-700 dark:text-gray-300">90%</span>
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">Artificial Intelligence</span>
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">90%</span>
                                 </div>
-                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 90%"></div>
                                 </div>
                             </div>
                             
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Web Development</span>
-                                    <span class="text-gray-700 dark:text-gray-300">85%</span>
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">Web Development</span>
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">85%</span>
                                 </div>
-                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 85%"></div>
                                 </div>
                             </div>
                             
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Digital Marketing</span>
-                                    <span class="text-gray-700 dark:text-gray-300">80%</span>
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">Digital Marketing</span>
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">80%</span>
                                 </div>
-                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 80%"></div>
                                 </div>
                             </div>
@@ -287,35 +354,35 @@
                     
                     <!-- Professional Skills -->
                     <div data-aos="fade-left">
-                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Professional Skills</h3>
-                        <div class="space-y-6">
+                        <h3 class="text-subheading text-gray-800 dark:text-white mb-8">Professional Skills</h3>
+                        <div class="space-y-8">
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Customer Service</span>
-                                    <span class="text-gray-700 dark:text-gray-300">95%</span>
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">Customer Service</span>
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">95%</span>
                                 </div>
-                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 95%"></div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-3 bg-gradient-to-r from-green-500 to-teal-600 rounded-full skill-bar" style="width: 95%"></div>
                                 </div>
                             </div>
                             
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Business Management</span>
-                                    <span class="text-gray-700 dark:text-gray-300">85%</span>
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">Business Management</span>
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">85%</span>
                                 </div>
-                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 85%"></div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-3 bg-gradient-to-r from-green-500 to-teal-600 rounded-full skill-bar" style="width: 85%"></div>
                                 </div>
                             </div>
                             
                             <div>
-                                <div class="flex justify-between mb-2">
-                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Sales & Negotiation</span>
-                                    <span class="text-gray-700 dark:text-gray-300">88%</span>
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">Sales & Negotiation</span>
+                                    <span class="text-body font-semibold text-gray-700 dark:text-gray-300">88%</span>
                                 </div>
-                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 88%"></div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-3 bg-gradient-to-r from-green-500 to-teal-600 rounded-full skill-bar" style="width: 88%"></div>
                                 </div>
                             </div>
                         </div>
@@ -323,31 +390,34 @@
                 </div>
                 
                 <!-- Language Skills -->
-                <div class="mt-16 max-w-4xl mx-auto" data-aos="fade-up">
-                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center">Language Proficiency</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg text-center hover-lift">
-                            <div class="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="text-white text-xl font-bold">ID</span>
+                <div class="mt-20 max-w-6xl mx-auto" data-aos="fade-up">
+                    <h3 class="text-subheading text-center text-gray-800 dark:text-white mb-12">Language Proficiency</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg text-center hover-lift">
+                            <div class="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <span class="text-white font-bold text-body">ID</span>
                             </div>
-                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">Bahasa Indonesia</h4>
-                            <p class="text-green-500 font-semibold">Native</p>
+                            <h4 class="text-body font-bold text-gray-800 dark:text-white mb-3">Bahasa Indonesia</h4>
+                            <p class="text-green-500 font-semibold text-body-sm">Native Speaker</p>
+                            <p class="text-gray-600 dark:text-gray-400 text-body-sm mt-2">Kemampuan komunikasi sempurna</p>
                         </div>
                         
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg text-center hover-lift">
-                            <div class="w-20 h-20 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="text-white text-xl font-bold">SU</span>
+                        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg text-center hover-lift">
+                            <div class="w-20 h-20 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <span class="text-white font-bold text-body">SU</span>
                             </div>
-                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">Bahasa Sunda</h4>
-                            <p class="text-green-500 font-semibold">Fluent</p>
+                            <h4 class="text-body font-bold text-gray-800 dark:text-white mb-3">Bahasa Sunda</h4>
+                            <p class="text-green-500 font-semibold text-body-sm">Fluent</p>
+                            <p class="text-gray-600 dark:text-gray-400 text-body-sm mt-2">Penggunaan sehari-hari aktif</p>
                         </div>
                         
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg text-center hover-lift">
-                            <div class="w-20 h-20 bg-gradient-to-r from-red-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <span class="text-white text-xl font-bold">EN</span>
+                        <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg text-center hover-lift">
+                            <div class="w-20 h-20 bg-gradient-to-r from-red-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <span class="text-white font-bold text-body">EN</span>
                             </div>
-                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">English</h4>
-                            <p class="text-yellow-500 font-semibold">Intermediate</p>
+                            <h4 class="text-body font-bold text-gray-800 dark:text-white mb-3">English</h4>
+                            <p class="text-yellow-500 font-semibold text-body-sm">Intermediate</p>
+                            <p class="text-gray-600 dark:text-gray-400 text-body-sm mt-2">Komunikasi profesional aktif</p>
                         </div>
                     </div>
                 </div>
@@ -355,35 +425,36 @@
         </section>
 
         <!-- Experience Section -->
-        <section id="experience" class="py-20 bg-white dark:bg-gray-800">
+        <section id="experience" class="section-padding bg-white dark:bg-gray-800">
             <div class="container mx-auto px-4">
-                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
+                <h2 class="text-heading text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
                     Work <span class="text-gradient">Experience</span>
                 </h2>
-                <p class="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto" data-aos="fade-up">
-                    Perjalanan karir dan pengalaman profesional saya
+                <p class="text-body text-center text-gray-600 dark:text-gray-400 mb-16 max-w-3xl mx-auto readable-text" data-aos="fade-up">
+                    Perjalanan karir dan pengalaman profesional saya dalam berbagai bidang
                 </p>
                 
-                <div class="max-w-4xl mx-auto">
+                <div class="max-w-6xl mx-auto">
                     <!-- Experience Timeline -->
                     <div class="space-y-12">
                         <!-- Experience 1 -->
                         <div class="flex flex-col md:flex-row gap-8" data-aos="fade-right">
                             <div class="md:w-1/3 text-right">
-                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
-                                    <span class="font-bold">2022 - Present</span>
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-3xl inline-block">
+                                    <span class="text-body font-bold">2022 - Present</span>
                                 </div>
                             </div>
                             <div class="md:w-2/3">
-                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
-                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Kurir Delivery & Pengusaha</h3>
-                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
-                                        Mengelola bisnis delivery service sambil mengembangkan usaha pribadi di bidang digital.
+                                <div class="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl hover-lift">
+                                    <h3 class="text-body font-bold text-gray-800 dark:text-white mb-3">Kurir Delivery & Pengusaha</h3>
+                                    <p class="text-body text-gray-600 dark:text-gray-300 mb-6">
+                                        Mengelola bisnis delivery service sambil mengembangkan usaha pribadi di bidang digital. 
+                                        Bertanggung jawab dalam operasional logistik dan pengembangan strategi bisnis.
                                     </p>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">Logistics</span>
-                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Entrepreneurship</span>
-                                        <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Management</span>
+                                    <div class="flex flex-wrap gap-3">
+                                        <span class="bg-blue-100 text-blue-800 text-caption px-4 py-2 rounded-full font-medium">Logistics</span>
+                                        <span class="bg-green-100 text-green-800 text-caption px-4 py-2 rounded-full font-medium">Entrepreneurship</span>
+                                        <span class="bg-purple-100 text-purple-800 text-caption px-4 py-2 rounded-full font-medium">Management</span>
                                     </div>
                                 </div>
                             </div>
@@ -392,20 +463,22 @@
                         <!-- Experience 2 -->
                         <div class="flex flex-col md:flex-row gap-8" data-aos="fade-left">
                             <div class="md:w-1/3 text-right">
-                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
-                                    <span class="font-bold">2021 - 2022</span>
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-3xl inline-block">
+                                    <span class="text-body font-bold">2021 - 2022</span>
                                 </div>
                             </div>
                             <div class="md:w-2/3">
-                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
-                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Web Developer Freelance</h3>
-                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
-                                        Membangun website dan aplikasi web untuk berbagai klien dengan teknologi modern.
+                                <div class="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl hover-lift">
+                                    <h3 class="text-body font-bold text-gray-800 dark:text-white mb-3">Web Developer Freelance</h3>
+                                    <p class="text-body text-gray-600 dark:text-gray-300 mb-6">
+                                        Membangun website dan aplikasi web untuk berbagai klien dengan teknologi modern. 
+                                        Fokus pada responsive design, user experience, dan performa optimal.
                                     </p>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">HTML/CSS</span>
-                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full">JavaScript</span>
-                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">PHP</span>
+                                    <div class="flex flex-wrap gap-3">
+                                        <span class="bg-blue-100 text-blue-800 text-caption px-4 py-2 rounded-full font-medium">HTML/CSS</span>
+                                        <span class="bg-yellow-100 text-yellow-800 text-caption px-4 py-2 rounded-full font-medium">JavaScript</span>
+                                        <span class="bg-green-100 text-green-800 text-caption px-4 py-2 rounded-full font-medium">PHP</span>
+                                        <span class="bg-red-100 text-red-800 text-caption px-4 py-2 rounded-full font-medium">React</span>
                                     </div>
                                 </div>
                             </div>
@@ -414,20 +487,21 @@
                         <!-- Experience 3 -->
                         <div class="flex flex-col md:flex-row gap-8" data-aos="fade-right">
                             <div class="md:w-1/3 text-right">
-                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
-                                    <span class="font-bold">2020 - 2021</span>
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-3xl inline-block">
+                                    <span class="text-body font-bold">2020 - 2021</span>
                                 </div>
                             </div>
                             <div class="md:w-2/3">
-                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
-                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Direct Sales Executive</h3>
-                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
-                                        Bertanggung jawab dalam penjualan langsung dan membangun hubungan dengan pelanggan.
+                                <div class="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl hover-lift">
+                                    <h3 class="text-body font-bold text-gray-800 dark:text-white mb-3">Direct Sales Executive</h3>
+                                    <p class="text-body text-gray-600 dark:text-gray-300 mb-6">
+                                        Bertanggung jawab dalam penjualan langsung dan membangun hubungan dengan pelanggan. 
+                                        Mencapai target penjualan melalui strategi pemasaran yang efektif.
                                     </p>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full">Sales</span>
-                                        <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Negotiation</span>
-                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Communication</span>
+                                    <div class="flex flex-wrap gap-3">
+                                        <span class="bg-red-100 text-red-800 text-caption px-4 py-2 rounded-full font-medium">Sales</span>
+                                        <span class="bg-purple-100 text-purple-800 text-caption px-4 py-2 rounded-full font-medium">Negotiation</span>
+                                        <span class="bg-green-100 text-green-800 text-caption px-4 py-2 rounded-full font-medium">Communication</span>
                                     </div>
                                 </div>
                             </div>
@@ -436,20 +510,21 @@
                         <!-- Experience 4 -->
                         <div class="flex flex-col md:flex-row gap-8" data-aos="fade-left">
                             <div class="md:w-1/3 text-right">
-                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
-                                    <span class="font-bold">2019 - 2020</span>
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-3xl inline-block">
+                                    <span class="text-body font-bold">2019 - 2020</span>
                                 </div>
                             </div>
                             <div class="md:w-2/3">
-                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
-                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Customer Service Representative</h3>
-                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
-                                        Memberikan layanan terbaik kepada pelanggan dan menyelesaikan berbagai masalah dengan solusi efektif.
+                                <div class="bg-gray-50 dark:bg-gray-700 p-8 rounded-3xl hover-lift">
+                                    <h3 class="text-body font-bold text-gray-800 dark:text-white mb-3">Customer Service Representative</h3>
+                                    <p class="text-body text-gray-600 dark:text-gray-300 mb-6">
+                                        Memberikan layanan terbaik kepada pelanggan dan menyelesaikan berbagai masalah dengan solusi efektif. 
+                                        Menjaga kepuasan pelanggan melalui komunikasi yang profesional.
                                     </p>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">Customer Service</span>
-                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Problem Solving</span>
-                                        <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Communication</span>
+                                    <div class="flex flex-wrap gap-3">
+                                        <span class="bg-blue-100 text-blue-800 text-caption px-4 py-2 rounded-full font-medium">Customer Service</span>
+                                        <span class="bg-green-100 text-green-800 text-caption px-4 py-2 rounded-full font-medium">Problem Solving</span>
+                                        <span class="bg-purple-100 text-purple-800 text-caption px-4 py-2 rounded-full font-medium">Communication</span>
                                     </div>
                                 </div>
                             </div>
@@ -460,93 +535,93 @@
         </section>
 
         <!-- Contact Section -->
-        <section id="contact" class="py-20 bg-gray-50 dark:bg-gray-900">
+        <section id="contact" class="section-padding bg-gray-50 dark:bg-gray-900">
             <div class="container mx-auto px-4">
-                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
+                <h2 class="text-heading text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
                     Get In <span class="text-gradient">Touch</span>
                 </h2>
-                <p class="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto" data-aos="fade-up">
+                <p class="text-body text-center text-gray-600 dark:text-gray-400 mb-16 max-w-3xl mx-auto readable-text" data-aos="fade-up">
                     Tertarik bekerja sama? Mari berdiskusi tentang proyek Anda!
                 </p>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
                     <div data-aos="fade-right">
-                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Contact Information</h3>
+                        <h3 class="text-subheading text-gray-800 dark:text-white mb-8">Contact Information</h3>
                         
-                        <div class="space-y-6">
+                        <div class="space-y-8">
                             <div class="flex items-start">
-                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-map-marker-alt text-white"></i>
+                                <div class="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-6">
+                                    <i class="fas fa-map-marker-alt text-white text-body"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-gray-800 dark:text-white">Location</h4>
-                                    <p class="text-gray-600 dark:text-gray-300">Belinyu, Bangka Belitung, Indonesia</p>
+                                    <h4 class="text-body font-bold text-gray-800 dark:text-white mb-2">Location</h4>
+                                    <p class="text-body text-gray-600 dark:text-gray-300">Belinyu, Bangka Belitung, Indonesia</p>
                                 </div>
                             </div>
                             
                             <div class="flex items-start">
-                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-envelope text-white"></i>
+                                <div class="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-6">
+                                    <i class="fas fa-envelope text-white text-body"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-gray-800 dark:text-white">Email</h4>
-                                    <p class="text-gray-600 dark:text-gray-300">vicky.satria@example.com</p>
+                                    <h4 class="text-body font-bold text-gray-800 dark:text-white mb-2">Email</h4>
+                                    <p class="text-body text-gray-600 dark:text-gray-300">vicky.satria@example.com</p>
                                 </div>
                             </div>
                             
                             <div class="flex items-start">
-                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-phone text-white"></i>
+                                <div class="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-6">
+                                    <i class="fas fa-phone text-white text-body"></i>
                                 </div>
                                 <div>
-                                    <h4 class="font-bold text-gray-800 dark:text-white">Phone</h4>
-                                    <p class="text-gray-600 dark:text-gray-300">+62 812-3456-7890</p>
+                                    <h4 class="text-body font-bold text-gray-800 dark:text-white mb-2">Phone</h4>
+                                    <p class="text-body text-gray-600 dark:text-gray-300">+62 812-3456-7890</p>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="mt-8">
-                            <h4 class="font-bold text-gray-800 dark:text-white mb-4">Follow Me</h4>
+                        <div class="mt-12">
+                            <h4 class="text-body font-bold text-gray-800 dark:text-white mb-6">Follow Me</h4>
                             <div class="flex space-x-4">
-                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-500 hover:text-white transition">
-                                    <i class="fab fa-linkedin-in"></i>
+                                <a href="#" class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center hover:bg-blue-500 hover:text-white transition-colors duration-200">
+                                    <i class="fab fa-linkedin-in text-body"></i>
                                 </a>
-                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-400 hover:text-white transition">
-                                    <i class="fab fa-twitter"></i>
+                                <a href="#" class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center hover:bg-blue-400 hover:text-white transition-colors duration-200">
+                                    <i class="fab fa-twitter text-body"></i>
                                 </a>
-                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-800 hover:text-white transition">
-                                    <i class="fab fa-github"></i>
+                                <a href="#" class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center hover:bg-gray-800 hover:text-white transition-colors duration-200">
+                                    <i class="fab fa-github text-body"></i>
                                 </a>
-                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-green-500 hover:text-white transition">
-                                    <i class="fab fa-whatsapp"></i>
+                                <a href="#" class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl flex items-center justify-center hover:bg-green-500 hover:text-white transition-colors duration-200">
+                                    <i class="fab fa-whatsapp text-body"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
                     
                     <div data-aos="fade-left">
-                        <form class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+                        <form class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-lg">
                             <div class="mb-6">
-                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="name">Nama Lengkap</label>
-                                <input type="text" id="name" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                                <label class="block text-body-sm font-semibold text-gray-700 dark:text-gray-300 mb-3" for="name">Nama Lengkap</label>
+                                <input type="text" id="name" class="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-body">
                             </div>
                             
                             <div class="mb-6">
-                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="email">Email Address</label>
-                                <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                                <label class="block text-body-sm font-semibold text-gray-700 dark:text-gray-300 mb-3" for="email">Email Address</label>
+                                <input type="email" id="email" class="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-body">
                             </div>
                             
                             <div class="mb-6">
-                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="subject">Subjek</label>
-                                <input type="text" id="subject" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                                <label class="block text-body-sm font-semibold text-gray-700 dark:text-gray-300 mb-3" for="subject">Subjek</label>
+                                <input type="text" id="subject" class="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-body">
                             </div>
                             
-                            <div class="mb-6">
-                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="message">Pesan</label>
-                                <textarea id="message" rows="5" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"></textarea>
+                            <div class="mb-8">
+                                <label class="block text-body-sm font-semibold text-gray-700 dark:text-gray-300 mb-3" for="message">Pesan</label>
+                                <textarea id="message" rows="5" class="w-full px-4 py-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-body"></textarea>
                             </div>
                             
-                            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-bold hover-lift">
+                            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-semibold hover-lift text-body-sm">
                                 Kirim Pesan
                             </button>
                         </form>
@@ -561,215 +636,52 @@
                 <div class="text-center">
                     <div class="flex justify-center mb-6">
                         <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                            <span class="text-white font-bold">VL</span>
+                            <span class="text-white font-bold text-body">VL</span>
                         </div>
                     </div>
-                    <p class="text-gray-400 mb-6">
+                    <p class="text-body-sm text-gray-400 mb-6">
                         &copy; 2023 Vicky Satria Lindy. All rights reserved.
                     </p>
-                    <div class="flex justify-center space-x-6">
-                        <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
-                        <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
-                        <a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a>
+                    <div class="flex justify-center space-x-8">
+                        <a href="#" class="text-body-sm text-gray-400 hover:text-white transition-colors duration-200">Privacy Policy</a>
+                        <a href="#" class="text-body-sm text-gray-400 hover:text-white transition-colors duration-200">Terms of Service</a>
+                        <a href="#" class="text-body-sm text-gray-400 hover:text-white transition-colors duration-200">Cookie Policy</a>
                     </div>
                 </div>
             </div>
         </footer>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="adminPanel" class="hidden min-h-screen bg-gray-100 dark:bg-gray-900">
-        <!-- Admin Header -->
-        <header class="bg-white dark:bg-gray-800 shadow-sm">
-            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-                <div class="flex items-center space-x-2">
-                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span class="text-white font-bold">A</span>
-                    </div>
-                    <span class="text-xl font-bold text-gray-800 dark:text-white">Admin Dashboard - Vicky Satria Lindy</span>
-                </div>
-                
-                <div class="flex items-center space-x-4">
-                    <button id="themeToggleAdmin" class="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <button id="backToSite" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition">
-                        Back to Site
-                    </button>
-                </div>
-            </div>
-        </header>
-
-        <!-- Admin Content -->
-        <div class="container mx-auto px-4 py-8">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <!-- Sidebar -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-                        <nav class="space-y-2">
-                            <a href="#" class="admin-nav-item active flex items-center space-x-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                                <i class="fas fa-tachometer-alt"></i>
-                                <span>Dashboard</span>
-                            </a>
-                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <i class="fas fa-user-edit"></i>
-                                <span>Profile Settings</span>
-                            </a>
-                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <i class="fas fa-briefcase"></i>
-                                <span>Experience Management</span>
-                            </a>
-                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <i class="fas fa-chart-bar"></i>
-                                <span>Skills Management</span>
-                            </a>
-                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <i class="fas fa-envelope"></i>
-                                <span>Messages</span>
-                            </a>
-                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <i class="fas fa-cog"></i>
-                                <span>Settings</span>
-                            </a>
-                        </nav>
-                    </div>
-                </div>
-                
-                <!-- Main Admin Content -->
-                <div class="lg:col-span-3">
-                    <!-- Stats Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg" data-aos="fade-up">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-eye text-blue-500"></i>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500 dark:text-gray-400">Total Views</p>
-                                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">1,247</h3>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg" data-aos="fade-up" data-aos-delay="100">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-envelope text-green-500"></i>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500 dark:text-gray-400">Messages</p>
-                                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">24</h3>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg" data-aos="fade-up" data-aos-delay="200">
-                            <div class="flex items-center">
-                                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-4">
-                                    <i class="fas fa-download text-purple-500"></i>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500 dark:text-gray-400">CV Downloads</p>
-                                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">56</h3>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Actions -->
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8" data-aos="fade-up">
-                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-6">Quick Actions</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <button class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition text-center">
-                                <i class="fas fa-edit text-xl mb-2"></i>
-                                <p>Edit Profile</p>
-                            </button>
-                            
-                            <button class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition text-center">
-                                <i class="fas fa-plus text-xl mb-2"></i>
-                                <p>Add Experience</p>
-                            </button>
-                            
-                            <button class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition text-center">
-                                <i class="fas fa-chart-bar text-xl mb-2"></i>
-                                <p>Update Skills</p>
-                            </button>
-                            
-                            <button class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition text-center">
-                                <i class="fas fa-image text-xl mb-2"></i>
-                                <p>Upload Photo</p>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <!-- Recent Messages -->
-                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6" data-aos="fade-up">
-                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-6">Recent Messages</h3>
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <div>
-                                    <h4 class="font-bold text-gray-800 dark:text-white">John Doe</h4>
-                                    <p class="text-gray-600 dark:text-gray-400">Interested in web development collaboration</p>
-                                </div>
-                                <span class="text-sm text-gray-500">2 hours ago</span>
-                            </div>
-                            
-                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <div>
-                                    <h4 class="font-bold text-gray-800 dark:text-white">Jane Smith</h4>
-                                    <p class="text-gray-600 dark:text-gray-400">AI project inquiry</p>
-                                </div>
-                                <span class="text-sm text-gray-500">1 day ago</span>
-                            </div>
-                            
-                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                                <div>
-                                    <h4 class="font-bold text-gray-800 dark:text-white">PT. Example</h4>
-                                    <p class="text-gray-600 dark:text-gray-400">Job opportunity</p>
-                                </div>
-                                <span class="text-sm text-gray-500">3 days ago</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         // Initialize AOS animations
         AOS.init({
             duration: 800,
-            once: true
+            once: true,
+            offset: 50
         });
 
         // Theme Toggle
         const themeToggle = document.getElementById('themeToggle');
-        const themeToggleAdmin = document.getElementById('themeToggleAdmin');
         
         function toggleTheme() {
             const html = document.documentElement;
             if (html.classList.contains('dark')) {
                 html.classList.remove('dark');
                 localStorage.setItem('theme', 'light');
-                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
-                if(themeToggleAdmin) themeToggleAdmin.innerHTML = '<i class="fas fa-moon"></i>';
+                themeToggle.innerHTML = '<i class="fas fa-moon text-body-sm"></i>';
             } else {
                 html.classList.add('dark');
                 localStorage.setItem('theme', 'dark');
-                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-                if(themeToggleAdmin) themeToggleAdmin.innerHTML = '<i class="fas fa-sun"></i>';
+                themeToggle.innerHTML = '<i class="fas fa-sun text-body-sm"></i>';
             }
         }
         
         themeToggle.addEventListener('click', toggleTheme);
-        if(themeToggleAdmin) themeToggleAdmin.addEventListener('click', toggleTheme);
         
         // Check for saved theme preference
         if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
-            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            if(themeToggleAdmin) themeToggleAdmin.innerHTML = '<i class="fas fa-sun"></i>';
+            themeToggle.innerHTML = '<i class="fas fa-sun text-body-sm"></i>';
         }
 
         // Mobile Menu Toggle
@@ -780,74 +692,14 @@
             mobileMenuContent.classList.toggle('hidden');
         });
 
-        // Admin Panel Toggle
-        const adminToggle = document.getElementById('adminToggle');
-        const backToSite = document.getElementById('backToSite');
-        const mainContent = document.getElementById('mainContent');
-        const adminPanel = document.getElementById('adminPanel');
-        
-        adminToggle.addEventListener('click', () => {
-            Swal.fire({
-                title: 'Enter Admin Password',
-                input: 'password',
-                inputAttributes: {
-                    autocapitalize: 'off'
-                },
-                showCancelButton: true,
-                confirmButtonText: 'Login',
-                showLoaderOnConfirm: true,
-                preConfirm: (password) => {
-                    // In a real application, this would be an API call
-                    if (password === 'admin123') {
-                        return true;
-                    } else {
-                        Swal.showValidationMessage('Password incorrect');
-                        return false;
-                    }
-                },
-                allowOutsideClick: () => !Swal.isLoading()
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    mainContent.classList.add('hidden');
-                    adminPanel.classList.remove('hidden');
-                    AOS.refresh(); // Refresh animations for admin panel
-                }
-            });
-        });
-        
-        backToSite.addEventListener('click', () => {
-            adminPanel.classList.add('hidden');
-            mainContent.classList.remove('hidden');
-            AOS.refresh(); // Refresh animations for main content
-        });
-
-        // Admin Navigation
-        const adminNavItems = document.querySelectorAll('.admin-nav-item');
-        adminNavItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                adminNavItems.forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                
-                Swal.fire({
-                    title: 'Navigation',
-                    text: `Navigating to ${item.querySelector('span').textContent}`,
-                    icon: 'info',
-                    confirmButtonText: 'OK',
-                    background: '#1e293b',
-                    color: 'white'
-                });
-            });
-        });
-
         // Contact Form Submission
         const contactForm = document.querySelector('form');
         if(contactForm) {
             contactForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 Swal.fire({
-                    title: 'Message Sent!',
-                    text: 'Thank you for your message. I will get back to you soon.',
+                    title: 'Pesan Terkirim!',
+                    text: 'Terima kasih atas pesan Anda. Saya akan membalas secepatnya.',
                     icon: 'success',
                     confirmButtonText: 'OK',
                     background: '#1e293b',
@@ -867,6 +719,9 @@
                         behavior: 'smooth',
                         block: 'start'
                     });
+                    
+                    // Close mobile menu if open
+                    mobileMenuContent.classList.add('hidden');
                 }
             });
         });
@@ -895,6 +750,17 @@
         if (skillsSection) {
             observer.observe(skillsSection);
         }
+
+        // Add loading animation for images
+        document.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                img.addEventListener('load', function() {
+                    this.classList.add('opacity-100');
+                    this.classList.remove('opacity-0');
+                });
+            });
+        });
     </script>
 </body>
 </html>
