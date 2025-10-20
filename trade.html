@@ -1,6 +1,733 @@
 <!DOCTYPE html>
 <html lang="en">
+<head><!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAUUSD Trading Bot - MT5 Integration</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Socket.io for real-time updates -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .price-up {
+            color: #10b981;
+            animation: pulse-green 2s infinite;
+        }
+        .price-down {
+            color: #ef4444;
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .tradingview-widget-container {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+    <!-- Header -->
+    <header class="glass-effect sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-coins text-yellow-400 text-2xl"></i>
+                <h1 class="text-xl font-bold">XAUUSD Trading Bot - MT5</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm">MT5:</span>
+                    <div id="mt5Status" class="w-3 h-3 bg-red-500 rounded-full"></div>
+                    <span id="mt5StatusText" class="text-sm">Disconnected</span>
+                </div>
+                <button id="settingsBtn" class="p-2 rounded-full hover:bg-blue-800 transition">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Connection Panel -->
+        <div class="glass-effect rounded-xl p-6 mb-6" data-aos="fade-down">
+            <h2 class="text-xl font-bold mb-4">MT5 Connection</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Server</label>
+                    <input type="text" id="mt5Server" placeholder="MT5 Server" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Login</label>
+                    <input type="number" id="mt5Login" placeholder="Account Number" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Password</label>
+                    <input type="password" id="mt5Password" placeholder="Password" 
+                           class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button id="connectBtn" class="w-full bg-green-600 hover:bg-green-700 py-2 rounded-lg font-bold transition">
+                        Connect MT5
+                    </button>
+                </div>
+            </div>
+            <div id="accountInfo" class="mt-4 hidden">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-400">Balance:</span>
+                        <span id="accountBalance" class="font-bold">$0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Equity:</span>
+                        <span id="accountEquity" class="font-bold">$0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Margin:</span>
+                        <span id="accountMargin" class="font-bold">$0.00</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-400">Free Margin:</span>
+                        <span id="accountFreeMargin" class="font-bold">$0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Price Chart -->
+            <div class="lg:col-span-2 glass-effect rounded-xl p-6" data-aos="fade-right">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">XAU/USD Live Chart</h2>
+                    <div class="flex space-x-2">
+                        <button class="timeframe-btn px-3 py-1 bg-blue-700 rounded text-sm" data-tf="M1">1M</button>
+                        <button class="timeframe-btn px-3 py-1 bg-gray-700 rounded text-sm" data-tf="M5">5M</button>
+                        <button class="timeframe-btn px-3 py-1 bg-gray-700 rounded text-sm" data-tf="M15">15M</button>
+                        <button class="timeframe-btn px-3 py-1 bg-gray-700 rounded text-sm" data-tf="H1">1H</button>
+                        <button class="timeframe-btn px-3 py-1 bg-gray-700 rounded text-sm" data-tf="H4">4H</button>
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Trading Panel -->
+            <div class="glass-effect rounded-xl p-6" data-aos="fade-left">
+                <h2 class="text-xl font-bold mb-4">Trading Panel</h2>
+                
+                <!-- Current Price -->
+                <div class="mb-6 p-4 bg-gray-800 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Current Price</span>
+                        <span id="currentPrice" class="text-2xl font-bold">$0.00</span>
+                    </div>
+                    <div class="flex justify-between mt-2">
+                        <span class="text-gray-400">Spread</span>
+                        <span id="currentSpread" class="text-yellow-500">0.0</span>
+                    </div>
+                </div>
+
+                <!-- Trading Controls -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Volume (Lots)</label>
+                        <input type="number" id="tradeVolume" value="0.01" min="0.01" step="0.01"
+                            class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="buyBtn" class="bg-green-600 hover:bg-green-700 py-3 rounded-lg font-bold transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            BUY
+                        </button>
+                        <button id="sellBtn" class="bg-red-600 hover:bg-red-700 py-3 rounded-lg font-bold transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            SELL
+                        </button>
+                    </div>
+
+                    <div class="pt-4 border-t border-gray-700">
+                        <h3 class="font-medium mb-2">Risk Management</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-sm mb-1">Stop Loss (pips)</label>
+                                <input type="number" id="stopLoss" value="50" 
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Take Profit (pips)</label>
+                                <input type="number" id="takeProfit" value="100" 
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm">
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Auto Trading</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="autoTrade" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats and Open Trades -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Trading Stats -->
+            <div class="glass-effect rounded-xl p-6" data-aos="fade-up">
+                <h2 class="text-xl font-bold mb-4">Account Statistics</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <div class="text-gray-400 text-sm">Total Trades</div>
+                        <div id="totalTrades" class="text-2xl font-bold">0</div>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <div class="text-gray-400 text-sm">Win Rate</div>
+                        <div id="winRate" class="text-2xl font-bold text-green-500">0%</div>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <div class="text-gray-400 text-sm">Profit/Loss</div>
+                        <div id="totalProfit" class="text-2xl font-bold">$0.00</div>
+                    </div>
+                    <div class="bg-gray-800 p-4 rounded-lg">
+                        <div class="text-gray-400 text-sm">Open Trades</div>
+                        <div id="openTrades" class="text-2xl font-bold">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Open Trades -->
+            <div class="glass-effect rounded-xl p-6" data-aos="fade-up">
+                <h2 class="text-xl font-bold mb-4">Open Trades</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-2">Ticket</th>
+                                <th class="text-left py-2">Type</th>
+                                <th class="text-left py-2">Volume</th>
+                                <th class="text-left py-2">Open Price</th>
+                                <th class="text-left py-2">Current Price</th>
+                                <th class="text-left py-2">Profit</th>
+                                <th class="text-left py-2">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="openTradesTable">
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-gray-500">No open trades</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading History -->
+        <div class="glass-effect rounded-xl p-6 mt-6" data-aos="fade-up">
+            <h2 class="text-xl font-bold mb-4">Trading History</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-700">
+                            <th class="text-left py-2">Time</th>
+                            <th class="text-left py-2">Type</th>
+                            <th class="text-left py-2">Volume</th>
+                            <th class="text-left py-2">Open Price</th>
+                            <th class="text-left py-2">Close Price</th>
+                            <th class="text-left py-2">Profit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tradeHistory">
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-gray-500">No trading history</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize AOS animations
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+
+        // MT5 Connection State
+        let mt5Connected = false;
+        let socket = null;
+        let currentTimeframe = 'M1';
+
+        // Chart instance
+        let priceChart = null;
+
+        // Initialize Chart
+        function initializeChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'XAU/USD',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'rgba(255, 255, 255, 0.7)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Connect to MT5
+        document.getElementById('connectBtn').addEventListener('click', function() {
+            const server = document.getElementById('mt5Server').value;
+            const login = document.getElementById('mt5Login').value;
+            const password = document.getElementById('mt5Password').value;
+
+            if (!server || !login || !password) {
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Please fill all connection details',
+                    icon: 'error',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+                return;
+            }
+
+            // Simulate MT5 connection
+            connectToMT5(server, login, password);
+        });
+
+        // Simulate MT5 Connection
+        function connectToMT5(server, login, password) {
+            Swal.fire({
+                title: 'Connecting to MT5...',
+                text: 'Please wait while we establish connection',
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                background: '#1e293b',
+                color: 'white'
+            });
+
+            // Simulate API call delay
+            setTimeout(() => {
+                mt5Connected = true;
+                updateConnectionStatus();
+                
+                Swal.fire({
+                    title: 'Connected!',
+                    text: 'Successfully connected to MT5',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+
+                // Enable trading buttons
+                document.getElementById('buyBtn').disabled = false;
+                document.getElementById('sellBtn').disabled = false;
+
+                // Show account info
+                document.getElementById('accountInfo').classList.remove('hidden');
+                
+                // Simulate account data
+                simulateAccountData();
+                simulatePriceUpdates();
+                initializeChart();
+
+            }, 2000);
+        }
+
+        // Update connection status
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('mt5Status');
+            const statusText = document.getElementById('mt5StatusText');
+            
+            if (mt5Connected) {
+                statusElement.className = 'w-3 h-3 bg-green-500 rounded-full animate-pulse';
+                statusText.textContent = 'Connected';
+            } else {
+                statusElement.className = 'w-3 h-3 bg-red-500 rounded-full';
+                statusText.textContent = 'Disconnected';
+            }
+        }
+
+        // Simulate account data
+        function simulateAccountData() {
+            document.getElementById('accountBalance').textContent = '$10,000.00';
+            document.getElementById('accountEquity').textContent = '$10,245.50';
+            document.getElementById('accountMargin').textContent = '$245.00';
+            document.getElementById('accountFreeMargin').textContent = '$9,755.00';
+        }
+
+        // Simulate price updates
+        function simulatePriceUpdates() {
+            let currentPrice = 2034.75;
+            
+            setInterval(() => {
+                const change = (Math.random() - 0.5) * 5;
+                currentPrice += change;
+                
+                document.getElementById('currentPrice').textContent = `$${currentPrice.toFixed(2)}`;
+                document.getElementById('currentSpread').textContent = (Math.random() * 2).toFixed(1);
+                
+                // Update chart
+                if (priceChart) {
+                    const now = new Date();
+                    const timeLabel = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+                    
+                    priceChart.data.labels.push(timeLabel);
+                    priceChart.data.datasets[0].data.push(currentPrice);
+                    
+                    // Keep only last 50 data points
+                    if (priceChart.data.labels.length > 50) {
+                        priceChart.data.labels.shift();
+                        priceChart.data.datasets[0].data.shift();
+                    }
+                    
+                    priceChart.update('none');
+                }
+                
+            }, 1000);
+        }
+
+        // Trading functions
+        document.getElementById('buyBtn').addEventListener('click', function() {
+            if (!mt5Connected) {
+                Swal.fire({
+                    title: 'Not Connected',
+                    text: 'Please connect to MT5 first',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+                return;
+            }
+
+            const volume = document.getElementById('tradeVolume').value;
+            const stopLoss = document.getElementById('stopLoss').value;
+            const takeProfit = document.getElementById('takeProfit').value;
+            const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
+
+            executeTrade('BUY', volume, currentPrice, stopLoss, takeProfit);
+        });
+
+        document.getElementById('sellBtn').addEventListener('click', function() {
+            if (!mt5Connected) {
+                Swal.fire({
+                    title: 'Not Connected',
+                    text: 'Please connect to MT5 first',
+                    icon: 'warning',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+                return;
+            }
+
+            const volume = document.getElementById('tradeVolume').value;
+            const stopLoss = document.getElementById('stopLoss').value;
+            const takeProfit = document.getElementById('takeProfit').value;
+            const currentPrice = parseFloat(document.getElementById('currentPrice').textContent.replace('$', ''));
+
+            executeTrade('SELL', volume, currentPrice, stopLoss, takeProfit);
+        });
+
+        // Execute trade
+        function executeTrade(type, volume, price, sl, tp) {
+            Swal.fire({
+                title: `Confirm ${type} Order`,
+                html: `
+                    <div class="text-left">
+                        <p><b>Type:</b> ${type}</p>
+                        <p><b>Volume:</b> ${volume} lots</p>
+                        <p><b>Price:</b> $${price.toFixed(2)}</p>
+                        <p><b>Stop Loss:</b> ${sl} pips</p>
+                        <p><b>Take Profit:</b> ${tp} pips</p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: `Confirm ${type}`,
+                confirmButtonColor: type === 'BUY' ? '#10b981' : '#ef4444',
+                background: '#1e293b',
+                color: 'white'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Simulate MT5 API call
+                    simulateTradeExecution(type, volume, price, sl, tp);
+                }
+            });
+        }
+
+        // Simulate trade execution
+        function simulateTradeExecution(type, volume, price, sl, tp) {
+            Swal.fire({
+                title: 'Executing Order...',
+                text: 'Sending order to MT5',
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                background: '#1e293b',
+                color: 'white'
+            });
+
+            setTimeout(() => {
+                const ticket = Math.floor(Math.random() * 1000000);
+                const profit = (Math.random() - 0.5) * 100;
+                
+                Swal.fire({
+                    title: 'Order Executed!',
+                    text: `${type} order #${ticket} executed successfully`,
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+
+                // Add to open trades
+                addOpenTrade(ticket, type, volume, price, sl, tp);
+                
+            }, 1500);
+        }
+
+        // Add open trade
+        function addOpenTrade(ticket, type, volume, price, sl, tp) {
+            const table = document.getElementById('openTradesTable');
+            
+            // Remove "no trades" message if it exists
+            if (table.querySelector('td[colspan]')) {
+                table.innerHTML = '';
+            }
+            
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-800';
+            row.innerHTML = `
+                <td class="py-3">${ticket}</td>
+                <td class="py-3">
+                    <span class="px-2 py-1 ${type === 'BUY' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'} rounded text-sm">${type}</span>
+                </td>
+                <td class="py-3">${volume}</td>
+                <td class="py-3">$${price.toFixed(2)}</td>
+                <td class="py-3">$${(price + (Math.random() - 0.5) * 2).toFixed(2)}</td>
+                <td class="py-3 ${Math.random() > 0.5 ? 'text-green-500' : 'text-red-500'}">${(Math.random() > 0.5 ? '+' : '')}${(Math.random() * 50).toFixed(2)}</td>
+                <td class="py-3">
+                    <button class="close-trade text-red-500 hover:text-red-400" data-ticket="${ticket}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+            
+            table.appendChild(row);
+            
+            // Add close trade event listener
+            row.querySelector('.close-trade').addEventListener('click', function() {
+                closeTrade(ticket);
+            });
+            
+            updateStatistics();
+        }
+
+        // Close trade
+        function closeTrade(ticket) {
+            Swal.fire({
+                title: 'Close Trade?',
+                text: `Are you sure you want to close trade #${ticket}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Close Trade',
+                confirmButtonColor: '#ef4444',
+                background: '#1e293b',
+                color: 'white'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Remove from open trades and add to history
+                    const table = document.getElementById('openTradesTable');
+                    const row = table.querySelector(`button[data-ticket="${ticket}"]`)?.closest('tr');
+                    
+                    if (row) {
+                        const cells = row.querySelectorAll('td');
+                        const type = cells[1].textContent.trim();
+                        const volume = cells[2].textContent;
+                        const openPrice = cells[3].textContent;
+                        const closePrice = cells[4].textContent;
+                        const profit = cells[5].textContent;
+                        
+                        row.remove();
+                        addToHistory(type, volume, openPrice, closePrice, profit);
+                        
+                        // Show "no trades" message if table is empty
+                        if (table.children.length === 0) {
+                            table.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-gray-500">No open trades</td></tr>';
+                        }
+                        
+                        updateStatistics();
+                    }
+                }
+            });
+        }
+
+        // Add to history
+        function addToHistory(type, volume, openPrice, closePrice, profit) {
+            const table = document.getElementById('tradeHistory');
+            
+            // Remove "no history" message if it exists
+            if (table.querySelector('td[colspan]')) {
+                table.innerHTML = '';
+            }
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            
+            const row = document.createElement('tr');
+            row.className = 'border-b border-gray-800';
+            row.innerHTML = `
+                <td class="py-3">${timeString}</td>
+                <td class="py-3">
+                    <span class="px-2 py-1 ${type === 'BUY' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'} rounded text-sm">${type}</span>
+                </td>
+                <td class="py-3">${volume}</td>
+                <td class="py-3">${openPrice}</td>
+                <td class="py-3">${closePrice}</td>
+                <td class="py-3 ${profit.startsWith('+') ? 'text-green-500' : 'text-red-500'}">${profit}</td>
+            `;
+            
+            table.appendChild(row);
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            const openTrades = document.getElementById('openTradesTable').querySelectorAll('tr:not([colspan])').length;
+            document.getElementById('openTrades').textContent = openTrades;
+            
+            // Simulate some stats
+            document.getElementById('totalTrades').textContent = Math.floor(Math.random() * 50) + 10;
+            document.getElementById('winRate').textContent = `${Math.floor(Math.random() * 30) + 60}%`;
+            document.getElementById('totalProfit').textContent = `$${(Math.random() * 2000 + 500).toFixed(2)}`;
+        }
+
+        // Timeframe buttons
+        document.querySelectorAll('.timeframe-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                document.querySelectorAll('.timeframe-btn').forEach(btn => {
+                    btn.className = 'timeframe-btn px-3 py-1 bg-gray-700 rounded text-sm';
+                });
+                this.className = 'timeframe-btn px-3 py-1 bg-blue-700 rounded text-sm';
+                
+                // Update timeframe
+                currentTimeframe = this.dataset.tf;
+                
+                // In real implementation, this would fetch new data from MT5
+                Swal.fire({
+                    title: 'Timeframe Updated',
+                    text: `Chart timeframe changed to ${currentTimeframe}`,
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+            });
+        });
+
+        // Settings button
+        document.getElementById('settingsBtn').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Trading Bot Settings',
+                html: `
+                    <div class="text-left space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Trading Strategy</label>
+                            <select class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
+                                <option>Trend Following</option>
+                                <option>Mean Reversion</option>
+                                <option>Breakout</option>
+                                <option>Scalping</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Max Risk per Trade (%)</label>
+                            <input type="number" value="2" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Daily Trade Limit</label>
+                            <input type="number" value="10" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Save Settings',
+                cancelButtonText: 'Cancel',
+                background: '#1e293b',
+                color: 'white'
+            });
+        });
+
+        // Initialize
+        initializeChart();
+        updateConnectionStatus();
+    </script>
+    
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>XAUUSD Trading Bot</title>
