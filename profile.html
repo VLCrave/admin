@@ -13,8 +13,6 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- EmailJS -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
@@ -840,8 +838,8 @@
                             </div>
                             
                             <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 rounded-xl font-semibold hover-lift text-body-sm flex items-center justify-center">
-                                <i class="fas fa-paper-plane mr-2"></i>
-                                <span id="submitText">Kirim Pesan</span>
+                                <i class="fab fa-telegram-plane mr-2"></i>
+                                <span id="submitText">Kirim via Telegram</span>
                                 <div id="loadingSpinner" class="loading-spinner hidden ml-2"></div>
                             </button>
                         </form>
@@ -882,15 +880,11 @@
         });
 
         // ================================
-        // KONFIGURASI EMAILJS
+        // TELEGRAM BOT CONFIGURATION
         // ================================
         
-        // Initialize EmailJS dengan Public Key
-        emailjs.init("cRtdcXAiieq1aQ1oH"); // Ganti dengan Public Key Anda
-        
-        // Service ID dan Template ID
-        const SERVICE_ID = 'service_fglmkyk';
-        const TEMPLATE_ID = 'template_z4gxrhp'; // Template ID Anda
+        const TELEGRAM_BOT_TOKEN = '8012881635:AAEBqLZZz0jaA4Ek0GsvFkzuEXoknxiq8Rg';
+        const TELEGRAM_CHAT_ID = '6046360096';
 
         // ================================
         // ATOMIC BACKGROUND ANIMATION
@@ -1184,7 +1178,29 @@
         });
 
         // ================================
-        // CONTACT FORM WITH EMAILJS
+        // TELEGRAM BOT FUNCTION
+        // ================================
+        
+        async function sendToTelegram(message) {
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: message,
+                    parse_mode: 'HTML'
+                })
+            });
+            
+            return response.json();
+        }
+
+        // ================================
+        // CONTACT FORM TO TELEGRAM
         // ================================
         
         const contactForm = document.getElementById('contactForm');
@@ -1201,80 +1217,125 @@
                 }
                 
                 // Show loading state
-                submitText.textContent = 'Mengirim...';
+                submitText.textContent = 'Mengirim ke Telegram...';
                 loadingSpinner.classList.remove('hidden');
                 submitBtn.disabled = true;
                 
                 try {
-                    // Data yang akan dikirim
-                    const templateParams = {
-                        to_email: 'vlbusiness35@gmail.com',
-                        from_name: document.getElementById('name').value,
-                        from_email: document.getElementById('email').value,
-                        subject: document.getElementById('subject').value,
-                        message: document.getElementById('message').value,
-                        reply_to: document.getElementById('email').value,
-                        timestamp: new Date().toLocaleString('id-ID')
-                    };
+                    // Data dari form
+                    const name = document.getElementById('name').value;
+                    const email = document.getElementById('email').value;
+                    const subject = document.getElementById('subject').value;
+                    const message = document.getElementById('message').value;
+                    
+                    // Format pesan untuk Telegram
+                    const telegramMessage = `
+📧 <b>NEW PORTFOLIO MESSAGE</b>
 
-                    // Kirim email menggunakan EmailJS
-                    const response = await emailjs.send(
-                        SERVICE_ID,     // Service ID Anda
-                        TEMPLATE_ID,    // Template ID Anda
-                        templateParams
-                    );
+👤 <b>Sender Information:</b>
+• Nama: ${name}
+• Email: ${email}
+• Subjek: ${subject}
+• Waktu: ${new Date().toLocaleString('id-ID')}
 
-                    console.log('Email sent successfully:', response);
+💬 <b>Message:</b>
+${message}
 
-                    // Success message
-                    Swal.fire({
-                        title: 'Pesan Terkirim! 🎉',
-                        html: `
-                            <div class="text-left">
-                                <p class="mb-2">Terima kasih <strong>${templateParams.from_name}</strong>!</p>
-                                <p class="mb-3">Pesan Anda telah berhasil dikirim ke Vicky Satria Lindy.</p>
-                                <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                    <p class="text-body-sm text-green-700 dark:text-green-300">
-                                        <i class="fas fa-check-circle mr-2"></i>
-                                        Email otomatis telah dikirim menggunakan Template ID
+📍 <b>Lokasi:</b> ${window.location.href}
+
+🕒 ${new Date().toLocaleString('id-ID', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+})}
+                    `;
+
+                    // Kirim ke Telegram
+                    const response = await sendToTelegram(telegramMessage);
+                    
+                    if (response.ok) {
+                        // Success message
+                        Swal.fire({
+                            title: 'Terkirim ke Telegram! ✅',
+                            html: `
+                                <div class="text-left">
+                                    <div style="background: #d1fae5; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                                        <h4 style="margin: 0 0 10px 0; color: #065f46;">📱 Pesan Terkirim ke Telegram</h4>
+                                        <p style="margin: 5px 0;"><strong>Dari:</strong> ${name}</p>
+                                        <p style="margin: 5px 0;"><strong>Subjek:</strong> ${subject}</p>
+                                        <p style="margin: 5px 0;"><strong>Waktu:</strong> ${new Date().toLocaleString('id-ID')}</p>
+                                    </div>
+                                    <p style="color: #059669; margin: 10px 0;">
+                                        <i class="fab fa-telegram"></i>
+                                        Notifikasi sudah dikirim ke Telegram Vicky
                                     </p>
                                 </div>
-                            </div>
-                        `,
-                        icon: 'success',
-                        confirmButtonText: 'OK',
-                        background: '#1e293b',
-                        color: 'white',
-                        width: '500px'
-                    });
+                            `,
+                            icon: 'success',
+                            confirmButtonText: 'Mengerti',
+                            background: '#1e293b',
+                            color: 'white',
+                            width: '450px'
+                        });
 
-                    // Reset form
-                    contactForm.reset();
+                        // Reset form
+                        contactForm.reset();
+                    } else {
+                        throw new Error('Failed to send to Telegram');
+                    }
 
                 } catch (error) {
-                    console.error('Error sending email:', error);
+                    console.error('Error sending to Telegram:', error);
+                    
+                    // Fallback - tampilkan data yang akan dikirim
+                    const name = document.getElementById('name').value;
+                    const email = document.getElementById('email').value;
+                    const subject = document.getElementById('subject').value;
+                    const message = document.getElementById('message').value;
                     
                     Swal.fire({
-                        title: 'Gagal Mengirim Email',
+                        title: 'Gagal Mengirim ke Telegram',
                         html: `
                             <div class="text-left">
-                                <p class="mb-3">Maaf, terjadi kesalahan dalam pengiriman otomatis.</p>
-                                <p class="mb-4">Anda dapat menghubungi langsung melalui:</p>
+                                <p class="mb-3">Pesan gagal terkirim otomatis, tapi data Anda sudah tercatat:</p>
+                                
+                                <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                                    <h4 style="margin: 0 0 10px 0; color: #92400e;">Data Pesan:</h4>
+                                    <p><strong>Nama:</strong> ${name}</p>
+                                    <p><strong>Email:</strong> ${email}</p>
+                                    <p><strong>Subjek:</strong> ${subject}</p>
+                                    <p><strong>Pesan:</strong> ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}</p>
+                                </div>
+                                
+                                <p class="mb-4">Silakan hubungi langsung melalui:</p>
                                 <div class="space-y-2">
-                                    <p class="font-bold text-blue-500">Email: vlbusiness35@gmail.com</p>
-                                    <p class="font-bold text-green-500">WhatsApp: +62 812-3456-7890</p>
+                                    <p><strong>📧 Email:</strong> vlbusiness35@gmail.com</p>
+                                    <p><strong>📱 WhatsApp:</strong> +62 812-3456-7890</p>
+                                    <p><strong>📲 Telegram:</strong> @vickysatria</p>
                                 </div>
                             </div>
                         `,
-                        icon: 'error',
-                        confirmButtonText: 'Tutup',
+                        icon: 'info',
+                        confirmButtonText: 'Salin Data',
                         background: '#1e293b',
                         color: 'white',
-                        width: '500px'
+                        width: '500px',
+                        showCancelButton: true,
+                        cancelButtonText: 'Tutup'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Salin data ke clipboard
+                            const emailText = `Hai Vicky, saya ${name} (${email}). Subjek: ${subject}. Pesan: ${message}`;
+                            navigator.clipboard.writeText(emailText);
+                            Swal.fire('Data Disalin!', 'Anda bisa paste di email/WhatsApp/Telegram', 'success');
+                        }
                     });
                 } finally {
                     // Reset button state
-                    submitText.textContent = 'Kirim Pesan';
+                    submitText.textContent = 'Kirim via Telegram';
                     loadingSpinner.classList.add('hidden');
                     submitBtn.disabled = false;
                 }
@@ -1348,11 +1409,9 @@
             return true;
         }
 
-        // Debug info
-        console.log('EmailJS Configuration:');
-        console.log('- Service ID:', SERVICE_ID);
-        console.log('- Template ID:', TEMPLATE_ID);
-        console.log('- To Email: vlbusiness35@gmail.com');
+        console.log('Telegram Bot Configuration Loaded!');
+        console.log('Bot Token:', TELEGRAM_BOT_TOKEN.substring(0, 10) + '...');
+        console.log('Chat ID:', TELEGRAM_CHAT_ID);
     </script>
 </body>
 </html>
