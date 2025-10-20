@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VLCrave Express - Layanan Delivery Terpercaya</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VLCrave Express">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
@@ -88,9 +99,55 @@
             display: flex;
             align-items: center;
         }
+        
+        /* Partner Logo Styles */
+        .partner-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 50%;
+            background: white;
+            padding: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 3px solid #f8fafc;
+        }
+        
+        /* PWA Install Prompt */
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            z-index: 1000;
+            max-width: 300px;
+            animation: slideInUp 0.3s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt" class="install-prompt hidden">
+        <div class="flex items-center mb-3">
+            <i class="fas fa-mobile-alt text-blue-500 text-xl mr-3"></i>
+            <div>
+                <h3 class="font-bold text-gray-800">Install VLCrave Express</h3>
+                <p class="text-sm text-gray-600">Add to home screen for quick access</p>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <button id="installCancel" class="flex-1 bg-gray-200 text-gray-800 py-2 rounded-lg text-sm font-medium">Nanti</button>
+            <button id="installConfirm" class="flex-1 bg-blue-500 text-white py-2 rounded-lg text-sm font-medium">Install</button>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="bg-blue-600 text-white shadow-lg sticky top-0 z-50">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -106,6 +163,7 @@
                 <a href="#area" class="nav-link px-3 py-2 rounded">Area Layanan</a>
                 <a href="#jam" class="nav-link px-3 py-2 rounded">Jam Operasional</a>
                 <a href="#layanan" class="nav-link px-3 py-2 rounded">Daftar Layanan</a>
+                <a href="#partner" class="nav-link px-3 py-2 rounded">Partner Kami</a>
                 <a href="#kontak" class="nav-link px-3 py-2 rounded">Kontak</a>
             </nav>
         </div>
@@ -117,6 +175,7 @@
                 <a href="#area" class="nav-link px-3 py-2 rounded">Area Layanan</a>
                 <a href="#jam" class="nav-link px-3 py-2 rounded">Jam Operasional</a>
                 <a href="#layanan" class="nav-link px-3 py-2 rounded">Daftar Layanan</a>
+                <a href="#partner" class="nav-link px-3 py-2 rounded">Partner Kami</a>
                 <a href="#kontak" class="nav-link px-3 py-2 rounded">Kontak</a>
             </div>
         </div>
@@ -395,6 +454,114 @@
             </div>
         </section>
 
+        <!-- Partner Section -->
+        <section id="partner" class="mb-16 fade-in">
+            <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Partner Kami</h2>
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <div class="text-center mb-8">
+                    <p class="text-gray-600 text-lg">Bekerja sama dengan berbagai mitra terpercaya untuk memberikan pelayanan terbaik</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Partner 1 - Warung Makan -->
+                    <div class="bg-gray-50 rounded-lg p-6 flex items-center justify-between card-hover">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://cdn-icons-png.flaticon.com/512/878/878052.png" 
+                                 alt="Warung Makan" class="partner-logo">
+                            <div>
+                                <h3 class="font-bold text-lg">Warung Makan Sederhana</h3>
+                                <p class="text-gray-600 text-sm">Makanan rumahan dengan cita rasa autentik</p>
+                            </div>
+                        </div>
+                        <button class="partner-order bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                            Pesan <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Partner 2 - Kedai Kopi -->
+                    <div class="bg-gray-50 rounded-lg p-6 flex items-center justify-between card-hover">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://cdn-icons-png.flaticon.com/512/924/924514.png" 
+                                 alt="Kedai Kopi" class="partner-logo">
+                            <div>
+                                <h3 class="font-bold text-lg">Kedai Kopi 89</h3>
+                                <p class="text-gray-600 text-sm">Kopi segar dan berbagai minuman kekinian</p>
+                            </div>
+                        </div>
+                        <button class="partner-order bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                            Pesan <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Partner 3 - Alfamart -->
+                    <div class="bg-gray-50 rounded-lg p-6 flex items-center justify-between card-hover">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2838/2838694.png" 
+                                 alt="Alfamart" class="partner-logo">
+                            <div>
+                                <h3 class="font-bold text-lg">Alfamart Belinyu</h3>
+                                <p class="text-gray-600 text-sm">Kebutuhan sehari-hari lengkap dan terjangkau</p>
+                            </div>
+                        </div>
+                        <button class="partner-order bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                            Pesan <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Partner 4 - Laundry -->
+                    <div class="bg-gray-50 rounded-lg p-6 flex items-center justify-between card-hover">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://cdn-icons-png.flaticon.com/512/2978/2978373.png" 
+                                 alt="Laundry" class="partner-logo">
+                            <div>
+                                <h3 class="font-bold text-lg">Laundry Cepat</h3>
+                                <p class="text-gray-600 text-sm">Layanan laundry kilat dengan hasil maksimal</p>
+                            </div>
+                        </div>
+                        <button class="partner-order bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                            Pesan <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Partner 5 - Bakery -->
+                    <div class="bg-gray-50 rounded-lg p-6 flex items-center justify-between card-hover">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3082/3082027.png" 
+                                 alt="Bakery" class="partner-logo">
+                            <div>
+                                <h3 class="font-bold text-lg">Roti Enak Bakery</h3>
+                                <p class="text-gray-600 text-sm">Roti fresh dan berbagai kue lezat</p>
+                            </div>
+                        </div>
+                        <button class="partner-order bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                            Pesan <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Partner 6 - Pizza -->
+                    <div class="bg-gray-50 rounded-lg p-6 flex items-center justify-between card-hover">
+                        <div class="flex items-center space-x-4">
+                            <img src="https://cdn-icons-png.flaticon.com/512/3595/3595458.png" 
+                                 alt="Pizza" class="partner-logo">
+                            <div>
+                                <h3 class="font-bold text-lg">Pizza House</h3>
+                                <p class="text-gray-600 text-sm">Pizza dengan topping beragam dan keju melimpah</p>
+                            </div>
+                        </div>
+                        <button class="partner-order bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300">
+                            Pesan <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-8">
+                    <p class="text-gray-600">Ingin menjadi partner kami? 
+                        <a href="#kontak" class="text-blue-500 hover:text-blue-600 font-medium">Hubungi kami</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
         <!-- Kontak Section -->
         <section id="kontak" class="mb-16 fade-in">
             <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Kontak Kami</h2>
@@ -460,6 +627,47 @@
     </footer>
 
     <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installConfirm = document.getElementById('installConfirm');
+        const installCancel = document.getElementById('installCancel');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt.classList.remove('hidden');
+        });
+
+        installConfirm.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                }
+                deferredPrompt = null;
+                installPrompt.classList.add('hidden');
+            }
+        });
+
+        installCancel.addEventListener('click', () => {
+            installPrompt.classList.add('hidden');
+        });
+
         // Mobile menu toggle
         document.getElementById('menu-toggle').addEventListener('click', function() {
             const mobileMenu = document.getElementById('mobile-menu');
@@ -543,6 +751,32 @@
             });
         });
 
+        // Partner Order Buttons
+        document.querySelectorAll('.partner-order').forEach(button => {
+            button.addEventListener('click', function() {
+                const partnerCard = this.closest('.bg-gray-50');
+                const partnerName = partnerCard.querySelector('h3').textContent;
+                const partnerDesc = partnerCard.querySelector('p').textContent;
+                
+                Swal.fire({
+                    title: `Pesan dari ${partnerName}`,
+                    html: `<p class="text-gray-600 mb-4">${partnerDesc}</p><p>Anda akan diarahkan ke WhatsApp untuk memesan</p>`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#25D366',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Lanjut ke WhatsApp',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const message = `Halo VLCrave Express, saya ingin memesan dari ${partnerName}`;
+                        const encodedMessage = encodeURIComponent(message);
+                        window.open(`https://wa.me/6285709458101?text=${encodedMessage}`, '_blank');
+                    }
+                });
+            });
+        });
+
         // Add animation on scroll
         const observerOptions = {
             threshold: 0.1,
@@ -561,10 +795,10 @@
             observer.observe(section);
         });
 
-        // Geolocation for VLCrave Express (titik awal/pusat)
+        // Geolocation for VLCrave Express (titik awal/pusat) - Belinyu
         const vlCraveLocation = {
-            lat: -1.683333,  // Latitude Belinyu, Bangka Belitung
-            lng: 105.700000  // Longitude Belinyu, Bangka Belitung
+            lat: -1.683889,
+            lng: 105.700556
         };
 
         // Variables to store user location data
@@ -573,9 +807,12 @@
         let shippingDistance = 0;
         let shippingCost = 0;
 
+        // Geoapify API Key
+        const GEOAPIFY_API_KEY = '955d0f6627d847449516a6df5d3de4b3';
+
         // Calculate distance between two coordinates (Haversine formula)
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Radius of the earth in km
+            const R = 6371;
             const dLat = deg2rad(lat2 - lat1);
             const dLon = deg2rad(lon2 - lon1);
             const a = 
@@ -583,7 +820,7 @@
                 Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
                 Math.sin(dLon/2) * Math.sin(dLon/2); 
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-            const distance = R * c; // Distance in km
+            const distance = R * c;
             return distance;
         }
 
@@ -593,15 +830,11 @@
 
         // Calculate shipping cost based on distance
         function calculateShippingCost(distance) {
-            // Convert to integer, rounding up for decimal values
             const roundedDistance = Math.ceil(distance);
             
-            // KM 1-2: Rp 5,000
             if (roundedDistance <= 2) {
                 return 5000;
-            } 
-            // KM berikutnya: +Rp 1,000 per KM
-            else {
+            } else {
                 return 5000 + ((roundedDistance - 2) * 1000);
             }
         }
@@ -646,25 +879,70 @@
             });
         }
 
-        // Reverse geocode coordinates to get address
-        function reverseGeocode(lat, lng) {
-            // In a real application, you would use a geocoding service like Google Maps Geocoding API
-            // This is a simplified simulation
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    // Simulate getting an address based on coordinates
-                    const addresses = [
-                        "Jl. Raya Belinyu, Air Asam, Kec. Belinyu, Kabupaten Bangka, Kepulauan Bangka Belitung",
-                        "Jl. Mentok, Mantung, Kec. Belinyu, Kabupaten Bangka, Kepulauan Bangka Belitung", 
-                        "Jl. Jenderal Sudirman, Gunung Muda, Kec. Gunung Muda, Kabupaten Bangka, Kepulauan Bangka Belitung",
-                        "Jl. Pemuda, Riding Panjang, Kec. Riding Panjang, Kabupaten Bangka, Kepulauan Bangka Belitung",
-                        "Jl. Pelabuhan, Telang, Kec. Telang, Kabupaten Bangka, Kepulauan Bangka Belitung"
-                    ];
+        // Reverse geocode coordinates to get actual address using Geoapify API
+        async function reverseGeocode(lat, lng) {
+            try {
+                const response = await fetch(
+                    `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${GEOAPIFY_API_KEY}&format=json&lang=id`
+                );
+                
+                const data = await response.json();
+                
+                if (data.features && data.features.length > 0) {
+                    const address = data.features[0].properties;
                     
-                    const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
-                    resolve(randomAddress);
-                }, 1500);
-            });
+                    // Format alamat yang lebih baik
+                    let formattedAddress = '';
+                    
+                    if (address.street) {
+                        formattedAddress += address.street;
+                        if (address.housenumber) {
+                            formattedAddress += ` No. ${address.housenumber}`;
+                        }
+                    }
+                    
+                    if (address.suburb || address.city || address.state) {
+                        if (formattedAddress) formattedAddress += ', ';
+                        if (address.suburb) formattedAddress += address.suburb;
+                        else if (address.city) formattedAddress += address.city;
+                        else if (address.state) formattedAddress += address.state;
+                    }
+                    
+                    if (address.postcode) {
+                        if (formattedAddress) formattedAddress += ', ';
+                        formattedAddress += address.postcode;
+                    }
+                    
+                    if (address.country) {
+                        if (formattedAddress) formattedAddress += ', ';
+                        formattedAddress += address.country;
+                    }
+                    
+                    return formattedAddress || address.formatted || 'Alamat tidak dapat ditemukan';
+                } else {
+                    return getFallbackAddress(lat, lng);
+                }
+            } catch (error) {
+                console.error('Error reverse geocoding:', error);
+                return getFallbackAddress(lat, lng);
+            }
+        }
+
+        // Fallback address jika Geoapify API tidak tersedia
+        function getFallbackAddress(lat, lng) {
+            const distanceToCenter = calculateDistance(lat, lng, vlCraveLocation.lat, vlCraveLocation.lng);
+            
+            if (distanceToCenter < 2) {
+                return "Jl. Raya Belinyu, Kuto Panji, Kec. Belinyu, Kabupaten Bangka";
+            } else if (distanceToCenter < 5) {
+                return "Jl. Mentok, Mantung, Kec. Belinyu, Kabupaten Bangka";
+            } else if (distanceToCenter < 10) {
+                return "Jl. Jenderal Sudirman, Gunung Muda, Kec. Gunung Muda, Kabupaten Bangka";
+            } else if (distanceToCenter < 15) {
+                return "Jl. Pemuda, Riding Panjang, Kec. Riding Panjang, Kabupaten Bangka";
+            } else {
+                return "Jl. Pelabuhan, Telang, Kec. Telang, Kabupaten Bangka";
+            }
         }
 
         // Save to localStorage
@@ -692,31 +970,23 @@
             const button = this;
             const originalText = button.innerHTML;
             
-            // Show loading
             button.innerHTML = '<div class="loading"></div> Mendeteksi lokasi...';
             button.disabled = true;
             
             try {
-                // Get user location
                 userLocation = await getUserLocation();
-                
-                // Get address from coordinates
                 userAddress = await reverseGeocode(userLocation.lat, userLocation.lng);
                 
-                // Display address
                 document.getElementById('address-text').textContent = userAddress;
                 document.getElementById('address-text').className = 'text-gray-800';
                 
-                // Calculate distance
                 shippingDistance = calculateDistance(
                     vlCraveLocation.lat, vlCraveLocation.lng,
                     userLocation.lat, userLocation.lng
                 );
                 
-                // Calculate shipping cost
                 shippingCost = calculateShippingCost(shippingDistance);
                 
-                // Save to localStorage
                 saveToLocalStorage('vlcrave_user_location', {
                     coords: userLocation,
                     address: userAddress,
@@ -725,14 +995,11 @@
                     timestamp: new Date().toISOString()
                 });
                 
-                // Display result
                 document.getElementById('result-address').textContent = userAddress;
                 document.getElementById('result-distance').textContent = `${shippingDistance.toFixed(1)} km`;
                 document.getElementById('result-price').textContent = `Rp ${shippingCost.toLocaleString('id-ID')}`;
                 
-                // Show negotiate button
                 document.getElementById('negotiate-button').classList.remove('hidden');
-                
                 document.getElementById('shipping-result').classList.remove('hidden');
                 
             } catch (error) {
@@ -743,7 +1010,6 @@
                     confirmButtonColor: '#3085d6'
                 });
             } finally {
-                // Reset button
                 button.innerHTML = originalText;
                 button.disabled = false;
             }
@@ -754,31 +1020,23 @@
             const button = this;
             const originalText = button.innerHTML;
             
-            // Show loading
             button.innerHTML = '<div class="loading"></div> Mendeteksi lokasi...';
             button.disabled = true;
             
             try {
-                // Get user location
                 userLocation = await getUserLocation();
-                
-                // Get address from coordinates
                 userAddress = await reverseGeocode(userLocation.lat, userLocation.lng);
                 
-                // Display address
                 document.getElementById('service-address-text').textContent = userAddress;
                 document.getElementById('service-address-text').className = 'text-gray-800';
                 
-                // Calculate distance
                 const distance = calculateDistance(
                     vlCraveLocation.lat, vlCraveLocation.lng,
                     userLocation.lat, userLocation.lng
                 );
                 
-                // Check if service is available (within 15 km)
                 const isServiceAvailable = distance <= 15;
                 
-                // Save to localStorage
                 saveToLocalStorage('vlcrave_service_check', {
                     coords: userLocation,
                     address: userAddress,
@@ -787,7 +1045,6 @@
                     timestamp: new Date().toISOString()
                 });
                 
-                // Display result
                 document.getElementById('result-service-address').textContent = userAddress;
                 document.getElementById('result-service-distance').textContent = `${distance.toFixed(1)} km`;
                 
@@ -814,7 +1071,6 @@
                     confirmButtonColor: '#3085d6'
                 });
             } finally {
-                // Reset button
                 button.innerHTML = originalText;
                 button.disabled = false;
             }
@@ -850,8 +1106,6 @@
             if (savedLocation) {
                 document.getElementById('address-text').textContent = savedLocation.address;
                 document.getElementById('address-text').className = 'text-gray-800';
-                
-                // You could also pre-fill the results if needed
             }
             
             const savedService = loadFromLocalStorage('vlcrave_service_check');
