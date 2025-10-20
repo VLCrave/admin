@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vicky Satria Lindy - Professional Portfolio</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .dark-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hover-lift {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .skill-bar {
+            transition: width 2s ease-in-out;
+        }
+        
+        .admin-nav-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #4f46e5;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6366f1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-effect py-4">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span class="text-white font-bold">VL</span>
+                </div>
+                <span class="text-xl font-bold text-white">Vicky Satria Lindy</span>
+            </div>
+            
+            <div class="hidden md:flex space-x-8">
+                <a href="#home" class="text-white hover:text-blue-200 transition">Home</a>
+                <a href="#about" class="text-white hover:text-blue-200 transition">About</a>
+                <a href="#skills" class="text-white hover:text-blue-200 transition">Skills</a>
+                <a href="#experience" class="text-white hover:text-blue-200 transition">Experience</a>
+                <a href="#contact" class="text-white hover:text-blue-200 transition">Contact</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button id="themeToggle" class="text-white p-2 rounded-full hover:bg-white/20 transition">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button id="adminToggle" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition">
+                    Admin
+                </button>
+                <button id="mobileMenu" class="md:hidden text-white p-2">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobileMenuContent" class="md:hidden glass-effect mt-4 p-4 hidden">
+            <div class="flex flex-col space-y-4">
+                <a href="#home" class="text-white hover:text-blue-200 transition">Home</a>
+                <a href="#about" class="text-white hover:text-blue-200 transition">About</a>
+                <a href="#skills" class="text-white hover:text-blue-200 transition">Skills</a>
+                <a href="#experience" class="text-white hover:text-blue-200 transition">Experience</a>
+                <a href="#contact" class="text-white hover:text-blue-200 transition">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="mainContent">
+        <!-- Hero Section -->
+        <section id="home" class="min-h-screen gradient-bg flex items-center pt-16">
+            <div class="container mx-auto px-4 py-20">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div data-aos="fade-right">
+                        <h1 class="text-4xl md:text-6xl font-bold text-white mb-6">
+                            Hi, I'm <span class="text-gradient">Vicky Satria Lindy</span>
+                        </h1>
+                        <p class="text-xl text-blue-100 mb-8">
+                            Multitalented Professional with expertise in AI Operations, Web Development, and Business Management. Passionate about creating innovative solutions.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <button class="bg-white text-blue-600 px-8 py-3 rounded-lg font-bold hover-lift">
+                                View My Work
+                            </button>
+                            <button class="border-2 border-white text-white px-8 py-3 rounded-lg font-bold hover-lift">
+                                Contact Me
+                            </button>
+                        </div>
+                    </div>
+                    <div data-aos="fade-left" class="flex justify-center">
+                        <div class="relative">
+                            <div class="w-80 h-80 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full animate-float flex items-center justify-center">
+                                <i class="fas fa-user text-white text-8xl opacity-70"></i>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-20 animate-pulse"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20 bg-white dark:bg-gray-800">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-16" data-aos="fade-up">
+                    About <span class="text-gradient">Me</span>
+                </h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div data-aos="fade-right">
+                        <div class="bg-gray-100 dark:bg-gray-700 p-8 rounded-2xl">
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-user text-blue-500 w-8"></i>
+                                    <div>
+                                        <span class="font-semibold">Nama:</span>
+                                        <span class="ml-2">Vicky Satria Lindy</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-birthday-cake text-blue-500 w-8"></i>
+                                    <div>
+                                        <span class="font-semibold">Umur:</span>
+                                        <span class="ml-2">20 Tahun</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-map-marker-alt text-blue-500 w-8"></i>
+                                    <div>
+                                        <span class="font-semibold">Alamat:</span>
+                                        <span class="ml-2">Belinyu, Bangka Belitung</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-language text-blue-500 w-8"></i>
+                                    <div>
+                                        <span class="font-semibold">Bahasa:</span>
+                                        <span class="ml-2">Indonesia, Sunda, Inggris</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-briefcase text-blue-500 w-8"></i>
+                                    <div>
+                                        <span class="font-semibold">Pekerjaan:</span>
+                                        <span class="ml-2">Kurir Delivery, Web Development, Pengusaha</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div data-aos="fade-left">
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+                            Professional Journey
+                        </h3>
+                        <p class="text-gray-600 dark:text-gray-300 mb-6">
+                            Saya adalah profesional muda yang energik dengan kemampuan adaptasi yang tinggi. 
+                            Memiliki pengalaman di berbagai bidang mulai dari customer service, teknologi, 
+                            hingga bisnis. Keahlian khusus saya dalam mengoperasikan Artificial Intelligence 
+                            membantu dalam menciptakan solusi inovatif untuk berbagai tantangan bisnis.
+                        </p>
+                        <p class="text-gray-600 dark:text-gray-300 mb-6">
+                            Sebagai seorang pengusaha, saya memahami pentingnya memberikan nilai tambah 
+                            dan pengalaman terbaik kepada klien. Kombinasi skill teknis dan bisnis membuat 
+                            saya dapat berkontribusi secara maksimal dalam berbagai proyek.
+                        </p>
+                        
+                        <button class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-lg font-bold hover-lift">
+                            Download CV
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills" class="py-20 bg-gray-50 dark:bg-gray-900">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
+                    My <span class="text-gradient">Skills</span>
+                </h2>
+                <p class="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto" data-aos="fade-up">
+                    Berbagai keahlian yang saya kuasai untuk mendukung karir profesional
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <!-- Technical Skills -->
+                    <div data-aos="fade-right">
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Technical Skills</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Artificial Intelligence</span>
+                                    <span class="text-gray-700 dark:text-gray-300">90%</span>
+                                </div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 90%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Web Development</span>
+                                    <span class="text-gray-700 dark:text-gray-300">85%</span>
+                                </div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Digital Marketing</span>
+                                    <span class="text-gray-700 dark:text-gray-300">80%</span>
+                                </div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 80%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Skills -->
+                    <div data-aos="fade-left">
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Professional Skills</h3>
+                        <div class="space-y-6">
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Customer Service</span>
+                                    <span class="text-gray-700 dark:text-gray-300">95%</span>
+                                </div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Business Management</span>
+                                    <span class="text-gray-700 dark:text-gray-300">85%</span>
+                                </div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 85%"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-gray-700 dark:text-gray-300 font-medium">Sales & Negotiation</span>
+                                    <span class="text-gray-700 dark:text-gray-300">88%</span>
+                                </div>
+                                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                    <div class="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full skill-bar" style="width: 88%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Language Skills -->
+                <div class="mt-16 max-w-4xl mx-auto" data-aos="fade-up">
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6 text-center">Language Proficiency</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg text-center hover-lift">
+                            <div class="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-white text-xl font-bold">ID</span>
+                            </div>
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">Bahasa Indonesia</h4>
+                            <p class="text-green-500 font-semibold">Native</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg text-center hover-lift">
+                            <div class="w-20 h-20 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-white text-xl font-bold">SU</span>
+                            </div>
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">Bahasa Sunda</h4>
+                            <p class="text-green-500 font-semibold">Fluent</p>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg text-center hover-lift">
+                            <div class="w-20 h-20 bg-gradient-to-r from-red-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span class="text-white text-xl font-bold">EN</span>
+                            </div>
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-2">English</h4>
+                            <p class="text-yellow-500 font-semibold">Intermediate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Experience Section -->
+        <section id="experience" class="py-20 bg-white dark:bg-gray-800">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
+                    Work <span class="text-gradient">Experience</span>
+                </h2>
+                <p class="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto" data-aos="fade-up">
+                    Perjalanan karir dan pengalaman profesional saya
+                </p>
+                
+                <div class="max-w-4xl mx-auto">
+                    <!-- Experience Timeline -->
+                    <div class="space-y-12">
+                        <!-- Experience 1 -->
+                        <div class="flex flex-col md:flex-row gap-8" data-aos="fade-right">
+                            <div class="md:w-1/3 text-right">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
+                                    <span class="font-bold">2022 - Present</span>
+                                </div>
+                            </div>
+                            <div class="md:w-2/3">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
+                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Kurir Delivery & Pengusaha</h3>
+                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
+                                        Mengelola bisnis delivery service sambil mengembangkan usaha pribadi di bidang digital.
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">Logistics</span>
+                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Entrepreneurship</span>
+                                        <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Management</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Experience 2 -->
+                        <div class="flex flex-col md:flex-row gap-8" data-aos="fade-left">
+                            <div class="md:w-1/3 text-right">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
+                                    <span class="font-bold">2021 - 2022</span>
+                                </div>
+                            </div>
+                            <div class="md:w-2/3">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
+                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Web Developer Freelance</h3>
+                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
+                                        Membangun website dan aplikasi web untuk berbagai klien dengan teknologi modern.
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">HTML/CSS</span>
+                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full">JavaScript</span>
+                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">PHP</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Experience 3 -->
+                        <div class="flex flex-col md:flex-row gap-8" data-aos="fade-right">
+                            <div class="md:w-1/3 text-right">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
+                                    <span class="font-bold">2020 - 2021</span>
+                                </div>
+                            </div>
+                            <div class="md:w-2/3">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
+                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Direct Sales Executive</h3>
+                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
+                                        Bertanggung jawab dalam penjualan langsung dan membangun hubungan dengan pelanggan.
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-red-100 text-red-800 text-xs px-3 py-1 rounded-full">Sales</span>
+                                        <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Negotiation</span>
+                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Communication</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Experience 4 -->
+                        <div class="flex flex-col md:flex-row gap-8" data-aos="fade-left">
+                            <div class="md:w-1/3 text-right">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl inline-block">
+                                    <span class="font-bold">2019 - 2020</span>
+                                </div>
+                            </div>
+                            <div class="md:w-2/3">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-2xl hover-lift">
+                                    <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-2">Customer Service Representative</h3>
+                                    <p class="text-gray-600 dark:text-gray-300 mb-4">
+                                        Memberikan layanan terbaik kepada pelanggan dan menyelesaikan berbagai masalah dengan solusi efektif.
+                                    </p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full">Customer Service</span>
+                                        <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full">Problem Solving</span>
+                                        <span class="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full">Communication</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="py-20 bg-gray-50 dark:bg-gray-900">
+            <div class="container mx-auto px-4">
+                <h2 class="text-3xl md:text-4xl font-bold text-center text-gray-800 dark:text-white mb-4" data-aos="fade-up">
+                    Get In <span class="text-gradient">Touch</span>
+                </h2>
+                <p class="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto" data-aos="fade-up">
+                    Tertarik bekerja sama? Mari berdiskusi tentang proyek Anda!
+                </p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+                    <div data-aos="fade-right">
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Contact Information</h3>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-map-marker-alt text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-white">Location</h4>
+                                    <p class="text-gray-600 dark:text-gray-300">Belinyu, Bangka Belitung, Indonesia</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-envelope text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-white">Email</h4>
+                                    <p class="text-gray-600 dark:text-gray-300">vicky.satria@example.com</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start">
+                                <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-phone text-white"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-white">Phone</h4>
+                                    <p class="text-gray-600 dark:text-gray-300">+62 812-3456-7890</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-8">
+                            <h4 class="font-bold text-gray-800 dark:text-white mb-4">Follow Me</h4>
+                            <div class="flex space-x-4">
+                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-500 hover:text-white transition">
+                                    <i class="fab fa-linkedin-in"></i>
+                                </a>
+                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-blue-400 hover:text-white transition">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-800 hover:text-white transition">
+                                    <i class="fab fa-github"></i>
+                                </a>
+                                <a href="#" class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-green-500 hover:text-white transition">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div data-aos="fade-left">
+                        <form class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg">
+                            <div class="mb-6">
+                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="name">Nama Lengkap</label>
+                                <input type="text" id="name" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="email">Email Address</label>
+                                <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="subject">Subjek</label>
+                                <input type="text" id="subject" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label class="block text-gray-700 dark:text-gray-300 mb-2" for="message">Pesan</label>
+                                <textarea id="message" rows="5" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-bold hover-lift">
+                                Kirim Pesan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="bg-gray-800 text-white py-12">
+            <div class="container mx-auto px-4">
+                <div class="text-center">
+                    <div class="flex justify-center mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                            <span class="text-white font-bold">VL</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 mb-6">
+                        &copy; 2023 Vicky Satria Lindy. All rights reserved.
+                    </p>
+                    <div class="flex justify-center space-x-6">
+                        <a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a>
+                        <a href="#" class="text-gray-400 hover:text-white transition">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="hidden min-h-screen bg-gray-100 dark:bg-gray-900">
+        <!-- Admin Header -->
+        <header class="bg-white dark:bg-gray-800 shadow-sm">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <span class="text-white font-bold">A</span>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800 dark:text-white">Admin Dashboard - Vicky Satria Lindy</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggleAdmin" class="text-gray-600 dark:text-gray-300 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button id="backToSite" class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition">
+                        Back to Site
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Admin Content -->
+        <div class="container mx-auto px-4 py-8">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Sidebar -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                        <nav class="space-y-2">
+                            <a href="#" class="admin-nav-item active flex items-center space-x-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                                <i class="fas fa-tachometer-alt"></i>
+                                <span>Dashboard</span>
+                            </a>
+                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-user-edit"></i>
+                                <span>Profile Settings</span>
+                            </a>
+                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-briefcase"></i>
+                                <span>Experience Management</span>
+                            </a>
+                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Skills Management</span>
+                            </a>
+                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-envelope"></i>
+                                <span>Messages</span>
+                            </a>
+                            <a href="#" class="admin-nav-item flex items-center space-x-3 p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+                
+                <!-- Main Admin Content -->
+                <div class="lg:col-span-3">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg" data-aos="fade-up">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-eye text-blue-500"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Total Views</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">1,247</h3>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg" data-aos="fade-up" data-aos-delay="100">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-envelope text-green-500"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">Messages</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">24</h3>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg" data-aos="fade-up" data-aos-delay="200">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-4">
+                                    <i class="fas fa-download text-purple-500"></i>
+                                </div>
+                                <div>
+                                    <p class="text-gray-500 dark:text-gray-400">CV Downloads</p>
+                                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white">56</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8" data-aos="fade-up">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-6">Quick Actions</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition text-center">
+                                <i class="fas fa-edit text-xl mb-2"></i>
+                                <p>Edit Profile</p>
+                            </button>
+                            
+                            <button class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30 transition text-center">
+                                <i class="fas fa-plus text-xl mb-2"></i>
+                                <p>Add Experience</p>
+                            </button>
+                            
+                            <button class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition text-center">
+                                <i class="fas fa-chart-bar text-xl mb-2"></i>
+                                <p>Update Skills</p>
+                            </button>
+                            
+                            <button class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg text-yellow-600 dark:text-yellow-400 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition text-center">
+                                <i class="fas fa-image text-xl mb-2"></i>
+                                <p>Upload Photo</p>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Messages -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6" data-aos="fade-up">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-6">Recent Messages</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-white">John Doe</h4>
+                                    <p class="text-gray-600 dark:text-gray-400">Interested in web development collaboration</p>
+                                </div>
+                                <span class="text-sm text-gray-500">2 hours ago</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-white">Jane Smith</h4>
+                                    <p class="text-gray-600 dark:text-gray-400">AI project inquiry</p>
+                                </div>
+                                <span class="text-sm text-gray-500">1 day ago</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 dark:text-white">PT. Example</h4>
+                                    <p class="text-gray-600 dark:text-gray-400">Job opportunity</p>
+                                </div>
+                                <span class="text-sm text-gray-500">3 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize AOS animations
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const themeToggleAdmin = document.getElementById('themeToggleAdmin');
+        
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                if(themeToggleAdmin) themeToggleAdmin.innerHTML = '<i class="fas fa-moon"></i>';
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                if(themeToggleAdmin) themeToggleAdmin.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        }
+        
+        themeToggle.addEventListener('click', toggleTheme);
+        if(themeToggleAdmin) themeToggleAdmin.addEventListener('click', toggleTheme);
+        
+        // Check for saved theme preference
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            if(themeToggleAdmin) themeToggleAdmin.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+
+        // Mobile Menu Toggle
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuContent = document.getElementById('mobileMenuContent');
+        
+        mobileMenu.addEventListener('click', () => {
+            mobileMenuContent.classList.toggle('hidden');
+        });
+
+        // Admin Panel Toggle
+        const adminToggle = document.getElementById('adminToggle');
+        const backToSite = document.getElementById('backToSite');
+        const mainContent = document.getElementById('mainContent');
+        const adminPanel = document.getElementById('adminPanel');
+        
+        adminToggle.addEventListener('click', () => {
+            Swal.fire({
+                title: 'Enter Admin Password',
+                input: 'password',
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Login',
+                showLoaderOnConfirm: true,
+                preConfirm: (password) => {
+                    // In a real application, this would be an API call
+                    if (password === 'admin123') {
+                        return true;
+                    } else {
+                        Swal.showValidationMessage('Password incorrect');
+                        return false;
+                    }
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    mainContent.classList.add('hidden');
+                    adminPanel.classList.remove('hidden');
+                    AOS.refresh(); // Refresh animations for admin panel
+                }
+            });
+        });
+        
+        backToSite.addEventListener('click', () => {
+            adminPanel.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            AOS.refresh(); // Refresh animations for main content
+        });
+
+        // Admin Navigation
+        const adminNavItems = document.querySelectorAll('.admin-nav-item');
+        adminNavItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                adminNavItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                Swal.fire({
+                    title: 'Navigation',
+                    text: `Navigating to ${item.querySelector('span').textContent}`,
+                    icon: 'info',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+            });
+        });
+
+        // Contact Form Submission
+        const contactForm = document.querySelector('form');
+        if(contactForm) {
+            contactForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Message Sent!',
+                    text: 'Thank you for your message. I will get back to you soon.',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    background: '#1e293b',
+                    color: 'white'
+                });
+                contactForm.reset();
+            });
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Animate skill bars when they come into view
+        const observerOptions = {
+            threshold: 0.5
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const skillBars = entry.target.querySelectorAll('.skill-bar');
+                    skillBars.forEach(bar => {
+                        const width = bar.style.width;
+                        bar.style.width = '0';
+                        setTimeout(() => {
+                            bar.style.width = width;
+                        }, 100);
+                    });
+                }
+            });
+        }, observerOptions);
+
+        const skillsSection = document.getElementById('skills');
+        if (skillsSection) {
+            observer.observe(skillsSection);
+        }
+    </script>
+</body>
+</html>
