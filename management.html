@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - VLCrave Express</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Firebase App -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #3b82f6;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1f2937;
+            --light: #f8fafc;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-item {
+            transition: all 0.3s ease;
+            border-radius: 12px;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .income-card {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .expense-card {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .profit-card {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+        
+        .floating-btn {
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .floating-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 12px;
+        }
+        
+        .table-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .pulse-ring {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 1; }
+            70% { transform: scale(1.2); opacity: 0; }
+            100% { transform: scale(0.8); opacity: 0; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="glass-card p-8 w-full max-w-md">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shipping-fast text-2xl gradient-text"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white">Admin Login</h2>
+                <p class="text-white/80 mt-2">VLCrave Express Dashboard</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-white mb-2">Email</label>
+                    <input type="email" id="email" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="admin@vlcrave.com" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-white mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="w-full bg-white text-blue-600 font-semibold py-3 rounded-xl hover:bg-blue-50 transition duration-300 transform hover:scale-105">
+                    Masuk ke Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-80 fixed h-full z-40">
+            <div class="p-6">
+                <div class="flex items-center space-x-3 mb-8">
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+                            <i class="fas fa-shipping-fast text-xl gradient-text"></i>
+                        </div>
+                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full border-2 border-white"></div>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">VLCrave Admin</h1>
+                        <p class="text-white/60 text-sm">Financial Dashboard</p>
+                    </div>
+                </div>
+                
+                <nav class="space-y-2">
+                    <a href="#" class="nav-item block px-4 py-3 text-white active" data-tab="dashboard">
+                        <i class="fas fa-chart-pie mr-3"></i>Dashboard Keuangan
+                    </a>
+                    <a href="#" class="nav-item block px-4 py-3 text-white" data-tab="income">
+                        <i class="fas fa-money-bill-wave mr-3"></i>Pemasukan
+                    </a>
+                    <a href="#" class="nav-item block px-4 py-3 text-white" data-tab="expenses">
+                        <i class="fas fa-receipt mr-3"></i>Pengeluaran
+                    </a>
+                    <a href="#" class="nav-item block px-4 py-3 text-white" data-tab="shipping">
+                        <i class="fas fa-truck mr-3"></i>Harga Ongkir
+                    </a>
+                    <a href="#" class="nav-item block px-4 py-3 text-white" data-tab="partners">
+                        <i class="fas fa-handshake mr-3"></i>Partner
+                    </a>
+                    <a href="#" class="nav-item block px-4 py-3 text-white" data-tab="reports">
+                        <i class="fas fa-chart-bar mr-3"></i>Laporan
+                    </a>
+                    <a href="#" class="nav-item block px-4 py-3 text-white" data-tab="settings">
+                        <i class="fas fa-cog mr-3"></i>Pengaturan
+                    </a>
+                </nav>
+            </div>
+            
+            <div class="absolute bottom-0 w-full p-6 border-t border-white/20">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div>
+                        <p class="text-white font-medium" id="userEmail">admin@vlcrave.com</p>
+                        <p class="text-white/60 text-sm">Administrator</p>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="w-full bg-white/20 text-white py-3 rounded-xl hover:bg-white/30 transition duration-300">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Keluar
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content ml-0 lg:ml-80 w-full p-6">
+            <!-- Header -->
+            <header class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 id="pageTitle" class="text-3xl font-bold text-white">Dashboard Keuangan</h1>
+                        <p class="text-white/80" id="currentDate">Senin, 15 Jan 2024</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-white hover:bg-white/30 transition duration-300">
+                                <i class="fas fa-bell"></i>
+                            </button>
+                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full"></span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-white font-medium" id="currentTime">12:00 PM</p>
+                            <p class="text-white/60 text-sm">Waktu Server</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <main>
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active fade-in">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div class="income-card dashboard-card p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-white/80">Total Pemasukan</p>
+                                    <h2 class="text-3xl font-bold mt-2" id="totalIncome">Rp 12.450.000</h2>
+                                    <p class="text-white/60 text-sm mt-2"><i class="fas fa-arrow-up mr-1"></i> 12% dari bulan lalu</p>
+                                </div>
+                                <div class="bg-white/20 p-3 rounded-xl">
+                                    <i class="fas fa-money-bill-wave text-2xl text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="expense-card dashboard-card p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-white/80">Total Pengeluaran</p>
+                                    <h2 class="text-3xl font-bold mt-2" id="totalExpense">Rp 3.280.000</h2>
+                                    <p class="text-white/60 text-sm mt-2"><i class="fas fa-arrow-down mr-1"></i> 8% dari bulan lalu</p>
+                                </div>
+                                <div class="bg-white/20 p-3 rounded-xl">
+                                    <i class="fas fa-receipt text-2xl text-white"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="profit-card dashboard-card p-6">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-white/80">Pendapatan Bersih</p>
+                                    <h2 class="text-3xl font-bold mt-2" id="netProfit">Rp 9.170.000</h2>
+                                    <p class="text-white/60 text-sm mt-2"><i class="fas fa-chart-line mr-1"></i> 15% profit margin</p>
+                                </div>
+                                <div class="relative">
+                                    <div class="bg-white/20 p-3 rounded-xl">
+                                        <i class="fas fa-chart-pie text-2xl text-white"></i>
+                                    </div>
+                                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full pulse-ring"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts and Additional Stats -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+                        <!-- Income vs Expense Chart -->
+                        <div class="xl:col-span-2 chart-container">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-semibold text-gray-800">Pemasukan vs Pengeluaran</h3>
+                                <select class="bg-gray-100 border-0 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option>Bulan Ini</option>
+                                    <option>3 Bulan Terakhir</option>
+                                    <option>Tahun Ini</option>
+                                </select>
+                            </div>
+                            <canvas id="incomeExpenseChart" height="250"></canvas>
+                        </div>
+                        
+                        <!-- Quick Stats -->
+                        <div class="space-y-6">
+                            <div class="dashboard-card p-6">
+                                <h3 class="font-semibold text-gray-800 mb-4">Statistik Cepat</h3>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                <i class="fas fa-shipping-fast text-blue-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-600">Total Pengiriman</p>
+                                                <p class="font-semibold" id="totalDeliveries">247</p>
+                                            </div>
+                                        </div>
+                                        <span class="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">+12%</span>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                                <i class="fas fa-handshake text-green-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-600">Partner Aktif</p>
+                                                <p class="font-semibold" id="activePartners">18</p>
+                                            </div>
+                                        </div>
+                                        <span class="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">+2</span>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                                <i class="fas fa-map-marker-alt text-purple-600"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-sm text-gray-600">Area Layanan</p>
+                                                <p class="font-semibold" id="serviceAreas">46</p>
+                                            </div>
+                                        </div>
+                                        <span class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-card p-6">
+                                <h3 class="font-semibold text-gray-800 mb-4">Kategori Pengeluaran</h3>
+                                <canvas id="expenseCategoryChart" height="150"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="dashboard-card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Transaksi Terbaru</h3>
+                            <button class="text-blue-600 hover:text-blue-700 font-medium" onclick="switchTab('income')">
+                                Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b">
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Tanggal</th>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Keterangan</th>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Kategori</th>
+                                        <th class="py-3 px-4 text-right text-gray-600 font-medium">Jumlah</th>
+                                        <th class="py-3 px-4 text-center text-gray-600 font-medium">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentTransactions">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Income Tab -->
+                <div id="income" class="tab-content hidden fade-in">
+                    <div class="dashboard-card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Kelola Pemasukan</h3>
+                            <button id="addIncomeBtn" class="floating-btn bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i>Tambah Pemasukan
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Tanggal</th>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Keterangan</th>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Kategori</th>
+                                        <th class="py-3 px-4 text-right text-gray-600 font-medium">Jumlah</th>
+                                        <th class="py-3 px-4 text-center text-gray-600 font-medium">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incomeTableBody">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expenses Tab -->
+                <div id="expenses" class="tab-content hidden fade-in">
+                    <div class="dashboard-card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Kelola Pengeluaran</h3>
+                            <button id="addExpenseBtn" class="floating-btn bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i>Tambah Pengeluaran
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Tanggal</th>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Keterangan</th>
+                                        <th class="py-3 px-4 text-left text-gray-600 font-medium">Kategori</th>
+                                        <th class="py-3 px-4 text-right text-gray-600 font-medium">Jumlah</th>
+                                        <th class="py-3 px-4 text-center text-gray-600 font-medium">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other tabs would follow similar structure -->
+                <div id="shipping" class="tab-content hidden fade-in">
+                    <!-- Shipping management content -->
+                </div>
+
+                <div id="partners" class="tab-content hidden fade-in">
+                    <!-- Partners management content -->
+                </div>
+
+                <div id="reports" class="tab-content hidden fade-in">
+                    <!-- Reports content -->
+                </div>
+
+                <div id="settings" class="tab-content hidden fade-in">
+                    <!-- Settings content -->
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Add Income Modal -->
+    <div id="incomeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="glass-card p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold text-white mb-4">Tambah Pemasukan</h3>
+            <form id="incomeForm">
+                <div class="mb-4">
+                    <label class="block text-white mb-2">Tanggal</label>
+                    <input type="date" id="incomeDate" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white mb-2">Keterangan</label>
+                    <input type="text" id="incomeDescription" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="Deskripsi pemasukan" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white mb-2">Kategori</label>
+                    <select id="incomeCategory" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50" required>
+                        <option value="" class="text-gray-800">Pilih Kategori</option>
+                        <option value="delivery" class="text-gray-800">Layanan Delivery</option>
+                        <option value="partner" class="text-gray-800">Komisi Partner</option>
+                        <option value="other" class="text-gray-800">Lainnya</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-white mb-2">Jumlah (Rp)</label>
+                    <input type="number" id="incomeAmount" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="0" required>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal('incomeModal')" class="flex-1 bg-white/20 text-white py-3 rounded-xl hover:bg-white/30 transition duration-300">Batal</button>
+                    <button type="submit" class="flex-1 bg-green-500 text-white py-3 rounded-xl hover:bg-green-600 transition duration-300">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div id="expenseModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="glass-card p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold text-white mb-4">Tambah Pengeluaran</h3>
+            <form id="expenseForm">
+                <div class="mb-4">
+                    <label class="block text-white mb-2">Tanggal</label>
+                    <input type="date" id="expenseDate" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white mb-2">Keterangan</label>
+                    <input type="text" id="expenseDescription" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="Deskripsi pengeluaran" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-white mb-2">Kategori</label>
+                    <select id="expenseCategory" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50" required>
+                        <option value="" class="text-gray-800">Pilih Kategori</option>
+                        <option value="operational" class="text-gray-800">Operasional</option>
+                        <option value="fuel" class="text-gray-800">Bahan Bakar</option>
+                        <option value="maintenance" class="text-gray-800">Pemeliharaan</option>
+                        <option value="salary" class="text-gray-800">Gaji Karyawan</option>
+                        <option value="other" class="text-gray-800">Lainnya</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-white mb-2">Jumlah (Rp)</label>
+                    <input type="number" id="expenseAmount" class="w-full px-4 py-3 bg-white/20 border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="0" required>
+                </div>
+                <div class="flex space-x-3">
+                    <button type="button" onclick="closeModal('expenseModal')" class="flex-1 bg-white/20 text-white py-3 rounded-xl hover:bg-white/30 transition duration-300">Batal</button>
+                    <button type="submit" class="flex-1 bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition duration-300">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1kevuJ9mRJ8le8uPXin11uUqJ6sOLopY",
+            authDomain: "vlcrave-whatsapp-order.firebaseapp.com",
+            projectId: "vlcrave-whatsapp-order",
+            storageBucket: "vlcrave-whatsapp-order.firebasestorage.app",
+            messagingSenderId: "796602954067",
+            appId: "1:796602954067:web:e10a110ae904decdc471a6",
+            measurementId: "G-XLWNDN39ZD"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Global variables
+        let currentUser = null;
+        let incomeData = [];
+        let expenseData = [];
+
+        // Update current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('id-ID', options);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Authentication
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                currentUser = userCredential.user;
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('userEmail').textContent = currentUser.email;
+                loadFinancialData();
+                initializeCharts();
+            } catch (error) {
+                Swal.fire('Error', 'Login gagal: ' + error.message, 'error');
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            auth.signOut();
+            location.reload();
+        });
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('userEmail').textContent = user.email;
+                loadFinancialData();
+                initializeCharts();
+            } else {
+                document.getElementById('loginModal').style.display = 'flex';
+            }
+        });
+
+        // Navigation
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.remove('hidden');
+            document.getElementById(tabName).classList.add('active');
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            // Update page title
+            const titles = {
+                dashboard: 'Dashboard Keuangan',
+                income: 'Kelola Pemasukan',
+                expenses: 'Kelola Pengeluaran',
+                shipping: 'Kelola Harga Ongkir',
+                partners: 'Kelola Partner',
+                reports: 'Laporan Keuangan',
+                settings: 'Pengaturan Sistem'
+            };
+            document.getElementById('pageTitle').textContent = titles[tabName];
+        }
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tabName = item.getAttribute('data-tab');
+                switchTab(tabName);
+            });
+        });
+
+        // Load financial data
+        async function loadFinancialData() {
+            try {
+                // Load income data
+                const incomeSnapshot = await db.collection('income')
+                    .orderBy('date', 'desc')
+                    .limit(50)
+                    .get();
+                incomeData = [];
+                incomeSnapshot.forEach(doc => {
+                    incomeData.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Load expense data
+                const expenseSnapshot = await db.collection('expenses')
+                    .orderBy('date', 'desc')
+                    .limit(50)
+                    .get();
+                expenseData = [];
+                expenseSnapshot.forEach(doc => {
+                    expenseData.push({ id: doc.id, ...doc.data() });
+                });
+
+                updateFinancialStats();
+                updateIncomeTable();
+                updateExpenseTable();
+                updateRecentTransactions();
+
+            } catch (error) {
+                console.error('Error loading financial data:', error);
+                Swal.fire('Error', 'Gagal memuat data keuangan: ' + error.message, 'error');
+            }
+        }
+
+        // Update financial statistics
+        function updateFinancialStats() {
+            const totalIncome = incomeData.reduce((sum, item) => sum + item.amount, 0);
+            const totalExpense = expenseData.reduce((sum, item) => sum + item.amount, 0);
+            const netProfit = totalIncome - totalExpense;
+
+            document.getElementById('totalIncome').textContent = formatCurrency(totalIncome);
+            document.getElementById('totalExpense').textContent = formatCurrency(totalExpense);
+            document.getElementById('netProfit').textContent = formatCurrency(netProfit);
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Income vs Expense Chart
+            const incomeExpenseCtx = document.getElementById('incomeExpenseChart').getContext('2d');
+            new Chart(incomeExpenseCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
+                    datasets: [
+                        {
+                            label: 'Pemasukan',
+                            data: [12000000, 15000000, 13000000, 16000000, 19000000, 17000000, 20000000, 18000000, 22000000, 21000000, 23000000, 25000000],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Pengeluaran',
+                            data: [3000000, 3500000, 3200000, 3800000, 4200000, 4000000, 4500000, 4300000, 4800000, 4700000, 5000000, 5200000],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'Rp ' + value.toLocaleString('id-ID');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Expense Category Chart
+            const expenseCategoryCtx = document.getElementById('expenseCategoryChart').getContext('2d');
+            new Chart(expenseCategoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Operasional', 'Bahan Bakar', 'Pemeliharaan', 'Gaji', 'Lainnya'],
+                    datasets: [{
+                        data: [40, 25, 15, 15, 5],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#ef4444',
+                            '#f59e0b',
+                            '#10b981',
+                            '#8b5cf6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update income table
+        function updateIncomeTable() {
+            const tbody = document.getElementById('incomeTableBody');
+            tbody.innerHTML = '';
+            
+            incomeData.forEach(income => {
+                const date = new Date(income.date.seconds * 1000);
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${date.toLocaleDateString('id-ID')}</td>
+                    <td class="py-3 px-4">${income.description}</td>
+                    <td class="py-3 px-4">
+                        <span class="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">${income.category}</span>
+                    </td>
+                    <td class="py-3 px-4 text-right font-semibold text-green-600">${formatCurrency(income.amount)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="editIncome('${income.id}')" class="text-blue-500 hover:text-blue-700 mr-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteIncome('${income.id}')" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update expense table
+        function updateExpenseTable() {
+            const tbody = document.getElementById('expensesTableBody');
+            tbody.innerHTML = '';
+            
+            expenseData.forEach(expense => {
+                const date = new Date(expense.date.seconds * 1000);
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${date.toLocaleDateString('id-ID')}</td>
+                    <td class="py-3 px-4">${expense.description}</td>
+                    <td class="py-3 px-4">
+                        <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">${expense.category}</span>
+                    </td>
+                    <td class="py-3 px-4 text-right font-semibold text-red-600">${formatCurrency(expense.amount)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="editExpense('${expense.id}')" class="text-blue-500 hover:text-blue-700 mr-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteExpense('${expense.id}')" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update recent transactions
+        function updateRecentTransactions() {
+            const tbody = document.getElementById('recentTransactions');
+            tbody.innerHTML = '';
+            
+            // Combine and sort transactions
+            const allTransactions = [
+                ...incomeData.map(item => ({ ...item, type: 'income' })),
+                ...expenseData.map(item => ({ ...item, type: 'expense' }))
+            ].sort((a, b) => new Date(b.date.seconds * 1000) - new Date(a.date.seconds * 1000))
+             .slice(0, 10);
+            
+            allTransactions.forEach(transaction => {
+                const date = new Date(transaction.date.seconds * 1000);
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                
+                const amountClass = transaction.type === 'income' ? 'text-green-600' : 'text-red-600';
+                const statusBadge = transaction.type === 'income' ? 
+                    '<span class="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">Pemasukan</span>' :
+                    '<span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full">Pengeluaran</span>';
+                
+                row.innerHTML = `
+                    <td class="py-3 px-4">${date.toLocaleDateString('id-ID')}</td>
+                    <td class="py-3 px-4">${transaction.description}</td>
+                    <td class="py-3 px-4">${transaction.category}</td>
+                    <td class="py-3 px-4 text-right font-semibold ${amountClass}">${formatCurrency(transaction.amount)}</td>
+                    <td class="py-3 px-4 text-center">${statusBadge}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Add income
+        document.getElementById('addIncomeBtn').addEventListener('click', () => {
+            document.getElementById('incomeForm').reset();
+            document.getElementById('incomeDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('incomeModal').classList.remove('hidden');
+        });
+
+        document.getElementById('incomeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const incomeData = {
+                date: new Date(document.getElementById('incomeDate').value),
+                description: document.getElementById('incomeDescription').value,
+                category: document.getElementById('incomeCategory').value,
+                amount: parseInt(document.getElementById('incomeAmount').value),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                await db.collection('income').add(incomeData);
+                closeModal('incomeModal');
+                loadFinancialData();
+                Swal.fire('Success', 'Pemasukan berhasil ditambahkan', 'success');
+            } catch (error) {
+                Swal.fire('Error', 'Gagal menambah pemasukan: ' + error.message, 'error');
+            }
+        });
+
+        // Add expense
+        document.getElementById('addExpenseBtn').addEventListener('click', () => {
+            document.getElementById('expenseForm').reset();
+            document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('expenseModal').classList.remove('hidden');
+        });
+
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const expenseData = {
+                date: new Date(document.getElementById('expenseDate').value),
+                description: document.getElementById('expenseDescription').value,
+                category: document.getElementById('expenseCategory').value,
+                amount: parseInt(document.getElementById('expenseAmount').value),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                await db.collection('expenses').add(expenseData);
+                closeModal('expenseModal');
+                loadFinancialData();
+                Swal.fire('Success', 'Pengeluaran berhasil ditambahkan', 'success');
+            } catch (error) {
+                Swal.fire('Error', 'Gagal menambah pengeluaran: ' + error.message, 'error');
+            }
+        });
+
+        // Utility functions
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            
+            // Check authentication status
+            auth.onAuthStateChanged((user) => {
+                if (!user) {
+                    document.getElementById('loginModal').style.display = 'flex';
+                }
+            });
+        });
+
+        // Note: For production, you would need to implement edit/delete functions
+        // for income and expenses, and complete the other tab functionalities
+
+    </script>
+</body>
+</html>
