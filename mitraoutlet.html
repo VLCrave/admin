@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daftar Mitra Outlet - VLCrave Express</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="./img/icon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="css/login.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>#map { height: 250px; margin: 10px 0; border-radius: 10px; }</style>
+</head>
+<body>
+
+  <div class="login-box">
+    <img src="./img/icon.png" alt="Logo" class="login-logo" />
+    <h2>Daftar Mitra Outlet</h2>
+
+    <input type="text" id="register-nama" placeholder="Nama Pemilik" required />
+    <input type="tel" id="register-hp" placeholder="Nomor HP" required />
+    <input type="email" id="register-email" placeholder="Email" required />
+    <input type="password" id="register-password" placeholder="Password" required />
+    <input type="password" id="register-pin" placeholder="PIN 6 Digit" maxlength="6" required />
+    <input type="text" id="register-namatoko" placeholder="Nama Toko" required />
+    <input type="text" id="register-deskripsi" placeholder="Deskripsi Toko" required />
+    <input type="text" id="register-alamat" placeholder="Alamat Lengkap Toko" required />
+
+    <label>Jam Buka (0–23):</label>
+    <input type="number" id="register-jambuka" min="0" max="23" value="8" required />
+    <label>Jam Tutup (0–23):</label>
+    <input type="number" id="register-jamtutup" min="0" max="23" value="21" required />
+
+    <label>Koordinat Toko (lat,lng):</label>
+    <input type="text" id="register-koordinat" placeholder="Klik peta atau gunakan lokasi" required />
+    <button type="button" id="lokasi-btn">📍 Gunakan Lokasi Terkini</button>
+    <div id="map"></div>
+
+    <label>Upload Logo Toko:</label>
+    <input type="file" id="register-logo" accept="image/*" required />
+    <label>Upload Foto KTP:</label>
+    <input type="file" id="register-ktp" accept="image/*" required />
+
+    <p id="upload-status" style="font-size: 12px; color: gray;"></p>
+
+    <button id="register-btn">Daftar Sekarang</button>
+    <p id="register-msg"></p>
+
+    <div class="login-footer">
+      Sudah punya akun? <a href="login.html">Masuk</a>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+    import {
+      getFirestore, doc, setDoc, serverTimestamp, GeoPoint
+    } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAfBzoX9kUwUTWfQYT6QLndd_mP03__8Wo",
+      authDomain: "vlcrave-express.firebaseapp.com",
+      projectId: "vlcrave-express",
+      storageBucket: "vlcrave-express.appspot.com",
+      messagingSenderId: "609330453287",
+      appId: "1:609330453287:web:5280b9ec5c0d435518e702"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let map = L.map('map').setView([-2.2, 106.1], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    let marker = L.marker([-2.2, 106.1], { draggable: true }).addTo(map);
+    marker.on("dragend", e => {
+      const { lat, lng } = e.target.getLatLng();
+      document.getElementById("register-koordinat").value = `${lat.toFixed(5)},${lng.toFixed(5)}`;
+    });
+
+    map.on("click", e => {
+      marker.setLatLng(e.latlng);
+      document.getElementById("register-koordinat").value = `${e.latlng.lat.toFixed(5)},${e.latlng.lng.toFixed(5)}`;
+    });
+
+    document.getElementById("lokasi-btn").addEventListener("click", () => {
+      if (!navigator.geolocation) return alert("Browser tidak mendukung GPS.");
+      navigator.geolocation.getCurrentPosition(pos => {
+        const { latitude, longitude } = pos.coords;
+        marker.setLatLng([latitude, longitude]);
+        map.setView([latitude, longitude], 16);
+        document.getElementById("register-koordinat").value = `${latitude.toFixed(5)},${longitude.toFixed(5)}`;
+      }, () => alert("❌ Gagal ambil lokasi."));
+    });
+
+    document.getElementById("register-btn").addEventListener("click", async () => {
+      const nama = document.getElementById("register-nama").value.trim();
+      const hp = document.getElementById("register-hp").value.trim();
+      const email = document.getElementById("register-email").value.trim();
+      const password = document.getElementById("register-password").value;
+      const pin = document.getElementById("register-pin").value.trim();
+      const alamat = document.getElementById("register-alamat").value.trim();
+      const namatoko = document.getElementById("register-namatoko").value.trim();
+      const deskripsi = document.getElementById("register-deskripsi").value.trim();
+      const jamBuka = parseInt(document.getElementById("register-jambuka").value);
+      const jamTutup = parseInt(document.getElementById("register-jamtutup").value);
+      const koordinatStr = document.getElementById("register-koordinat").value.trim();
+      const fileLogo = document.getElementById("register-logo").files[0];
+      const fileKTP = document.getElementById("register-ktp").files[0];
+      const msg = document.getElementById("register-msg");
+      const status = document.getElementById("upload-status");
+
+      msg.innerText = ""; status.innerText = "";
+
+      if (!nama || !hp || !email || !password || !pin || !alamat || !namatoko || !deskripsi || !fileLogo || !fileKTP || !koordinatStr) {
+        msg.innerText = "❌ Semua kolom wajib diisi.";
+        return;
+      }
+
+      if (pin.length !== 6 || isNaN(pin)) {
+        msg.innerText = "❌ PIN harus 6 digit angka.";
+        return;
+      }
+
+      const [latStr, lngStr] = koordinatStr.split(",").map(s => s.trim());
+      const latitude = parseFloat(latStr), longitude = parseFloat(lngStr);
+      if (isNaN(latitude) || isNaN(longitude)) {
+        msg.innerText = "❌ Format koordinat tidak valid.";
+        return;
+      }
+
+      try {
+        status.innerText = "⏳ Mengupload file ke Cloudinary...";
+
+        const uploadImage = async (file, folder) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", "VLCrave-Express");
+          formData.append("folder", folder);
+
+          const res = await fetch("https://api.cloudinary.com/v1_1/du8gsffhb/image/upload", {
+            method: "POST",
+            body: formData
+          });
+          const data = await res.json();
+          return data.secure_url;
+        };
+
+        const logoURL = await uploadImage(fileLogo, "logo-outlet");
+        const ktpURL = await uploadImage(fileKTP, "ktp-outlet");
+        status.innerText = "✅ Upload selesai.";
+
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = userCredential.user.uid;
+
+        await setDoc(doc(db, "users", uid), {
+          uid, namaLengkap: nama, nomorHp: parseInt(hp), email, username: "",
+          pin, role: "seller", saldo: 5000, photoURL: logoURL, createdAt: serverTimestamp()
+        });
+
+        const tokoID = "VLT-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+
+        await setDoc(doc(db, "toko", tokoID), {
+          idToko: tokoID,
+          userId: uid,
+          namaPemilik: nama,
+          namaToko: namatoko,
+          deskripsiToko: deskripsi,
+          alamatToko: alamat,
+          logo: logoURL,
+          urlKTP: ktpURL,
+          saldo: 5000,
+          status: "nonaktif",
+          statusManual: false,
+          isOpen: false,
+          jamBuka,
+          jamTutup,
+          koordinat: new GeoPoint(latitude, longitude),
+          fcmToken: "",
+          createdAt: serverTimestamp()
+        });
+
+        msg.innerText = "✅ Akun outlet berhasil dibuat!";
+        setTimeout(() => window.location.href = "login.html", 1500);
+      } catch (err) {
+        msg.innerText = "❌ " + err.message;
+        status.innerText = "";
+      }
+    });
+  </script>
+</body>
+</html>
