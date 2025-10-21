@@ -867,6 +867,178 @@
             });
         }
 
+        // Areas Management
+        function updateAreasTable() {
+            const tbody = document.getElementById('areasTableBody');
+            tbody.innerHTML = '';
+            
+            if (areasData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="5" class="py-8 px-4 text-center text-gray-500">
+                        <i class="fas fa-map-marker-alt text-4xl mb-2 opacity-50"></i>
+                        <p>Belum ada data area</p>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            areasData.forEach(area => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition duration-200';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${area.nama || area.kecamatan || 'N/A'}</td>
+                    <td class="py-3 px-4">${area.jumlah_desa || 0}</td>
+                    <td class="py-3 px-4 text-center">${area.pusat_layanan ? 'Ya' : 'Tidak'}</td>
+                    <td class="py-3 px-4 text-center">${area.order || 0}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex justify-center space-x-2">
+                            <button onclick="editArea('${area.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteArea('${area.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Operational Hours Management
+        function updateHoursTable() {
+            const tbody = document.getElementById('hoursTableBody');
+            tbody.innerHTML = '';
+            
+            if (hoursData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="4" class="py-8 px-4 text-center text-gray-500">
+                        <i class="fas fa-clock text-4xl mb-2 opacity-50"></i>
+                        <p>Belum ada data jam operasional</p>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            hoursData.forEach(hour => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition duration-200';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${hour.hari || 'N/A'}</td>
+                    <td class="py-3 px-4">${hour.jam_operasional || 'N/A'}</td>
+                    <td class="py-3 px-4 text-center">${hour.order || 0}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex justify-center space-x-2">
+                            <button onclick="editHour('${hour.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteHour('${hour.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Services Management
+        function updateServicesTable() {
+            const tbody = document.getElementById('servicesTableBody');
+            tbody.innerHTML = '';
+            
+            if (servicesData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="6" class="py-8 px-4 text-center text-gray-500">
+                        <i class="fas fa-concierge-bell text-4xl mb-2 opacity-50"></i>
+                        <p>Belum ada data layanan</p>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            servicesData.forEach(service => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition duration-200';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${service.nama || 'N/A'}</td>
+                    <td class="py-3 px-4">${service.deskripsi || 'N/A'}</td>
+                    <td class="py-3 px-4">
+                        <i class="${service.icon || 'fas fa-question'} text-lg"></i>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="inline-block w-4 h-4 rounded-full" style="background-color: ${service.warna || '#ccc'}"></div>
+                    </td>
+                    <td class="py-3 px-4 text-center">${service.order || 0}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex justify-center space-x-2">
+                            <button onclick="editService('${service.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteService('${service.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Partners Management
+        function updatePartnersTable() {
+            const tbody = document.getElementById('partnersTableBody');
+            tbody.innerHTML = '';
+            
+            if (partnersData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="5" class="py-8 px-4 text-center text-gray-500">
+                        <i class="fas fa-handshake text-4xl mb-2 opacity-50"></i>
+                        <p>Belum ada data partner</p>
+                    </td>
+                `;
+                tbody.appendChild(row);
+                return;
+            }
+            
+            partnersData.forEach(partner => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50 transition duration-200';
+                row.innerHTML = `
+                    <td class="py-3 px-4">
+                        ${partner.logo ? 
+                            `<img src="${partner.logo}" alt="${partner.nama}" class="w-10 h-10 object-cover rounded">` : 
+                            `<div class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                                <i class="fas fa-building text-gray-500"></i>
+                            </div>`
+                        }
+                    </td>
+                    <td class="py-3 px-4">${partner.nama || 'N/A'}</td>
+                    <td class="py-3 px-4">${partner.deskripsi || 'N/A'}</td>
+                    <td class="py-3 px-4 text-center">${partner.order || 0}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="flex justify-center space-x-2">
+                            <button onclick="editPartner('${partner.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deletePartner('${partner.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Shipping Prices Management
         document.getElementById('addShippingBtn').addEventListener('click', () => {
             document.getElementById('shippingModalTitle').textContent = 'Tambah Data Ongkir';
             document.getElementById('shippingForm').reset();
@@ -986,6 +1158,39 @@
             }
         });
 
+        // Placeholder functions for other sections
+        function editArea(id) {
+            Swal.fire('Info', 'Fitur edit area akan segera tersedia', 'info');
+        }
+
+        function deleteArea(id) {
+            Swal.fire('Info', 'Fitur hapus area akan segera tersedia', 'info');
+        }
+
+        function editHour(id) {
+            Swal.fire('Info', 'Fitur edit jam operasional akan segera tersedia', 'info');
+        }
+
+        function deleteHour(id) {
+            Swal.fire('Info', 'Fitur hapus jam operasional akan segera tersedia', 'info');
+        }
+
+        function editService(id) {
+            Swal.fire('Info', 'Fitur edit layanan akan segera tersedia', 'info');
+        }
+
+        function deleteService(id) {
+            Swal.fire('Info', 'Fitur hapus layanan akan segera tersedia', 'info');
+        }
+
+        function editPartner(id) {
+            Swal.fire('Info', 'Fitur edit partner akan segera tersedia', 'info');
+        }
+
+        function deletePartner(id) {
+            Swal.fire('Info', 'Fitur hapus partner akan segera tersedia', 'info');
+        }
+
         // Utility functions
         function closeModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
@@ -1008,11 +1213,6 @@
                 }
             });
         });
-
-        // Note: Similar functions would be implemented for Areas, Hours, Services, Partners
-        // For brevity, I've shown the complete implementation for Shipping Prices
-        // The other sections would follow similar patterns
-
     </script>
 </body>
 </html>
