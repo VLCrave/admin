@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - VLCrave Express</title>
+    <title>VLCrave Express - Admin Dashboard</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- AOS (Animate On Scroll) -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     
     <!-- Firebase App -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -18,57 +21,74 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
         
-        * {
-            box-sizing: border-box;
-        }
-        
         body {
             font-family: 'Poppins', sans-serif;
-            overflow-x: hidden;
         }
         
         .sidebar {
             transition: all 0.3s ease;
-            z-index: 1000;
-            height: 100vh;
-            overflow-y: auto;
         }
         
-        .content {
-            transition: all 0.3s ease;
-            min-height: 100vh;
+        .sidebar.collapsed {
+            width: 70px;
         }
         
-        .sidebar-overlay {
+        .sidebar.collapsed .sidebar-text {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
         }
         
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                position: fixed;
-                top: 0;
-                left: 0;
-            }
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            .sidebar.active + .sidebar-overlay {
-                display: block;
-            }
+        .sidebar.collapsed .logo-text {
+            display: none;
         }
         
-        .table-container {
-            max-height: 500px;
-            overflow-y: auto;
-            overflow-x: auto;
+        .main-content {
+            transition: all 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .active-nav {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .data-table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        .data-table tr:hover {
+            background-color: #f1f5f9;
         }
         
         .loading {
@@ -85,519 +105,771 @@
             to { transform: rotate(360deg); }
         }
         
-        .btn {
-            @apply px-4 py-2 rounded-lg font-medium transition duration-300;
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
         }
         
-        .btn-primary {
-            @apply bg-blue-500 text-white hover:bg-blue-600;
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
         }
         
-        .btn-success {
-            @apply bg-green-500 text-white hover:bg-green-600;
-        }
-        
-        .btn-danger {
-            @apply bg-red-500 text-white hover:bg-red-600;
-        }
-        
-        .btn-warning {
-            @apply bg-yellow-500 text-white hover:bg-yellow-600;
-        }
-        
-        .card {
-            @apply bg-white rounded-xl shadow-md p-6;
-        }
-        
-        .stat-card {
-            @apply bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl shadow-lg p-6;
-        }
-        
-        .modal {
-            @apply fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4;
-        }
-        
-        .modal-content {
-            @apply bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto;
-        }
-        
-        .form-input {
-            @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300;
-        }
-        
-        .table-responsive {
-            @apply w-full overflow-x-auto;
-        }
-        
-        .table {
-            @apply w-full min-w-full;
-        }
-        
-        .table th {
-            @apply py-3 px-4 text-left bg-gray-50 font-semibold text-gray-700;
-        }
-        
-        .table td {
-            @apply py-3 px-4 border-b border-gray-200;
-        }
-        
-        .nav-item.active {
-            @apply bg-blue-700;
-        }
-        
-        /* Custom scrollbar */
-        .table-container::-webkit-scrollbar {
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
             width: 6px;
-            height: 6px;
         }
         
-        .table-container::-webkit-scrollbar-track {
+        ::-webkit-scrollbar-track {
             background: #f1f1f1;
-            border-radius: 10px;
         }
         
-        .table-container::-webkit-scrollbar-thumb {
+        ::-webkit-scrollbar-thumb {
             background: #c1c1c1;
             border-radius: 10px;
         }
         
-        .table-container::-webkit-scrollbar-thumb:hover {
+        ::-webkit-scrollbar-thumb:hover {
             background: #a8a8a8;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Responsive Table */
+        @media (max-width: 768px) {
+            .data-table {
+                display: block;
+                overflow-x: auto;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p class="text-gray-600 font-semibold">Memuat dashboard...</p>
+    </div>
+
     <!-- Login Modal -->
     <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Admin Login</h2>
-                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white">
-                        <i class="fas fa-shipping-fast text-xl"></i>
-                    </div>
+        <div class="modal-content p-8">
+            <div class="text-center mb-6">
+                <i class="fas fa-shipping-fast text-blue-500 text-4xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-gray-800">Admin Login</h2>
+                <p class="text-gray-600">Masuk ke dashboard admin VLCrave Express</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">Email:</label>
+                    <input type="email" id="loginEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
-                <form id="loginForm">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2 font-medium">Email</label>
-                        <input type="email" id="email" class="form-input" placeholder="admin@example.com" required>
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-gray-700 mb-2 font-medium">Password</label>
-                        <input type="password" id="password" class="form-input" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition duration-300 font-medium">
-                        Login
-                    </button>
-                </form>
+                
+                <div>
+                    <label class="block text-gray-700 mb-2">Password:</label>
+                    <input type="password" id="loginPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition duration-300 flex items-center justify-center">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Masuk
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center">
+                <p class="text-gray-600 text-sm">Hanya untuk administrator VLCrave Express</p>
             </div>
         </div>
     </div>
 
     <!-- Main Layout -->
     <div class="flex">
-        <!-- Sidebar Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        
         <!-- Sidebar -->
-        <div class="sidebar w-64 bg-gradient-to-b from-blue-800 to-indigo-900 text-white">
+        <div id="sidebar" class="sidebar bg-white shadow-lg h-screen fixed top-0 left-0 w-64 z-40">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-shipping-fast text-blue-500 text-2xl"></i>
+                    <h1 class="text-xl font-bold logo-text">VLCrave Admin</h1>
+                </div>
+                <button id="sidebar-toggle" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
             <div class="p-4">
-                <div class="flex items-center space-x-3 mb-8">
-                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                        <i class="fas fa-shipping-fast text-blue-600 text-xl"></i>
+                <div class="mb-6 flex items-center space-x-3 bg-blue-50 p-3 rounded-lg">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                        <i class="fas fa-user"></i>
                     </div>
-                    <div>
-                        <h1 class="text-xl font-bold">VLCrave Admin</h1>
-                        <p class="text-blue-200 text-xs">Express Delivery</p>
+                    <div class="sidebar-text">
+                        <p class="font-semibold" id="adminName">Admin User</p>
+                        <p class="text-sm text-gray-600">Administrator</p>
                     </div>
                 </div>
                 
-                <nav class="space-y-1">
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300 active" data-tab="dashboard">
-                        <i class="fas fa-tachometer-alt mr-3 text-lg"></i>
-                        <span>Dashboard</span>
+                <nav class="space-y-2">
+                    <a href="#" data-section="dashboard" class="nav-link px-3 py-2 rounded flex items-center space-x-3 active-nav">
+                        <i class="fas fa-tachometer-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Dashboard</span>
                     </a>
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300" data-tab="shipping">
-                        <i class="fas fa-truck mr-3 text-lg"></i>
-                        <span>Harga Ongkir</span>
+                    
+                    <a href="#" data-section="shipping" class="nav-link px-3 py-2 rounded flex items-center space-x-3">
+                        <i class="fas fa-truck w-5 text-center"></i>
+                        <span class="sidebar-text">Harga Ongkir</span>
                     </a>
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300" data-tab="areas">
-                        <i class="fas fa-map-marker-alt mr-3 text-lg"></i>
-                        <span>Area Layanan</span>
+                    
+                    <a href="#" data-section="areas" class="nav-link px-3 py-2 rounded flex items-center space-x-3">
+                        <i class="fas fa-map-marker-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Area Layanan</span>
                     </a>
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300" data-tab="hours">
-                        <i class="fas fa-clock mr-3 text-lg"></i>
-                        <span>Jam Operasional</span>
+                    
+                    <a href="#" data-section="hours" class="nav-link px-3 py-2 rounded flex items-center space-x-3">
+                        <i class="fas fa-clock w-5 text-center"></i>
+                        <span class="sidebar-text">Jam Operasional</span>
                     </a>
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300" data-tab="services">
-                        <i class="fas fa-concierge-bell mr-3 text-lg"></i>
-                        <span>Layanan</span>
+                    
+                    <a href="#" data-section="services" class="nav-link px-3 py-2 rounded flex items-center space-x-3">
+                        <i class="fas fa-concierge-bell w-5 text-center"></i>
+                        <span class="sidebar-text">Layanan</span>
                     </a>
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300" data-tab="partners">
-                        <i class="fas fa-handshake mr-3 text-lg"></i>
-                        <span>Partner</span>
+                    
+                    <a href="#" data-section="partners" class="nav-link px-3 py-2 rounded flex items-center space-x-3">
+                        <i class="fas fa-handshake w-5 text-center"></i>
+                        <span class="sidebar-text">Partner</span>
                     </a>
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300" data-tab="contact">
-                        <i class="fas fa-phone mr-3 text-lg"></i>
-                        <span>Kontak</span>
+                    
+                    <a href="#" data-section="contacts" class="nav-link px-3 py-2 rounded flex items-center space-x-3">
+                        <i class="fas fa-address-book w-5 text-center"></i>
+                        <span class="sidebar-text">Kontak</span>
                     </a>
-                    <a href="#" class="nav-item flex items-center px-4 py-3 rounded-xl hover:bg-blue-700 transition duration-300" data-tab="settings">
-                        <i class="fas fa-cog mr-3 text-lg"></i>
-                        <span>Pengaturan</span>
+                    
+                    <a href="#" data-section="users" class="nav-link px-3 py-2 rounded flex items-center space-x-3">
+                        <i class="fas fa-users w-5 text-center"></i>
+                        <span class="sidebar-text">Pengguna</span>
+                    </a>
+                    
+                    <a href="#" id="logoutBtn" class="nav-link px-3 py-2 rounded flex items-center space-x-3 text-red-500 hover:bg-red-500 hover:text-white">
+                        <i class="fas fa-sign-out-alt w-5 text-center"></i>
+                        <span class="sidebar-text">Keluar</span>
                     </a>
                 </nav>
-            </div>
-            
-            <div class="absolute bottom-0 w-full p-4 border-t border-blue-700">
-                <button id="logoutBtn" class="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition duration-300 font-medium">
-                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                </button>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="content flex-1">
+        <div id="mainContent" class="main-content ml-64 w-full min-h-screen">
             <!-- Header -->
-            <header class="bg-white shadow-sm border-b sticky top-0 z-40">
-                <div class="flex justify-between items-center px-4 py-3 md:px-6">
-                    <div class="flex items-center">
-                        <button id="menuToggle" class="md:hidden text-gray-600 mr-4">
-                            <i class="fas fa-bars text-xl"></i>
+            <header class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
+                <div>
+                    <h2 id="pageTitle" class="text-xl font-bold text-gray-800">Dashboard</h2>
+                    <p class="text-gray-600 text-sm" id="pageSubtitle">Ringkasan dan statistik VLCrave Express</p>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="notificationsBtn" class="text-gray-500 hover:text-gray-700 relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
                         </button>
-                        <h2 id="pageTitle" class="text-xl font-semibold text-gray-800">Dashboard</h2>
                     </div>
-                    <div class="flex items-center space-x-4">
-                        <span id="userEmail" class="text-gray-600 hidden md:inline"></span>
-                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold shadow-md">
-                            A
-                        </div>
+                    
+                    <div class="relative">
+                        <button id="profileBtn" class="flex items-center space-x-2 text-gray-700 hover:text-blue-500">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="font-medium hidden md:inline" id="headerAdminName">Admin</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
                     </div>
                 </div>
             </header>
 
-            <!-- Content Area -->
-            <main class="p-4 md:p-6">
-                <!-- Dashboard Tab -->
-                <div id="dashboard" class="tab-content active">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-                        <div class="stat-card">
-                            <div class="flex items-center justify-between">
+            <!-- Dashboard Content -->
+            <main class="p-6">
+                <!-- Dashboard Section -->
+                <section id="dashboard-section" class="section-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow-md p-6 card-hover" data-aos="fade-up">
+                            <div class="flex justify-between items-center">
                                 <div>
-                                    <p class="text-blue-100">Total Kecamatan</p>
-                                    <h3 id="totalKecamatan" class="text-3xl font-bold">0</h3>
+                                    <p class="text-gray-500">Total Pesanan</p>
+                                    <h3 class="text-2xl font-bold text-gray-800">1,248</h3>
                                 </div>
-                                <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                                    <i class="fas fa-map-marker-alt text-white text-xl"></i>
+                                <div class="bg-blue-100 p-3 rounded-full">
+                                    <i class="fas fa-shopping-cart text-blue-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <p class="text-green-500 text-sm">
+                                    <i class="fas fa-arrow-up mr-1"></i> 12% dari bulan lalu
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-md p-6 card-hover" data-aos="fade-up" data-aos-delay="100">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500">Pendapatan</p>
+                                    <h3 class="text-2xl font-bold text-gray-800">Rp 24,8 Jt</h3>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-full">
+                                    <i class="fas fa-money-bill-wave text-green-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <p class="text-green-500 text-sm">
+                                    <i class="fas fa-arrow-up mr-1"></i> 8% dari bulan lalu
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-md p-6 card-hover" data-aos="fade-up" data-aos-delay="200">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500">Pengguna Aktif</p>
+                                    <h3 class="text-2xl font-bold text-gray-800">892</h3>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-full">
+                                    <i class="fas fa-users text-purple-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <p class="text-green-500 text-sm">
+                                    <i class="fas fa-arrow-up mr-1"></i> 5% dari bulan lalu
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-md p-6 card-hover" data-aos="fade-up" data-aos-delay="300">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-500">Rating</p>
+                                    <h3 class="text-2xl font-bold text-gray-800">4.7/5</h3>
+                                </div>
+                                <div class="bg-yellow-100 p-3 rounded-full">
+                                    <i class="fas fa-star text-yellow-500 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <p class="text-green-500 text-sm">
+                                    <i class="fas fa-arrow-up mr-1"></i> 0.2 dari bulan lalu
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-right">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Statistik Pesanan</h3>
+                            <div class="chart-container">
+                                <canvas id="ordersChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-left">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Distribusi Layanan</h3>
+                            <div class="chart-container">
+                                <canvas id="servicesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Pesanan Terbaru</h3>
+                            <button class="text-blue-500 hover:text-blue-700 font-medium">
+                                Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">ID Pesanan</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Pelanggan</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Layanan</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Tanggal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="py-3 px-4">#VL-001248</td>
+                                        <td class="py-3 px-4">Ahmad Fauzi</td>
+                                        <td class="py-3 px-4">Makanan Delivery</td>
+                                        <td class="py-3 px-4">
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Selesai</span>
+                                        </td>
+                                        <td class="py-3 px-4">12 Mar 2023</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4">#VL-001247</td>
+                                        <td class="py-3 px-4">Siti Rahma</td>
+                                        <td class="py-3 px-4">Barang Pindahan</td>
+                                        <td class="py-3 px-4">
+                                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">Dalam Proses</span>
+                                        </td>
+                                        <td class="py-3 px-4">11 Mar 2023</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4">#VL-001246</td>
+                                        <td class="py-3 px-4">Budi Santoso</td>
+                                        <td class="py-3 px-4">Dokumen Express</td>
+                                        <td class="py-3 px-4">
+                                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Menunggu</span>
+                                        </td>
+                                        <td class="py-3 px-4">10 Mar 2023</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4">#VL-001245</td>
+                                        <td class="py-3 px-4">Rina Wijaya</td>
+                                        <td class="py-3 px-4">Makanan Delivery</td>
+                                        <td class="py-3 px-4">
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Selesai</span>
+                                        </td>
+                                        <td class="py-3 px-4">10 Mar 2023</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4">#VL-001244</td>
+                                        <td class="py-3 px-4">Joko Prasetyo</td>
+                                        <td class="py-3 px-4">Barang Pindahan</td>
+                                        <td class="py-3 px-4">
+                                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">Dibatalkan</span>
+                                        </td>
+                                        <td class="py-3 px-4">9 Mar 2023</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Shipping Prices Section -->
+                <section id="shipping-section" class="section-content hidden">
+                    <div class="bg-white rounded-xl shadow-md p-6 mb-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Kelola Harga Ongkir</h3>
+                            <button id="addShippingBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Tambah Data
+                            </button>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Cari Kecamatan:</label>
+                                    <input type="text" id="searchKecamatan" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama kecamatan...">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Cari Desa:</label>
+                                    <input type="text" id="searchDesa" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama desa...">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Filter:</label>
+                                    <select id="filterShipping" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="all">Semua Data</option>
+                                        <option value="publish">Sudah Publikasi</option>
+                                        <option value="draft">Draft</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="stat-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-blue-100">Total Desa</p>
-                                    <h3 id="totalDesa" class="text-3xl font-bold">0</h3>
-                                </div>
-                                <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                                    <i class="fas fa-home text-white text-xl"></i>
-                                </div>
-                            </div>
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Kecamatan</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Desa/Kelurahan</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Harga Ongkir</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shipping-table-body">
+                                    <!-- Data akan diisi oleh JavaScript dari Firestore -->
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8">
+                                            <div class="loading-spinner mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                            <p class="text-gray-500">Memuat data harga ongkir...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                         
-                        <div class="stat-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-blue-100">Total Partner</p>
-                                    <h3 id="totalPartner" class="text-3xl font-bold">0</h3>
-                                </div>
-                                <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                                    <i class="fas fa-handshake text-white text-xl"></i>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="stat-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-blue-100">Total Layanan</p>
-                                    <h3 id="totalLayanan" class="text-3xl font-bold">0</h3>
-                                </div>
-                                <div class="bg-white bg-opacity-20 p-3 rounded-full">
-                                    <i class="fas fa-concierge-bell text-white text-xl"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="text-lg font-semibold mb-4 text-gray-800">Quick Actions</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <button class="bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition duration-300 font-medium" onclick="switchTab('shipping')">
-                                <i class="fas fa-edit mr-2"></i>Edit Harga Ongkir
-                            </button>
-                            <button class="bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 transition duration-300 font-medium" onclick="switchTab('partners')">
-                                <i class="fas fa-plus mr-2"></i>Tambah Partner
-                            </button>
-                            <button class="bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition duration-300 font-medium" onclick="switchTab('contact')">
-                                <i class="fas fa-phone mr-2"></i>Update Kontak
-                            </button>
-                            <button class="bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition duration-300 font-medium" onclick="switchTab('hours')">
-                                <i class="fas fa-clock mr-2"></i>Edit Jam Operasional
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Shipping Prices Tab -->
-                <div id="shipping" class="tab-content hidden">
-                    <div class="card">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Kelola Harga Ongkir</h3>
-                            <button id="addShippingBtn" class="btn btn-primary w-full sm:w-auto">
-                                <i class="fas fa-plus mr-2"></i>Tambah Data
-                            </button>
-                        </div>
-                        <div class="table-responsive">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th class="py-3 px-4 text-left">Kecamatan</th>
-                                            <th class="py-3 px-4 text-left">Desa</th>
-                                            <th class="py-3 px-4 text-right">Harga</th>
-                                            <th class="py-3 px-4 text-center">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="shippingTableBody">
-                                        <!-- Data will be populated by JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Areas Tab -->
-                <div id="areas" class="tab-content hidden">
-                    <div class="card">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Kelola Area Layanan</h3>
-                            <button id="addAreaBtn" class="btn btn-primary w-full sm:w-auto">
-                                <i class="fas fa-plus mr-2"></i>Tambah Area
-                            </button>
-                        </div>
-                        <div class="table-responsive">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th class="py-3 px-4 text-left">Nama Kecamatan</th>
-                                            <th class="py-3 px-4 text-left">Jumlah Desa</th>
-                                            <th class="py-3 px-4 text-center">Pusat Layanan</th>
-                                            <th class="py-3 px-4 text-center">Urutan</th>
-                                            <th class="py-3 px-4 text-center">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="areasTableBody">
-                                        <!-- Data will be populated by JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Operational Hours Tab -->
-                <div id="hours" class="tab-content hidden">
-                    <div class="card">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Kelola Jam Operasional</h3>
-                            <button id="addHourBtn" class="btn btn-primary w-full sm:w-auto">
-                                <i class="fas fa-plus mr-2"></i>Tambah Jam
-                            </button>
-                        </div>
-                        <div class="table-responsive">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th class="py-3 px-4 text-left">Hari</th>
-                                            <th class="py-3 px-4 text-left">Jam Operasional</th>
-                                            <th class="py-3 px-4 text-center">Urutan</th>
-                                            <th class="py-3 px-4 text-center">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="hoursTableBody">
-                                        <!-- Data will be populated by JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Services Tab -->
-                <div id="services" class="tab-content hidden">
-                    <div class="card">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Kelola Layanan</h3>
-                            <button id="addServiceBtn" class="btn btn-primary w-full sm:w-auto">
-                                <i class="fas fa-plus mr-2"></i>Tambah Layanan
-                            </button>
-                        </div>
-                        <div class="table-responsive">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th class="py-3 px-4 text-left">Nama</th>
-                                            <th class="py-3 px-4 text-left">Deskripsi</th>
-                                            <th class="py-3 px-4 text-left">Icon</th>
-                                            <th class="py-3 px-4 text-center">Warna</th>
-                                            <th class="py-3 px-4 text-center">Urutan</th>
-                                            <th class="py-3 px-4 text-center">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="servicesTableBody">
-                                        <!-- Data will be populated by JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Partners Tab -->
-                <div id="partners" class="tab-content hidden">
-                    <div class="card">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                            <h3 class="text-lg font-semibold text-gray-800">Kelola Partner</h3>
-                            <button id="addPartnerBtn" class="btn btn-primary w-full sm:w-auto">
-                                <i class="fas fa-plus mr-2"></i>Tambah Partner
-                            </button>
-                        </div>
-                        <div class="table-responsive">
-                            <div class="table-container">
-                                <table class="table">
-                                    <thead>
-                                        <tr>
-                                            <th class="py-3 px-4 text-left">Logo</th>
-                                            <th class="py-3 px-4 text-left">Nama</th>
-                                            <th class="py-3 px-4 text-left">Deskripsi</th>
-                                            <th class="py-3 px-4 text-center">Urutan</th>
-                                            <th class="py-3 px-4 text-center">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="partnersTableBody">
-                                        <!-- Data will be populated by JavaScript -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Contact Tab -->
-                <div id="contact" class="tab-content hidden">
-                    <div class="card">
-                        <h3 class="text-lg font-semibold mb-6 text-gray-800">Kelola Informasi Kontak</h3>
-                        <form id="contactForm">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-gray-700 mb-2 font-medium">WhatsApp Number</label>
-                                    <input type="text" id="contactWhatsapp" class="form-input" placeholder="Contoh: 0857-0945-8101">
-                                </div>
-                                <div>
-                                    <label class="block text-gray-700 mb-2 font-medium">Facebook</label>
-                                    <input type="text" id="contactFacebook" class="form-input" placeholder="Contoh: VLCrave Express">
-                                </div>
-                            </div>
-                            <div class="mt-6">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save mr-2"></i>Simpan Perubahan
+                        <div class="mt-6 flex justify-between items-center">
+                            <p class="text-gray-600">Menampilkan <span id="shipping-count">0</span> data</p>
+                            <div class="flex space-x-2">
+                                <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                    1
+                                </button>
+                                <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300">
+                                    2
+                                </button>
+                                <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300">
+                                    <i class="fas fa-chevron-right"></i>
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- Settings Tab -->
-                <div id="settings" class="tab-content hidden">
-                    <div class="card">
-                        <h3 class="text-lg font-semibold mb-6 text-gray-800">Pengaturan Admin</h3>
-                        <div class="space-y-8">
-                            <div>
-                                <h4 class="font-semibold mb-4 text-gray-700">Tambah Admin Baru</h4>
-                                <form id="addAdminForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-gray-700 mb-2 font-medium">Email</label>
-                                        <input type="email" id="newAdminEmail" class="form-input" required>
-                                    </div>
-                                    <div>
-                                        <label class="block text-gray-700 mb-2 font-medium">Password</label>
-                                        <input type="password" id="newAdminPassword" class="form-input" required>
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-user-plus mr-2"></i>Tambah Admin
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                            
-                            <div class="border-t pt-6">
-                                <h4 class="font-semibold mb-4 text-gray-700">Backup Data</h4>
-                                <div class="flex flex-col sm:flex-row gap-4">
-                                    <button id="exportDataBtn" class="btn btn-success">
-                                        <i class="fas fa-download mr-2"></i>Export Data
-                                    </button>
-                                    <button id="importDataBtn" class="btn btn-warning">
-                                        <i class="fas fa-upload mr-2"></i>Import Data
-                                    </button>
+                <!-- Areas Section -->
+                <section id="areas-section" class="section-content hidden">
+                    <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Kelola Area Layanan</h3>
+                            <button id="addAreaBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Tambah Area
+                            </button>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Cari Area:</label>
+                                    <input type="text" id="searchArea" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama area...">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Filter:</label>
+                                    <select id="filterArea" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="all">Semua Area</option>
+                                        <option value="active">Aktif</option>
+                                        <option value="inactive">Nonaktif</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Nama Area</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Jumlah Desa</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Pusat Layanan</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="areas-table-body">
+                                    <!-- Data akan diisi oleh JavaScript dari Firestore -->
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8">
+                                            <div class="loading-spinner mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                            <p class="text-gray-500">Memuat data area layanan...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
+                </section>
+
+                <!-- Operational Hours Section -->
+                <section id="hours-section" class="section-content hidden">
+                    <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Kelola Jam Operasional</h3>
+                            <button id="addHourBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Tambah Jam
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Hari</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Jam Operasional</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hours-table-body">
+                                    <!-- Data akan diisi oleh JavaScript dari Firestore -->
+                                    <tr>
+                                        <td colspan="4" class="text-center py-8">
+                                            <div class="loading-spinner mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                            <p class="text-gray-500">Memuat data jam operasional...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Services Section -->
+                <section id="services-section" class="section-content hidden">
+                    <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Kelola Layanan</h3>
+                            <button id="addServiceBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Tambah Layanan
+                            </button>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Cari Layanan:</label>
+                                    <input type="text" id="searchService" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama layanan...">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Filter:</label>
+                                    <select id="filterService" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="all">Semua Layanan</option>
+                                        <option value="active">Aktif</option>
+                                        <option value="inactive">Nonaktif</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Nama Layanan</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Deskripsi</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="services-table-body">
+                                    <!-- Data akan diisi oleh JavaScript dari Firestore -->
+                                    <tr>
+                                        <td colspan="4" class="text-center py-8">
+                                            <div class="loading-spinner mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                            <p class="text-gray-500">Memuat data layanan...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Partners Section -->
+                <section id="partners-section" class="section-content hidden">
+                    <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Kelola Partner</h3>
+                            <button id="addPartnerBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Tambah Partner
+                            </button>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Cari Partner:</label>
+                                    <input type="text" id="searchPartner" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama partner...">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Filter:</label>
+                                    <select id="filterPartner" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="all">Semua Partner</option>
+                                        <option value="active">Aktif</option>
+                                        <option value="inactive">Nonaktif</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Nama Partner</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Deskripsi</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="partners-table-body">
+                                    <!-- Data akan diisi oleh JavaScript dari Firestore -->
+                                    <tr>
+                                        <td colspan="4" class="text-center py-8">
+                                            <div class="loading-spinner mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                            <p class="text-gray-500">Memuat data partner...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Contacts Section -->
+                <section id="contacts-section" class="section-content hidden">
+                    <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Kelola Kontak</h3>
+                            <button id="addContactBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Tambah Kontak
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Jenis Kontak</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Nilai</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="contacts-table-body">
+                                    <!-- Data akan diisi oleh JavaScript dari Firestore -->
+                                    <tr>
+                                        <td colspan="4" class="text-center py-8">
+                                            <div class="loading-spinner mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                            <p class="text-gray-500">Memuat data kontak...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="users-section" class="section-content hidden">
+                    <div class="bg-white rounded-xl shadow-md p-6" data-aos="fade-up">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">Kelola Pengguna</h3>
+                            <button id="addUserBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+                                <i class="fas fa-plus mr-2"></i> Tambah Pengguna
+                            </button>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Cari Pengguna:</label>
+                                    <input type="text" id="searchUser" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nama pengguna...">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Filter:</label>
+                                    <select id="filterUser" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="all">Semua Pengguna</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="user">Pengguna</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="data-table">
+                                <thead class="bg-blue-50">
+                                    <tr>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Nama</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Email</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Peran</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Status</th>
+                                        <th class="py-3 px-4 text-left font-semibold text-gray-700">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                    <!-- Data akan diisi oleh JavaScript dari Firestore -->
+                                    <tr>
+                                        <td colspan="5" class="text-center py-8">
+                                            <div class="loading-spinner mx-auto mb-4" style="width: 30px; height: 30px;"></div>
+                                            <p class="text-gray-500">Memuat data pengguna...</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
             </main>
         </div>
     </div>
 
-    <!-- Modals for Add/Edit Forms -->
-    <div id="shippingModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="p-6">
-                <h3 id="shippingModalTitle" class="text-xl font-bold mb-4 text-gray-800">Tambah Data Ongkir</h3>
-                <form id="shippingForm">
-                    <input type="hidden" id="shippingId">
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2 font-medium">Kecamatan</label>
-                        <select id="shippingKecamatan" class="form-input" required>
-                            <option value="">Pilih Kecamatan</option>
-                            <!-- Options will be populated by JavaScript -->
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label class="block text-gray-700 mb-2 font-medium">Desa</label>
-                        <select id="shippingDesa" class="form-input" required>
-                            <option value="">Pilih Desa</option>
-                            <!-- Options will be populated by JavaScript -->
-                        </select>
-                    </div>
-                    <div class="mb-6">
-                        <label class="block text-gray-700 mb-2 font-medium">Harga</label>
-                        <input type="number" id="shippingHarga" class="form-input" placeholder="Masukkan harga ongkir" required>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-3">
-                        <button type="button" onclick="closeModal('shippingModal')" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition duration-300 font-medium">Batal</button>
-                        <button type="submit" class="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition duration-300 font-medium">Simpan</button>
-                    </div>
-                </form>
+    <!-- Add/Edit Modal -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800">Tambah Data</h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
+            
+            <form id="dataForm" class="space-y-4">
+                <div id="formFields">
+                    <!-- Form fields will be dynamically generated based on the data type -->
+                </div>
+                
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition duration-300">
+                        Batal
+                    </button>
+                    <button type="submit" id="submitBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300 flex items-center">
+                        <i class="fas fa-save mr-2"></i> Simpan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Similar modals for other entities would be added here -->
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
         // Firebase Configuration
@@ -618,601 +890,599 @@
 
         // Global variables
         let currentUser = null;
-        let shippingData = {};
-        let areasData = [];
-        let hoursData = [];
-        let servicesData = [];
-        let partnersData = [];
-        let contactData = {};
+        let currentEditingId = null;
+        let currentCollection = '';
 
-        // Authentication
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            try {
-                const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                currentUser = userCredential.user;
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('userEmail').textContent = currentUser.email;
-                loadAllData();
-            } catch (error) {
-                Swal.fire('Error', 'Login gagal: ' + error.message, 'error');
-            }
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            once: true
         });
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            auth.signOut();
-            location.reload();
-        });
-
-        // Check auth state
+        // Check authentication state
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('adminName').textContent = user.displayName || user.email;
+                document.getElementById('headerAdminName').textContent = user.displayName || user.email.split('@')[0];
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loadingOverlay').style.display = 'none';
                 loadAllData();
             } else {
-                document.getElementById('loginModal').classList.remove('hidden');
+                document.getElementById('loginModal').style.display = 'flex';
+                document.getElementById('loadingOverlay').style.display = 'none';
             }
+        });
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            document.getElementById('submitBtn').innerHTML = '<div class="loading"></div> Memproses...';
+            document.getElementById('submitBtn').disabled = true;
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    Swal.fire({
+                        title: 'Berhasil!',
+                        text: 'Login berhasil, mengarahkan ke dashboard...',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Email atau password salah',
+                        icon: 'error',
+                        confirmButtonText: 'Coba Lagi'
+                    });
+                    
+                    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i> Masuk';
+                    document.getElementById('submitBtn').disabled = false;
+                });
+        });
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: 'Apakah Anda yakin ingin keluar?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    auth.signOut().then(() => {
+                        window.location.reload();
+                    });
+                }
+            });
+        });
+
+        // Sidebar toggle
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
         });
 
         // Navigation
-        function switchTab(tabName) {
-            // Hide all tabs
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden');
-                tab.classList.remove('active');
-            });
-            
-            // Show selected tab
-            document.getElementById(tabName).classList.remove('hidden');
-            document.getElementById(tabName).classList.add('active');
-            
-            // Update active nav item
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
-            
-            // Update page title
-            const titles = {
-                dashboard: 'Dashboard',
-                shipping: 'Kelola Harga Ongkir',
-                areas: 'Kelola Area Layanan',
-                hours: 'Kelola Jam Operasional',
-                services: 'Kelola Layanan',
-                partners: 'Kelola Partner',
-                contact: 'Kelola Kontak',
-                settings: 'Pengaturan'
-            };
-            document.getElementById('pageTitle').textContent = titles[tabName];
-            
-            // Close sidebar on mobile after switching tab
-            if (window.innerWidth < 768) {
-                document.querySelector('.sidebar').classList.remove('active');
-                document.getElementById('sidebarOverlay').classList.add('hidden');
-            }
-        }
-
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const tabName = item.getAttribute('data-tab');
-                switchTab(tabName);
+                
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(item => {
+                    item.classList.remove('active-nav');
+                });
+                
+                // Add active class to clicked link
+                link.classList.add('active-nav');
+                
+                // Hide all sections
+                document.querySelectorAll('.section-content').forEach(section => {
+                    section.classList.add('hidden');
+                });
+                
+                // Show selected section
+                const sectionId = link.getAttribute('data-section') + '-section';
+                document.getElementById(sectionId).classList.remove('hidden');
+                
+                // Update page title
+                updatePageTitle(link.getAttribute('data-section'));
             });
         });
 
-        // Mobile menu toggle
-        document.getElementById('menuToggle').addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.toggle('active');
-            document.getElementById('sidebarOverlay').classList.toggle('hidden');
-        });
-
-        // Close sidebar when clicking on overlay
-        document.getElementById('sidebarOverlay').addEventListener('click', () => {
-            document.querySelector('.sidebar').classList.remove('active');
-            document.getElementById('sidebarOverlay').classList.add('hidden');
-        });
-
-        // Load all data
-        async function loadAllData() {
-            try {
-                // Load shipping prices
-                const shippingSnapshot = await db.collection('shipping_prices').get();
-                shippingData = {};
-                shippingSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    shippingData[data.kecamatan] = data.desa;
-                });
-                updateShippingTable();
-                populateLocationDropdowns();
-
-                // Load areas
-                const areasSnapshot = await db.collection('areas').orderBy('order').get();
-                areasData = [];
-                areasSnapshot.forEach(doc => {
-                    areasData.push({ id: doc.id, ...doc.data() });
-                });
-                updateAreasTable();
-
-                // Load operational hours
-                const hoursSnapshot = await db.collection('operational_hours').orderBy('order').get();
-                hoursData = [];
-                hoursSnapshot.forEach(doc => {
-                    hoursData.push({ id: doc.id, ...doc.data() });
-                });
-                updateHoursTable();
-
-                // Load services
-                const servicesSnapshot = await db.collection('services').orderBy('order').get();
-                servicesData = [];
-                servicesSnapshot.forEach(doc => {
-                    servicesData.push({ id: doc.id, ...doc.data() });
-                });
-                updateServicesTable();
-
-                // Load partners
-                const partnersSnapshot = await db.collection('partners').orderBy('order').get();
-                partnersData = [];
-                partnersSnapshot.forEach(doc => {
-                    partnersData.push({ id: doc.id, ...doc.data() });
-                });
-                updatePartnersTable();
-
-                // Load contact info
-                const contactDoc = await db.collection('contact_info').doc('main').get();
-                if (contactDoc.exists) {
-                    contactData = contactDoc.data();
-                    document.getElementById('contactWhatsapp').value = contactData.whatsapp || '';
-                    document.getElementById('contactFacebook').value = contactData.facebook || '';
-                }
-
-                updateDashboardStats();
-
-            } catch (error) {
-                console.error('Error loading data:', error);
-                Swal.fire('Error', 'Gagal memuat data: ' + error.message, 'error');
-            }
+        // Update page title based on section
+        function updatePageTitle(section) {
+            const titles = {
+                'dashboard': 'Dashboard',
+                'shipping': 'Harga Ongkir',
+                'areas': 'Area Layanan',
+                'hours': 'Jam Operasional',
+                'services': 'Layanan',
+                'partners': 'Partner',
+                'contacts': 'Kontak',
+                'users': 'Pengguna'
+            };
+            
+            const subtitles = {
+                'dashboard': 'Ringkasan dan statistik VLCrave Express',
+                'shipping': 'Kelola harga ongkir berdasarkan lokasi',
+                'areas': 'Kelola area layanan VLCrave Express',
+                'hours': 'Kelola jam operasional layanan',
+                'services': 'Kelola berbagai layanan yang tersedia',
+                'partners': 'Kelola partner bisnis VLCrave Express',
+                'contacts': 'Kelola informasi kontak perusahaan',
+                'users': 'Kelola pengguna sistem admin'
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[section];
+            document.getElementById('pageSubtitle').textContent = subtitles[section];
         }
 
-        // Populate location dropdowns
-        function populateLocationDropdowns() {
-            const kecamatanSelect = document.getElementById('shippingKecamatan');
-            kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
-            
-            Object.keys(shippingData).forEach(kecamatan => {
-                const option = document.createElement('option');
-                option.value = kecamatan;
-                option.textContent = kecamatan;
-                kecamatanSelect.appendChild(option);
-            });
-        }
+        // Modal handlers
+        document.getElementById('closeModal').addEventListener('click', () => {
+            document.getElementById('dataModal').style.display = 'none';
+        });
 
-        // Update kecamatan selection
-        document.getElementById('shippingKecamatan').addEventListener('change', function() {
-            const desaSelect = document.getElementById('shippingDesa');
-            const selectedKecamatan = this.value;
-            
-            desaSelect.innerHTML = '<option value="">Pilih Desa</option>';
-            
-            if (selectedKecamatan && shippingData[selectedKecamatan]) {
-                Object.keys(shippingData[selectedKecamatan]).forEach(desa => {
-                    const option = document.createElement('option');
-                    option.value = desa;
-                    option.textContent = desa;
-                    desaSelect.appendChild(option);
-                });
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            document.getElementById('dataModal').style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            const modal = document.getElementById('dataModal');
+            if (e.target === modal) {
+                modal.style.display = 'none';
             }
         });
 
-        // Update dashboard statistics
-        function updateDashboardStats() {
-            // Count unique kecamatan
-            const kecamatanCount = Object.keys(shippingData).length;
-            
-            // Count total desa
-            let desaCount = 0;
-            Object.values(shippingData).forEach(desaObj => {
-                desaCount += Object.keys(desaObj).length;
-            });
-            
-            document.getElementById('totalKecamatan').textContent = kecamatanCount;
-            document.getElementById('totalDesa').textContent = desaCount;
-            document.getElementById('totalPartner').textContent = partnersData.length;
-            document.getElementById('totalLayanan').textContent = servicesData.length;
-        }
-
-        // Shipping Prices Management
-        function updateShippingTable() {
-            const tbody = document.getElementById('shippingTableBody');
-            tbody.innerHTML = '';
-            
-            if (Object.keys(shippingData).length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="4" class="py-8 px-4 text-center text-gray-500">
-                        <i class="fas fa-inbox text-4xl mb-2 opacity-50"></i>
-                        <p>Belum ada data ongkir</p>
-                    </td>
-                `;
-                tbody.appendChild(row);
-                return;
-            }
-            
-            Object.keys(shippingData).forEach(kecamatan => {
-                Object.keys(shippingData[kecamatan]).forEach(desa => {
-                    const price = shippingData[kecamatan][desa];
-                    const row = document.createElement('tr');
-                    row.className = 'border-b hover:bg-gray-50 transition duration-200';
-                    row.innerHTML = `
-                        <td class="py-3 px-4">${kecamatan}</td>
-                        <td class="py-3 px-4">${desa}</td>
-                        <td class="py-3 px-4 text-right font-medium">Rp ${price.toLocaleString('id-ID')}</td>
-                        <td class="py-3 px-4 text-center">
-                            <div class="flex justify-center space-x-2">
-                                <button onclick="editShipping('${kecamatan}', '${desa}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button onclick="deleteShipping('${kecamatan}', '${desa}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            });
-        }
-
-        // Areas Management
-        function updateAreasTable() {
-            const tbody = document.getElementById('areasTableBody');
-            tbody.innerHTML = '';
-            
-            if (areasData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="5" class="py-8 px-4 text-center text-gray-500">
-                        <i class="fas fa-map-marker-alt text-4xl mb-2 opacity-50"></i>
-                        <p>Belum ada data area</p>
-                    </td>
-                `;
-                tbody.appendChild(row);
-                return;
-            }
-            
-            areasData.forEach(area => {
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50 transition duration-200';
-                row.innerHTML = `
-                    <td class="py-3 px-4">${area.nama || area.kecamatan || 'N/A'}</td>
-                    <td class="py-3 px-4">${area.jumlah_desa || 0}</td>
-                    <td class="py-3 px-4 text-center">${area.pusat_layanan ? 'Ya' : 'Tidak'}</td>
-                    <td class="py-3 px-4 text-center">${area.order || 0}</td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="flex justify-center space-x-2">
-                            <button onclick="editArea('${area.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteArea('${area.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Operational Hours Management
-        function updateHoursTable() {
-            const tbody = document.getElementById('hoursTableBody');
-            tbody.innerHTML = '';
-            
-            if (hoursData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="4" class="py-8 px-4 text-center text-gray-500">
-                        <i class="fas fa-clock text-4xl mb-2 opacity-50"></i>
-                        <p>Belum ada data jam operasional</p>
-                    </td>
-                `;
-                tbody.appendChild(row);
-                return;
-            }
-            
-            hoursData.forEach(hour => {
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50 transition duration-200';
-                row.innerHTML = `
-                    <td class="py-3 px-4">${hour.hari || 'N/A'}</td>
-                    <td class="py-3 px-4">${hour.jam_operasional || 'N/A'}</td>
-                    <td class="py-3 px-4 text-center">${hour.order || 0}</td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="flex justify-center space-x-2">
-                            <button onclick="editHour('${hour.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteHour('${hour.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Services Management
-        function updateServicesTable() {
-            const tbody = document.getElementById('servicesTableBody');
-            tbody.innerHTML = '';
-            
-            if (servicesData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="6" class="py-8 px-4 text-center text-gray-500">
-                        <i class="fas fa-concierge-bell text-4xl mb-2 opacity-50"></i>
-                        <p>Belum ada data layanan</p>
-                    </td>
-                `;
-                tbody.appendChild(row);
-                return;
-            }
-            
-            servicesData.forEach(service => {
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50 transition duration-200';
-                row.innerHTML = `
-                    <td class="py-3 px-4">${service.nama || 'N/A'}</td>
-                    <td class="py-3 px-4">${service.deskripsi || 'N/A'}</td>
-                    <td class="py-3 px-4">
-                        <i class="${service.icon || 'fas fa-question'} text-lg"></i>
-                    </td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="inline-block w-4 h-4 rounded-full" style="background-color: ${service.warna || '#ccc'}"></div>
-                    </td>
-                    <td class="py-3 px-4 text-center">${service.order || 0}</td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="flex justify-center space-x-2">
-                            <button onclick="editService('${service.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteService('${service.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Partners Management
-        function updatePartnersTable() {
-            const tbody = document.getElementById('partnersTableBody');
-            tbody.innerHTML = '';
-            
-            if (partnersData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td colspan="5" class="py-8 px-4 text-center text-gray-500">
-                        <i class="fas fa-handshake text-4xl mb-2 opacity-50"></i>
-                        <p>Belum ada data partner</p>
-                    </td>
-                `;
-                tbody.appendChild(row);
-                return;
-            }
-            
-            partnersData.forEach(partner => {
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50 transition duration-200';
-                row.innerHTML = `
-                    <td class="py-3 px-4">
-                        ${partner.logo ? 
-                            `<img src="${partner.logo}" alt="${partner.nama}" class="w-10 h-10 object-cover rounded">` : 
-                            `<div class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                                <i class="fas fa-building text-gray-500"></i>
-                            </div>`
-                        }
-                    </td>
-                    <td class="py-3 px-4">${partner.nama || 'N/A'}</td>
-                    <td class="py-3 px-4">${partner.deskripsi || 'N/A'}</td>
-                    <td class="py-3 px-4 text-center">${partner.order || 0}</td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="flex justify-center space-x-2">
-                            <button onclick="editPartner('${partner.id}')" class="text-blue-500 hover:text-blue-700 transition duration-200 p-2 rounded-full hover:bg-blue-50">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deletePartner('${partner.id}')" class="text-red-500 hover:text-red-700 transition duration-200 p-2 rounded-full hover:bg-red-50">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Shipping Prices Management
+        // Add button handlers
         document.getElementById('addShippingBtn').addEventListener('click', () => {
-            document.getElementById('shippingModalTitle').textContent = 'Tambah Data Ongkir';
-            document.getElementById('shippingForm').reset();
-            document.getElementById('shippingId').value = '';
-            document.getElementById('shippingModal').classList.remove('hidden');
+            openModal('shipping_prices', 'Tambah Data Harga Ongkir');
         });
 
-        document.getElementById('shippingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const kecamatan = document.getElementById('shippingKecamatan').value;
-            const desa = document.getElementById('shippingDesa').value;
-            const harga = parseInt(document.getElementById('shippingHarga').value);
-            
-            try {
-                // Update local data structure
-                if (!shippingData[kecamatan]) {
-                    shippingData[kecamatan] = {};
-                }
-                shippingData[kecamatan][desa] = harga;
-                
-                // Update Firestore
-                await db.collection('shipping_prices').doc(kecamatan).set({
-                    kecamatan: kecamatan,
-                    desa: shippingData[kecamatan]
-                });
-                
-                closeModal('shippingModal');
-                updateShippingTable();
-                updateDashboardStats();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil',
-                    text: 'Data ongkir berhasil disimpan',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-            } catch (error) {
-                Swal.fire('Error', 'Gagal menyimpan data: ' + error.message, 'error');
-            }
+        document.getElementById('addAreaBtn').addEventListener('click', () => {
+            openModal('areas', 'Tambah Area Layanan');
         });
 
-        function editShipping(kecamatan, desa) {
-            document.getElementById('shippingModalTitle').textContent = 'Edit Data Ongkir';
-            document.getElementById('shippingKecamatan').value = kecamatan;
-            document.getElementById('shippingDesa').value = desa;
-            document.getElementById('shippingHarga').value = shippingData[kecamatan][desa];
-            document.getElementById('shippingModal').classList.remove('hidden');
+        document.getElementById('addHourBtn').addEventListener('click', () => {
+            openModal('operational_hours', 'Tambah Jam Operasional');
+        });
+
+        document.getElementById('addServiceBtn').addEventListener('click', () => {
+            openModal('services', 'Tambah Layanan');
+        });
+
+        document.getElementById('addPartnerBtn').addEventListener('click', () => {
+            openModal('partners', 'Tambah Partner');
+        });
+
+        document.getElementById('addContactBtn').addEventListener('click', () => {
+            openModal('contact_info', 'Tambah Kontak');
+        });
+
+        document.getElementById('addUserBtn').addEventListener('click', () => {
+            openModal('users', 'Tambah Pengguna');
+        });
+
+        // Open modal for adding/editing data
+        function openModal(collection, title, id = null) {
+            currentCollection = collection;
+            currentEditingId = id;
+            
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('dataModal').style.display = 'flex';
+            
+            // Generate form fields based on collection
+            generateFormFields(collection, id);
         }
 
-        async function deleteShipping(kecamatan, desa) {
-            const result = await Swal.fire({
-                title: 'Hapus Data?',
-                text: `Anda yakin ingin menghapus data ongkir untuk ${desa}, ${kecamatan}?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Hapus',
-                cancelButtonText: 'Batal'
+        // Generate form fields based on collection type
+        function generateFormFields(collection, id = null) {
+            const formFields = document.getElementById('formFields');
+            formFields.innerHTML = '';
+            
+            // Define field configurations for each collection
+            const fieldConfigs = {
+                'shipping_prices': [
+                    { name: 'kecamatan', label: 'Kecamatan', type: 'text', required: true },
+                    { name: 'desa', label: 'Desa/Kelurahan', type: 'text', required: true },
+                    { name: 'harga', label: 'Harga Ongkir', type: 'number', required: true },
+                    { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true }
+                ],
+                'areas': [
+                    { name: 'name', label: 'Nama Area', type: 'text', required: true },
+                    { name: 'villageCount', label: 'Jumlah Desa', type: 'number', required: true },
+                    { name: 'isCenter', label: 'Pusat Layanan', type: 'checkbox', required: false },
+                    { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true }
+                ],
+                'operational_hours': [
+                    { name: 'day', label: 'Hari', type: 'text', required: true },
+                    { name: 'hours', label: 'Jam Operasional', type: 'text', required: true },
+                    { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true }
+                ],
+                'services': [
+                    { name: 'name', label: 'Nama Layanan', type: 'text', required: true },
+                    { name: 'description', label: 'Deskripsi', type: 'textarea', required: true },
+                    { name: 'icon', label: 'Ikon (Font Awesome)', type: 'text', required: true },
+                    { name: 'color', label: 'Warna', type: 'select', options: ['blue', 'green', 'red', 'yellow', 'purple', 'pink'], required: true },
+                    { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true }
+                ],
+                'partners': [
+                    { name: 'name', label: 'Nama Partner', type: 'text', required: true },
+                    { name: 'description', label: 'Deskripsi', type: 'textarea', required: true },
+                    { name: 'logo', label: 'URL Logo', type: 'text', required: false },
+                    { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true }
+                ],
+                'contact_info': [
+                    { name: 'type', label: 'Jenis Kontak', type: 'select', options: ['whatsapp', 'facebook', 'instagram', 'email', 'phone'], required: true },
+                    { name: 'value', label: 'Nilai', type: 'text', required: true },
+                    { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true }
+                ],
+                'users': [
+                    { name: 'name', label: 'Nama Lengkap', type: 'text', required: true },
+                    { name: 'email', label: 'Email', type: 'email', required: true },
+                    { name: 'password', label: 'Password', type: 'password', required: id ? false : true },
+                    { name: 'role', label: 'Peran', type: 'select', options: ['admin', 'user'], required: true },
+                    { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive'], required: true }
+                ]
+            };
+            
+            const fields = fieldConfigs[collection] || [];
+            
+            fields.forEach(field => {
+                const fieldDiv = document.createElement('div');
+                
+                if (field.type === 'checkbox') {
+                    fieldDiv.innerHTML = `
+                        <div class="flex items-center">
+                            <input type="checkbox" id="${field.name}" name="${field.name}" class="mr-2 h-5 w-5 text-blue-500 rounded">
+                            <label for="${field.name}" class="text-gray-700">${field.label}</label>
+                        </div>
+                    `;
+                } else if (field.type === 'select') {
+                    fieldDiv.innerHTML = `
+                        <label for="${field.name}" class="block text-gray-700 mb-2">${field.label}${field.required ? ' *' : ''}</label>
+                        <select id="${field.name}" name="${field.name}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" ${field.required ? 'required' : ''}>
+                            <option value="">Pilih ${field.label}</option>
+                            ${field.options.map(option => `<option value="${option}">${option.charAt(0).toUpperCase() + option.slice(1)}</option>`).join('')}
+                        </select>
+                    `;
+                } else if (field.type === 'textarea') {
+                    fieldDiv.innerHTML = `
+                        <label for="${field.name}" class="block text-gray-700 mb-2">${field.label}${field.required ? ' *' : ''}</label>
+                        <textarea id="${field.name}" name="${field.name}" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" ${field.required ? 'required' : ''}></textarea>
+                    `;
+                } else {
+                    fieldDiv.innerHTML = `
+                        <label for="${field.name}" class="block text-gray-700 mb-2">${field.label}${field.required ? ' *' : ''}</label>
+                        <input type="${field.type}" id="${field.name}" name="${field.name}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" ${field.required ? 'required' : ''}>
+                    `;
+                }
+                
+                formFields.appendChild(fieldDiv);
             });
             
-            if (result.isConfirmed) {
-                try {
-                    delete shippingData[kecamatan][desa];
-                    
-                    // If no more desa in kecamatan, delete the kecamatan document
-                    if (Object.keys(shippingData[kecamatan]).length === 0) {
-                        delete shippingData[kecamatan];
-                        await db.collection('shipping_prices').doc(kecamatan).delete();
-                    } else {
-                        await db.collection('shipping_prices').doc(kecamatan).set({
-                            kecamatan: kecamatan,
-                            desa: shippingData[kecamatan]
+            // If editing, load existing data
+            if (id) {
+                loadDataForEditing(collection, id);
+            }
+        }
+
+        // Load data for editing
+        function loadDataForEditing(collection, id) {
+            db.collection(collection).doc(id).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        
+                        // Populate form fields with existing data
+                        Object.keys(data).forEach(key => {
+                            const field = document.getElementById(key);
+                            if (field) {
+                                if (field.type === 'checkbox') {
+                                    field.checked = data[key];
+                                } else {
+                                    field.value = data[key];
+                                }
+                            }
                         });
                     }
-                    
-                    updateShippingTable();
-                    updateDashboardStats();
+                })
+                .catch((error) => {
+                    console.error('Error loading data for editing:', error);
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Terhapus!',
-                        text: 'Data berhasil dihapus',
-                        timer: 2000,
-                        showConfirmButton: false
+                        title: 'Error!',
+                        text: 'Gagal memuat data untuk diedit',
+                        icon: 'error'
                     });
-                } catch (error) {
-                    Swal.fire('Error', 'Gagal menghapus data: ' + error.message, 'error');
-                }
-            }
+                });
         }
 
-        // Contact Form
-        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+        // Form submission handler
+        document.getElementById('dataForm').addEventListener('submit', (e) => {
             e.preventDefault();
             
-            const whatsapp = document.getElementById('contactWhatsapp').value;
-            const facebook = document.getElementById('contactFacebook').value;
+            const formData = new FormData(e.target);
+            const data = {};
             
-            try {
-                await db.collection('contact_info').doc('main').set({
-                    whatsapp: whatsapp,
-                    facebook: facebook,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil',
-                    text: 'Data kontak berhasil diperbarui',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            } catch (error) {
-                Swal.fire('Error', 'Gagal memperbarui data: ' + error.message, 'error');
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            // Handle checkbox values
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                data[checkbox.name] = checkbox.checked;
+            });
+            
+            // Show loading state
+            document.getElementById('submitBtn').innerHTML = '<div class="loading"></div> Menyimpan...';
+            document.getElementById('submitBtn').disabled = true;
+            
+            if (currentEditingId) {
+                // Update existing document
+                db.collection(currentCollection).doc(currentEditingId).update(data)
+                    .then(() => {
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: 'Data berhasil diperbarui',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        document.getElementById('dataModal').style.display = 'none';
+                        loadAllData();
+                    })
+                    .catch((error) => {
+                        console.error('Error updating document:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Gagal memperbarui data',
+                            icon: 'error'
+                        });
+                    })
+                    .finally(() => {
+                        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save mr-2"></i> Simpan';
+                        document.getElementById('submitBtn').disabled = false;
+                    });
+            } else {
+                // Add new document
+                db.collection(currentCollection).add(data)
+                    .then(() => {
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: 'Data berhasil ditambahkan',
+                            icon: 'success',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        document.getElementById('dataModal').style.display = 'none';
+                        loadAllData();
+                    })
+                    .catch((error) => {
+                        console.error('Error adding document:', error);
+                        Swal.fire({
+                            title: 'Error!',
+                            text: 'Gagal menambahkan data',
+                            icon: 'error'
+                        });
+                    })
+                    .finally(() => {
+                        document.getElementById('submitBtn').innerHTML = '<i class="fas fa-save mr-2"></i> Simpan';
+                        document.getElementById('submitBtn').disabled = false;
+                    });
             }
         });
 
-        // Placeholder functions for other sections
-        function editArea(id) {
-            Swal.fire('Info', 'Fitur edit area akan segera tersedia', 'info');
+        // Load all data from Firestore
+        function loadAllData() {
+            // This is a simplified version. In a real app, you would load data for each section
+            console.log('Loading data from Firestore...');
+            
+            // Load shipping prices
+            loadShippingData();
+            
+            // Load other data as needed...
         }
 
-        function deleteArea(id) {
-            Swal.fire('Info', 'Fitur hapus area akan segera tersedia', 'info');
+        // Load shipping data
+        function loadShippingData() {
+            db.collection('shipping_prices').get()
+                .then((querySnapshot) => {
+                    const tableBody = document.getElementById('shipping-table-body');
+                    tableBody.innerHTML = '';
+                    
+                    if (querySnapshot.empty) {
+                        tableBody.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-inbox text-4xl mb-4 block"></i>
+                                    Tidak ada data harga ongkir
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        const row = document.createElement('tr');
+                        
+                        row.innerHTML = `
+                            <td class="py-3 px-4">${data.kecamatan || '-'}</td>
+                            <td class="py-3 px-4">${data.desa || '-'}</td>
+                            <td class="py-3 px-4">Rp ${data.harga ? data.harga.toLocaleString('id-ID') : '0'}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium ${data.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    ${data.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <button class="edit-btn text-blue-500 hover:text-blue-700 mr-2" data-id="${doc.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-btn text-red-500 hover:text-red-700" data-id="${doc.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to edit and delete buttons
+                    document.querySelectorAll('.edit-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const id = e.currentTarget.getAttribute('data-id');
+                            openModal('shipping_prices', 'Edit Data Harga Ongkir', id);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const id = e.currentTarget.getAttribute('data-id');
+                            deleteData('shipping_prices', id);
+                        });
+                    });
+                    
+                    // Update count
+                    document.getElementById('shipping-count').textContent = querySnapshot.size;
+                })
+                .catch((error) => {
+                    console.error('Error loading shipping data:', error);
+                    const tableBody = document.getElementById('shipping-table-body');
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-red-500">
+                                <i class="fas fa-exclamation-triangle text-4xl mb-4 block"></i>
+                                Gagal memuat data
+                            </td>
+                        </tr>
+                    `;
+                });
         }
 
-        function editHour(id) {
-            Swal.fire('Info', 'Fitur edit jam operasional akan segera tersedia', 'info');
+        // Delete data
+        function deleteData(collection, id) {
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: 'Apakah Anda yakin ingin menghapus data ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Hapus',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.collection(collection).doc(id).delete()
+                        .then(() => {
+                            Swal.fire({
+                                title: 'Berhasil!',
+                                text: 'Data berhasil dihapus',
+                                icon: 'success',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                            
+                            loadAllData();
+                        })
+                        .catch((error) => {
+                            console.error('Error deleting document:', error);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Gagal menghapus data',
+                                icon: 'error'
+                            });
+                        });
+                }
+            });
         }
 
-        function deleteHour(id) {
-            Swal.fire('Info', 'Fitur hapus jam operasional akan segera tersedia', 'info');
-        }
-
-        function editService(id) {
-            Swal.fire('Info', 'Fitur edit layanan akan segera tersedia', 'info');
-        }
-
-        function deleteService(id) {
-            Swal.fire('Info', 'Fitur hapus layanan akan segera tersedia', 'info');
-        }
-
-        function editPartner(id) {
-            Swal.fire('Info', 'Fitur edit partner akan segera tersedia', 'info');
-        }
-
-        function deletePartner(id) {
-            Swal.fire('Info', 'Fitur hapus partner akan segera tersedia', 'info');
-        }
-
-        // Utility functions
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.add('hidden');
+        // Initialize charts
+        function initializeCharts() {
+            // Orders Chart
+            const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+            const ordersChart = new Chart(ordersCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+                    datasets: [{
+                        label: 'Pesanan',
+                        data: [120, 190, 300, 500, 200, 300],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+            
+            // Services Chart
+            const servicesCtx = document.getElementById('servicesChart').getContext('2d');
+            const servicesChart = new Chart(servicesCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Makanan', 'Barang', 'Dokumen', 'Lainnya'],
+                    datasets: [{
+                        data: [40, 30, 20, 10],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#8b5cf6'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
         }
 
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            // Check authentication status
-            auth.onAuthStateChanged((user) => {
-                if (!user) {
-                    document.getElementById('loginModal').classList.remove('hidden');
-                }
-            });
-            
-            // Close sidebar when window is resized to desktop
-            window.addEventListener('resize', function() {
-                if (window.innerWidth >= 768) {
-                    document.querySelector('.sidebar').classList.remove('active');
-                    document.getElementById('sidebarOverlay').classList.add('hidden');
-                }
-            });
+            initializeCharts();
         });
+
+        console.log('VLCrave Express Admin Dashboard loaded successfully!');
     </script>
 </body>
 </html>
