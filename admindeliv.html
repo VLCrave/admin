@@ -99,6 +99,15 @@
                 display: block;
             }
         }
+
+        /* Fix untuk konten section */
+        .content-section {
+            display: block;
+        }
+
+        .content-section.hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -886,10 +895,12 @@
             overlay.classList.remove('active');
         });
 
-        // Navigation
+        // Navigation - FIXED VERSION
         navItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
+                
+                console.log('Nav item clicked:', item.getAttribute('data-nav'));
                 
                 // Remove active class from all nav items
                 navItems.forEach(nav => nav.classList.remove('active'));
@@ -901,10 +912,22 @@
                 const target = item.getAttribute('data-nav');
                 
                 // Hide all content sections
-                contentSections.forEach(section => section.classList.add('hidden'));
+                contentSections.forEach(section => {
+                    if (section) {
+                        section.classList.add('hidden');
+                        console.log('Hiding section:', section.id);
+                    }
+                });
                 
-                // Show target content section
-                document.getElementById(`${target}-content`).classList.remove('hidden');
+                // Show target content section - WITH VALIDATION
+                const targetSection = document.getElementById(`${target}-content`);
+                if (targetSection) {
+                    targetSection.classList.remove('hidden');
+                    console.log('Showing section:', targetSection.id);
+                } else {
+                    console.error(`Section dengan ID ${target}-content tidak ditemukan`);
+                    return;
+                }
                 
                 // Update page title
                 pageTitle.textContent = getPageTitle(target);
@@ -1092,36 +1115,44 @@
         }
 
         function loadSectionData(section) {
-            switch(section) {
-                case 'products':
-                    loadProducts();
-                    break;
-                case 'categories':
-                    loadCategories();
-                    break;
-                case 'orders':
-                    loadOrders();
-                    break;
-                case 'customers':
-                    loadCustomers();
-                    break;
-                case 'settings':
-                    loadSettings();
-                    break;
-                default:
-                    // Dashboard data is already loaded by real-time listeners
-                    break;
+            try {
+                console.log(`Loading section data: ${section}`);
+                switch(section) {
+                    case 'products':
+                        loadProducts();
+                        break;
+                    case 'categories':
+                        loadCategories();
+                        break;
+                    case 'orders':
+                        loadOrders();
+                        break;
+                    case 'customers':
+                        loadCustomers();
+                        break;
+                    case 'settings':
+                        loadSettings();
+                        break;
+                    default:
+                        console.log(`Section ${section} tidak memerlukan loading data khusus`);
+                        break;
+                }
+            } catch (error) {
+                console.error(`Error loading section ${section}:`, error);
             }
         }
 
         // Initialize real-time listeners for dashboard
         function initializeRealtimeListeners() {
+            console.log('Initializing real-time listeners...');
+            
             // Products listener
             db.collection('products').onSnapshot((snapshot) => {
                 products = [];
                 snapshot.forEach(doc => {
                     products.push({ id: doc.id, ...doc.data() });
                 });
+                console.log('Products updated:', products.length);
                 updateDashboardProducts();
                 if (document.getElementById('products-content').classList.contains('hidden') === false) {
                     loadProducts();
@@ -1136,6 +1167,7 @@
                 snapshot.forEach(doc => {
                     categories.push({ id: doc.id, ...doc.data() });
                 });
+                console.log('Categories updated:', categories.length);
                 updateDashboardCategories();
                 if (document.getElementById('categories-content').classList.contains('hidden') === false) {
                     loadCategories();
@@ -1150,6 +1182,7 @@
                 snapshot.forEach(doc => {
                     orders.push({ id: doc.id, ...doc.data() });
                 });
+                console.log('Orders updated:', orders.length);
                 updateDashboardOrders();
                 updateDashboardRevenue();
                 if (document.getElementById('orders-content').classList.contains('hidden') === false) {
@@ -1165,6 +1198,7 @@
                 snapshot.forEach(doc => {
                     customers.push({ id: doc.id, ...doc.data() });
                 });
+                console.log('Customers updated:', customers.length);
                 updateDashboardCustomers();
                 if (document.getElementById('customers-content').classList.contains('hidden') === false) {
                     loadCustomers();
@@ -1177,6 +1211,7 @@
             db.collection('settings').doc('store').onSnapshot((doc) => {
                 if (doc.exists) {
                     settings = doc.data();
+                    console.log('Settings updated:', settings);
                     updateSettingsForm();
                     updateStoreInfo();
                 }
@@ -1850,14 +1885,17 @@
         }
 
         function formatPrice(price) {
+            if (!price) return '0';
             return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
         function formatDate(date) {
+            if (!date) return '-';
             return `${date.getDate()} ${getMonthName(date.getMonth())} ${date.getFullYear()}`;
         }
 
         function formatTime(date) {
+            if (!date) return '-';
             return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
         }
 
@@ -2570,54 +2608,71 @@
 
         // Initialize the admin panel
         document.addEventListener('DOMContentLoaded', () => {
-            // Set dashboard as active
-            document.querySelector('[data-nav="dashboard"]').classList.add('active');
-            document.getElementById('dashboard-content').classList.remove('hidden');
+            console.log('DOM loaded, initializing admin panel...');
             
-            // Initialize real-time listeners
-            initializeRealtimeListeners();
-            
-            // Update current time
-            updateCurrentTime();
-            setInterval(updateCurrentTime, 60000); // Update every minute
-            
-            // Update popular products when products or orders change
-            // This will be handled by the real-time listeners
-            
+            try {
+                // Set dashboard as active
+                const dashboardNav = document.querySelector('[data-nav="dashboard"]');
+                const dashboardContent = document.getElementById('dashboard-content');
+                
+                if (dashboardNav && dashboardContent) {
+                    dashboardNav.classList.add('active');
+                    dashboardContent.classList.remove('hidden');
+                    console.log('Dashboard berhasil di-set sebagai default');
+                } else {
+                    console.error('Element dashboard tidak ditemukan');
+                }
+                
+                // Initialize real-time listeners
+                initializeRealtimeListeners();
+                
+                // Update current time
+                updateCurrentTime();
+                setInterval(updateCurrentTime, 60000);
+                
+                // Update popular products when products or orders change
+                let productsLoaded = false;
+                let ordersLoaded = false;
+
+                // Override the update functions to also update popular products
+                const originalUpdateDashboardProducts = updateDashboardProducts;
+                updateDashboardProducts = function() {
+                    originalUpdateDashboardProducts();
+                    productsLoaded = true;
+                    if (productsLoaded && ordersLoaded) {
+                        updatePopularProducts();
+                    }
+                };
+
+                const originalUpdateDashboardOrders = updateDashboardOrders;
+                updateDashboardOrders = function() {
+                    originalUpdateDashboardOrders();
+                    ordersLoaded = true;
+                    if (productsLoaded && ordersLoaded) {
+                        updatePopularProducts();
+                    }
+                };
+                
+            } catch (error) {
+                console.error('Error dalam initializing admin panel:', error);
+            }
+
             // Check authentication
             auth.onAuthStateChanged((user) => {
-                if (user) {
-                    document.getElementById('admin-name').textContent = user.displayName || user.email;
-                    console.log('Admin authenticated:', user.email);
-                } else {
-                    // Redirect to admin login page
-                    window.location.href = 'adminlogin.html';
+                try {
+                    if (user) {
+                        document.getElementById('admin-name').textContent = user.displayName || user.email;
+                        console.log('Admin authenticated:', user.email);
+                    } else {
+                        console.log('User tidak terautentikasi, redirect ke login...');
+                        // Redirect to admin login page
+                        window.location.href = 'adminlogin.html';
+                    }
+                } catch (error) {
+                    console.error('Error dalam auth state change:', error);
                 }
             });
         });
-
-        // Update popular products when products or orders data is available
-        let productsLoaded = false;
-        let ordersLoaded = false;
-
-        // Override the update functions to also update popular products
-        const originalUpdateDashboardProducts = updateDashboardProducts;
-        updateDashboardProducts = function() {
-            originalUpdateDashboardProducts();
-            productsLoaded = true;
-            if (productsLoaded && ordersLoaded) {
-                updatePopularProducts();
-            }
-        };
-
-        const originalUpdateDashboardOrders = updateDashboardOrders;
-        updateDashboardOrders = function() {
-            originalUpdateDashboardOrders();
-            ordersLoaded = true;
-            if (productsLoaded && ordersLoaded) {
-                updatePopularProducts();
-            }
-        };
     </script>
 </body>
 </html>
