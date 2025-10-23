@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - VLStore</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #ff5e00 0%, #ff2e00 100%);
+        }
+        
+        .login-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="login-container">
+    <!-- Firebase Configuration -->
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqigW41nufIzMOtxHjcAN7ZRLFNokHDS0",
+            authDomain: "vlonline.firebaseapp.com",
+            projectId: "vlonline",
+            storageBucket: "vlonline.firebasestorage.app",
+            messagingSenderId: "860419602853",
+            appId: "1:860419602853:web:9f68d7ca09305293ab104c",
+            measurementId: "G-0QVS1K2BHL"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+    </script>
+
+    <div class="min-h-screen flex items-center justify-center px-4 py-12">
+        <div class="max-w-md w-full space-y-8">
+            <!-- Header -->
+            <div class="text-center">
+                <div class="flex items-center justify-center space-x-3 mb-6">
+                    <div class="gradient-bg text-white p-3 rounded-xl">
+                        <i class="fas fa-store text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold text-white">VLStore</h2>
+                        <p class="text-white/80 text-sm">Admin Panel</p>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-white">Masuk ke Admin Panel</h2>
+                <p class="mt-2 text-white/80">Silakan masuk dengan akun admin Anda</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="login-card rounded-2xl shadow-2xl p-8">
+                <form class="mt-8 space-y-6" id="login-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-white mb-2">Email Admin</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input 
+                                    id="email" 
+                                    name="email" 
+                                    type="email" 
+                                    autocomplete="email" 
+                                    required 
+                                    class="relative block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl bg-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                                    placeholder="admin@vlstore.com">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-white mb-2">Password</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input 
+                                    id="password" 
+                                    name="password" 
+                                    type="password" 
+                                    autocomplete="current-password" 
+                                    required 
+                                    class="relative block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl bg-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                                    placeholder="Masukkan password">
+                                <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <i class="fas fa-eye text-gray-400 hover:text-white"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input 
+                                id="remember-me" 
+                                name="remember-me" 
+                                type="checkbox" 
+                                class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded">
+                            <label for="remember-me" class="ml-2 block text-sm text-white">
+                                Ingat saya
+                            </label>
+                        </div>
+
+                        <div class="text-sm">
+                            <a href="#" class="font-medium text-orange-300 hover:text-orange-200 transition-colors">
+                                Lupa password?
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button 
+                            type="submit" 
+                            id="login-button"
+                            class="group relative w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-medium text-white gradient-bg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all duration-200 transform hover:scale-[1.02]">
+                            <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                                <i class="fas fa-sign-in-alt text-white"></i>
+                            </span>
+                            Masuk ke Dashboard
+                        </button>
+                    </div>
+
+                    <div class="text-center">
+                        <p class="text-white/70 text-sm">
+                            Butuh bantuan? 
+                            <a href="#" class="text-orange-300 hover:text-orange-200 font-medium transition-colors">
+                                Hubungi Super Admin
+                            </a>
+                        </p>
+                    </div>
+                </form>
+
+                <!-- Demo Credentials -->
+                <div class="mt-8 p-4 bg-white/10 rounded-xl border border-white/20">
+                    <h3 class="text-white font-medium mb-2 text-sm">Demo Credentials:</h3>
+                    <div class="space-y-1 text-xs text-white/80">
+                        <p><span class="font-medium">Email:</span> admin@vlstore.com</p>
+                        <p><span class="font-medium">Password:</span> admin123</p>
+                    </div>
+                    <p class="text-xs text-orange-300 mt-2">* Gunakan credentials ini untuk testing</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8">
+                <p class="text-white/60 text-sm">
+                    &copy; 2024 VLStore. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const loginForm = document.getElementById('login-form');
+        const loginButton = document.getElementById('login-button');
+        const togglePassword = document.getElementById('toggle-password');
+        const passwordInput = document.getElementById('password');
+        const emailInput = document.getElementById('email');
+        const rememberMe = document.getElementById('remember-me');
+
+        // Event Listeners
+        loginForm.addEventListener('submit', handleLogin);
+        togglePassword.addEventListener('click', togglePasswordVisibility);
+
+        // Load saved credentials if "Remember me" was checked
+        document.addEventListener('DOMContentLoaded', loadSavedCredentials);
+
+        // Functions
+        function togglePasswordVisibility() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            togglePassword.innerHTML = type === 'password' ? '<i class="fas fa-eye text-gray-400 hover:text-white"></i>' : '<i class="fas fa-eye-slash text-gray-400 hover:text-white"></i>';
+        }
+
+        function loadSavedCredentials() {
+            const savedEmail = localStorage.getItem('adminEmail');
+            const savedPassword = localStorage.getItem('adminPassword');
+            const remember = localStorage.getItem('rememberMe') === 'true';
+
+            if (remember && savedEmail && savedPassword) {
+                emailInput.value = savedEmail;
+                passwordInput.value = savedPassword;
+                rememberMe.checked = true;
+            }
+        }
+
+        function saveCredentials(email, password, remember) {
+            if (remember) {
+                localStorage.setItem('adminEmail', email);
+                localStorage.setItem('adminPassword', password);
+                localStorage.setItem('rememberMe', 'true');
+            } else {
+                localStorage.removeItem('adminEmail');
+                localStorage.removeItem('adminPassword');
+                localStorage.removeItem('rememberMe');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const remember = rememberMe.checked;
+
+            // Validate inputs
+            if (!email || !password) {
+                showError('Harap isi email dan password');
+                return;
+            }
+
+            // Show loading state
+            const originalText = loginButton.innerHTML;
+            loginButton.innerHTML = '<div class="loading"></div> Memproses...';
+            loginButton.disabled = true;
+
+            try {
+                // Sign in with email and password
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+
+                // Save credentials if "Remember me" is checked
+                saveCredentials(email, password, remember);
+
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Login Berhasil!',
+                    text: 'Selamat datang di Admin Panel VLStore',
+                    timer: 2000,
+                    showConfirmButton: false,
+                    willClose: () => {
+                        // Redirect to admin panel
+                        window.location.href = 'admin.html';
+                    }
+                });
+
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                let errorMessage = 'Terjadi kesalahan saat login';
+                
+                switch (error.code) {
+                    case 'auth/invalid-email':
+                        errorMessage = 'Format email tidak valid';
+                        break;
+                    case 'auth/user-disabled':
+                        errorMessage = 'Akun ini telah dinonaktifkan';
+                        break;
+                    case 'auth/user-not-found':
+                        errorMessage = 'Akun tidak ditemukan';
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = 'Password salah';
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = 'Terlalu banyak percobaan login. Coba lagi nanti';
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = 'Koneksi internet bermasalah';
+                        break;
+                }
+                
+                showError(errorMessage);
+                
+                // Reset button state
+                loginButton.innerHTML = originalText;
+                loginButton.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Gagal',
+                text: message,
+                confirmButtonText: 'Coba Lagi',
+                confirmButtonColor: '#ff5e00'
+            });
+        }
+
+        // Demo login for testing (remove in production)
+        function setupDemoLogin() {
+            // Auto-fill demo credentials on double click
+            emailInput.addEventListener('dblclick', () => {
+                emailInput.value = 'admin@vlstore.com';
+                passwordInput.value = 'admin123';
+                rememberMe.checked = true;
+                
+                Swal.fire({
+                    title: 'Demo Credentials Diisi',
+                    text: 'Credentials demo telah diisi. Klik Login untuk melanjutkan.',
+                    icon: 'info',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            });
+        }
+
+        // Initialize demo login
+        setupDemoLogin();
+
+        // Check if user is already logged in
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is already logged in, redirect to admin panel
+                window.location.href = 'admin.html';
+            }
+        });
+
+        // Add some interactive effects
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('ring-2', 'ring-orange-500');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('ring-2', 'ring-orange-500');
+            });
+        });
+
+        // Add enter key support
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+</body>
+</html>
