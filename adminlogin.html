@@ -104,7 +104,8 @@
                                     autocomplete="email" 
                                     required 
                                     class="relative block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl bg-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                                    placeholder="admin@vlstore.com">
+                                    placeholder="admin@vlstore.com"
+                                    value="admin@vlstore.com">
                             </div>
                         </div>
                         
@@ -121,7 +122,8 @@
                                     autocomplete="current-password" 
                                     required 
                                     class="relative block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl bg-white/10 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                                    placeholder="Masukkan password">
+                                    placeholder="Masukkan password"
+                                    value="admin123">
                                 <button type="button" id="toggle-password" class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <i class="fas fa-eye text-gray-400 hover:text-white"></i>
                                 </button>
@@ -135,7 +137,8 @@
                                 id="remember-me" 
                                 name="remember-me" 
                                 type="checkbox" 
-                                class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded">
+                                class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-300 rounded"
+                                checked>
                             <label for="remember-me" class="ml-2 block text-sm text-white">
                                 Ingat saya
                             </label>
@@ -170,14 +173,26 @@
                     </div>
                 </form>
 
+                <!-- Setup Instructions -->
+                <div class="mt-8 p-4 bg-yellow-500/20 rounded-xl border border-yellow-500/30">
+                    <h3 class="text-yellow-300 font-medium mb-2 text-sm">⚠️ Setup Required:</h3>
+                    <div class="space-y-2 text-xs text-yellow-200">
+                        <p>1. Buka <a href="https://console.firebase.google.com/" class="underline" target="_blank">Firebase Console</a></p>
+                        <p>2. Pilih project <strong>vlonline</strong></p>
+                        <p>3. Buka <strong>Authentication</strong> → <strong>Sign-in method</strong></p>
+                        <p>4. Aktifkan <strong>Email/Password</strong></p>
+                        <p>5. Klik <strong>Save</strong></p>
+                    </div>
+                </div>
+
                 <!-- Demo Credentials -->
-                <div class="mt-8 p-4 bg-white/10 rounded-xl border border-white/20">
+                <div class="mt-4 p-4 bg-white/10 rounded-xl border border-white/20">
                     <h3 class="text-white font-medium mb-2 text-sm">Demo Credentials:</h3>
                     <div class="space-y-1 text-xs text-white/80">
                         <p><span class="font-medium">Email:</span> admin@vlstore.com</p>
                         <p><span class="font-medium">Password:</span> admin123</p>
                     </div>
-                    <p class="text-xs text-orange-300 mt-2">* Gunakan credentials ini untuk testing</p>
+                    <p class="text-xs text-orange-300 mt-2">* Pastikan sudah setup Authentication di Firebase</p>
                 </div>
             </div>
 
@@ -256,9 +271,13 @@
             loginButton.disabled = true;
 
             try {
+                console.log('Attempting login with:', email);
+                
                 // Sign in with email and password
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const user = userCredential.user;
+
+                console.log('Login successful:', user);
 
                 // Save credentials if "Remember me" is checked
                 saveCredentials(email, password, remember);
@@ -289,7 +308,7 @@
                         errorMessage = 'Akun ini telah dinonaktifkan';
                         break;
                     case 'auth/user-not-found':
-                        errorMessage = 'Akun tidak ditemukan';
+                        errorMessage = 'Akun tidak ditemukan. Pastikan Email/Password sudah diaktifkan di Firebase Console';
                         break;
                     case 'auth/wrong-password':
                         errorMessage = 'Password salah';
@@ -299,6 +318,9 @@
                         break;
                     case 'auth/network-request-failed':
                         errorMessage = 'Koneksi internet bermasalah';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        errorMessage = 'Metode login Email/Password belum diaktifkan. Silakan aktifkan di Firebase Console';
                         break;
                 }
                 
@@ -314,38 +336,34 @@
             Swal.fire({
                 icon: 'error',
                 title: 'Login Gagal',
-                text: message,
-                confirmButtonText: 'Coba Lagi',
+                html: `
+                    <div class="text-left">
+                        <p class="mb-3">${message}</p>
+                        <div class="bg-yellow-50 p-3 rounded-lg text-sm text-yellow-800">
+                            <p class="font-medium mb-1">Langkah perbaikan:</p>
+                            <ol class="list-decimal list-inside space-y-1">
+                                <li>Buka <a href="https://console.firebase.google.com/" class="underline" target="_blank">Firebase Console</a></li>
+                                <li>Pilih project <strong>vlonline</strong></li>
+                                <li>Buka <strong>Authentication</strong> → <strong>Sign-in method</strong></li>
+                                <li>Aktifkan <strong>Email/Password</strong></li>
+                                <li>Klik <strong>Save</strong></li>
+                            </ol>
+                        </div>
+                    </div>
+                `,
+                confirmButtonText: 'Mengerti',
                 confirmButtonColor: '#ff5e00'
             });
         }
 
-        // Demo login for testing (remove in production)
-        function setupDemoLogin() {
-            // Auto-fill demo credentials on double click
-            emailInput.addEventListener('dblclick', () => {
-                emailInput.value = 'admin@vlstore.com';
-                passwordInput.value = 'admin123';
-                rememberMe.checked = true;
-                
-                Swal.fire({
-                    title: 'Demo Credentials Diisi',
-                    text: 'Credentials demo telah diisi. Klik Login untuk melanjutkan.',
-                    icon: 'info',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            });
-        }
-
-        // Initialize demo login
-        setupDemoLogin();
-
         // Check if user is already logged in
         auth.onAuthStateChanged((user) => {
             if (user) {
+                console.log('User already logged in:', user.email);
                 // User is already logged in, redirect to admin panel
                 window.location.href = 'admin.html';
+            } else {
+                console.log('No user logged in');
             }
         });
 
@@ -366,6 +384,9 @@
                 loginForm.dispatchEvent(new Event('submit'));
             }
         });
+
+        // Test Firebase connection
+        console.log('Firebase initialized:', firebase.apps.length > 0);
     </script>
 </body>
 </html>
