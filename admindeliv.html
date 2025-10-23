@@ -1,0 +1,2623 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - VLStore</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #ff5e00 0%, #ff2e00 100%);
+        }
+        
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item.active {
+            background-color: rgba(255, 94, 0, 0.1);
+            border-left: 4px solid #ff5e00;
+            color: #ff5e00;
+        }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .table-row:hover {
+            background-color: #f9fafb;
+        }
+        
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                z-index: 100;
+                height: 100vh;
+                overflow-y: auto;
+            }
+            
+            .sidebar.active {
+                left: 0;
+            }
+            
+            .overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0,0,0,0.5);
+                z-index: 90;
+            }
+            
+            .overlay.active {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Firebase Configuration -->
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqigW41nufIzMOtxHjcAN7ZRLFNokHDS0",
+            authDomain: "vlonline.firebaseapp.com",
+            projectId: "vlonline",
+            storageBucket: "vlonline.firebasestorage.app",
+            messagingSenderId: "860419602853",
+            appId: "1:860419602853:web:9f68d7ca09305293ab104c",
+            measurementId: "G-0QVS1K2BHL"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const auth = firebase.auth();
+    </script>
+
+    <!-- Overlay for Mobile -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar bg-white w-64 min-h-screen shadow-lg fixed md:relative z-50" id="sidebar">
+        <div class="p-4 border-b border-gray-200">
+            <div class="flex items-center space-x-2">
+                <div class="gradient-bg text-white p-2 rounded-lg">
+                    <i class="fas fa-store text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-gray-800">VLStore</span>
+                    <p class="text-xs text-gray-500">Admin Panel</p>
+                </div>
+            </div>
+        </div>
+        
+        <nav class="mt-6">
+            <ul class="space-y-2 px-4">
+                <li>
+                    <a href="#" class="nav-item flex items-center space-x-3 py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100 active" data-nav="dashboard">
+                        <i class="fas fa-tachometer-alt w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item flex items-center space-x-3 py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100" data-nav="products">
+                        <i class="fas fa-box w-5"></i>
+                        <span>Produk</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item flex items-center space-x-3 py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100" data-nav="categories">
+                        <i class="fas fa-tags w-5"></i>
+                        <span>Kategori</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item flex items-center space-x-3 py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100" data-nav="orders">
+                        <i class="fas fa-shopping-cart w-5"></i>
+                        <span>Pesanan</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item flex items-center space-x-3 py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100" data-nav="customers">
+                        <i class="fas fa-users w-5"></i>
+                        <span>Pelanggan</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-item flex items-center space-x-3 py-3 px-4 rounded-lg text-gray-700 hover:bg-gray-100" data-nav="settings">
+                        <i class="fas fa-cog w-5"></i>
+                        <span>Pengaturan</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        
+        <div class="absolute bottom-0 w-full p-4 border-t border-gray-200">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-gray-600"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium" id="admin-name">Admin User</p>
+                    <p class="text-xs text-gray-500">Administrator</p>
+                </div>
+                <button id="logout-btn" class="text-gray-500 hover:text-red-500">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64">
+        <!-- Top Bar -->
+        <header class="bg-white shadow-sm py-4 px-6 flex justify-between items-center">
+            <div class="flex items-center">
+                <button id="menu-toggle" class="md:hidden text-gray-600 mr-4">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <h1 class="text-xl font-semibold text-gray-800" id="page-title">Dashboard</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <button class="text-gray-600 hover:text-gray-900" id="notifications-btn">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center hidden" id="notification-count">0</span>
+                    </button>
+                </div>
+                <div class="text-sm text-gray-600" id="current-time">
+                    <!-- Current time will be loaded here -->
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main class="p-6">
+            <!-- Dashboard Content -->
+            <div id="dashboard-content" class="content-section">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Stat Cards -->
+                    <div class="stat-card bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Pendapatan</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-1" id="total-revenue">Rp 0</h3>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <i class="fas fa-wallet text-green-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-green-500 text-sm mt-2" id="revenue-change">
+                            <i class="fas fa-arrow-up mr-1"></i> Loading...
+                        </p>
+                    </div>
+                    
+                    <div class="stat-card bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Total Pesanan</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-1" id="total-orders">0</h3>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-shopping-cart text-blue-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-blue-500 text-sm mt-2" id="orders-change">
+                            <i class="fas fa-arrow-up mr-1"></i> Loading...
+                        </p>
+                    </div>
+                    
+                    <div class="stat-card bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Pelanggan</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-1" id="total-customers">0</h3>
+                            </div>
+                            <div class="bg-purple-100 p-3 rounded-full">
+                                <i class="fas fa-users text-purple-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-purple-500 text-sm mt-2" id="customers-change">
+                            <i class="fas fa-arrow-up mr-1"></i> Loading...
+                        </p>
+                    </div>
+                    
+                    <div class="stat-card bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm">Produk</p>
+                                <h3 class="text-2xl font-bold text-gray-800 mt-1" id="total-products">0</h3>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-full">
+                                <i class="fas fa-box text-orange-500 text-xl"></i>
+                            </div>
+                        </div>
+                        <p class="text-orange-500 text-sm mt-2" id="products-change">
+                            <i class="fas fa-plus mr-1"></i> Loading...
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Orders -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Pesanan Terbaru</h3>
+                            <a href="#" class="text-orange-500 text-sm font-medium view-all-orders">Lihat Semua</a>
+                        </div>
+                        <div class="space-y-4" id="recent-orders">
+                            <!-- Order items will be loaded here -->
+                            <div class="text-center py-8 text-gray-500">
+                                <div class="loading mx-auto mb-2"></div>
+                                <p>Memuat pesanan...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Popular Products -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-gray-800">Produk Populer</h3>
+                            <a href="#" class="text-orange-500 text-sm font-medium view-all-products">Lihat Semua</a>
+                        </div>
+                        <div class="space-y-4" id="popular-products">
+                            <!-- Product items will be loaded here -->
+                            <div class="text-center py-8 text-gray-500">
+                                <div class="loading mx-auto mb-2"></div>
+                                <p>Memuat produk...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Content -->
+            <div id="products-content" class="content-section hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 md:mb-0">Kelola Produk</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" placeholder="Cari produk..." class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" id="product-search">
+                            <button id="add-product-btn" class="gradient-bg text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center space-x-2">
+                                <i class="fas fa-plus"></i>
+                                <span>Tambah Produk</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Products Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm">
+                                    <th class="py-3 px-4 text-left rounded-l-lg">Produk</th>
+                                    <th class="py-3 px-4 text-left">Kategori</th>
+                                    <th class="py-3 px-4 text-left">Harga</th>
+                                    <th class="py-3 px-4 text-left">Stok</th>
+                                    <th class="py-3 px-4 text-left">Status</th>
+                                    <th class="py-3 px-4 text-left">Terjual</th>
+                                    <th class="py-3 px-4 text-right rounded-r-lg">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="products-table-body">
+                                <!-- Products will be loaded here -->
+                                <tr>
+                                    <td colspan="7" class="py-8 text-center text-gray-500">
+                                        <div class="loading mx-auto mb-2"></div>
+                                        <p>Memuat produk...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="flex justify-between items-center mt-6">
+                        <div class="text-sm text-gray-600" id="products-pagination-info">
+                            Menampilkan 0 dari 0 produk
+                        </div>
+                        <div class="flex space-x-2" id="products-pagination">
+                            <!-- Pagination buttons will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Content -->
+            <div id="categories-content" class="content-section hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 md:mb-0">Kelola Kategori</h3>
+                        <button id="add-category-btn" class="gradient-bg text-white py-2 px-4 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center space-x-2">
+                            <i class="fas fa-plus"></i>
+                            <span>Tambah Kategori</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Categories Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="categories-grid">
+                        <!-- Categories will be loaded here -->
+                        <div class="col-span-3 text-center py-8 text-gray-500">
+                            <div class="loading mx-auto mb-2"></div>
+                            <p>Memuat kategori...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Content -->
+            <div id="orders-content" class="content-section hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 md:mb-0">Kelola Pesanan</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" placeholder="Cari pesanan..." class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" id="order-search">
+                            <select id="order-filter" class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <option value="all">Semua Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Dikonfirmasi</option>
+                                <option value="processing">Diproses</option>
+                                <option value="shipped">Dikirim</option>
+                                <option value="delivered">Selesai</option>
+                                <option value="cancelled">Dibatalkan</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Orders Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm">
+                                    <th class="py-3 px-4 text-left rounded-l-lg">ID Pesanan</th>
+                                    <th class="py-3 px-4 text-left">Pelanggan</th>
+                                    <th class="py-3 px-4 text-left">Tanggal</th>
+                                    <th class="py-3 px-4 text-left">Total</th>
+                                    <th class="py-3 px-4 text-left">Status</th>
+                                    <th class="py-3 px-4 text-right rounded-r-lg">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body">
+                                <!-- Orders will be loaded here -->
+                                <tr>
+                                    <td colspan="6" class="py-8 text-center text-gray-500">
+                                        <div class="loading mx-auto mb-2"></div>
+                                        <p>Memuat pesanan...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="flex justify-between items-center mt-6">
+                        <div class="text-sm text-gray-600" id="orders-pagination-info">
+                            Menampilkan 0 dari 0 pesanan
+                        </div>
+                        <div class="flex space-x-2" id="orders-pagination">
+                            <!-- Pagination buttons will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customers Content -->
+            <div id="customers-content" class="content-section hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4 md:mb-0">Data Pelanggan</h3>
+                        <div class="flex space-x-2">
+                            <input type="text" placeholder="Cari pelanggan..." class="border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" id="customer-search">
+                        </div>
+                    </div>
+                    
+                    <!-- Customers Table -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm">
+                                    <th class="py-3 px-4 text-left rounded-l-lg">Nama</th>
+                                    <th class="py-3 px-4 text-left">Email</th>
+                                    <th class="py-3 px-4 text-left">Telepon</th>
+                                    <th class="py-3 px-4 text-left">Total Pesanan</th>
+                                    <th class="py-3 px-4 text-left">Total Belanja</th>
+                                    <th class="py-3 px-4 text-left">Bergabung</th>
+                                    <th class="py-3 px-4 text-right rounded-r-lg">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-table-body">
+                                <!-- Customers will be loaded here -->
+                                <tr>
+                                    <td colspan="7" class="py-8 text-center text-gray-500">
+                                        <div class="loading mx-auto mb-2"></div>
+                                        <p>Memuat pelanggan...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <div class="flex justify-between items-center mt-6">
+                        <div class="text-sm text-gray-600" id="customers-pagination-info">
+                            Menampilkan 0 dari 0 pelanggan
+                        </div>
+                        <div class="flex space-x-2" id="customers-pagination">
+                            <!-- Pagination buttons will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Content -->
+            <div id="settings-content" class="content-section hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-6">Pengaturan Aplikasi</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- General Settings -->
+                        <div class="lg:col-span-2">
+                            <form id="settings-form">
+                                <div class="mb-6">
+                                    <h4 class="text-md font-medium text-gray-800 mb-4">Pengaturan Umum</h4>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-medium mb-2">Nama Toko</label>
+                                            <input type="text" id="store-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-medium mb-2">Deskripsi Toko</label>
+                                            <textarea id="store-description" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" rows="3" required></textarea>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-medium mb-2">Email Kontak</label>
+                                            <input type="email" id="store-email" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-medium mb-2">Nomor Telepon</label>
+                                            <input type="tel" id="store-phone" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-6">
+                                    <h4 class="text-md font-medium text-gray-800 mb-4">Pengaturan Pengiriman</h4>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-medium mb-2">Biaya Pengiriman Dasar (Rp)</label>
+                                            <input type="number" id="shipping-base-cost" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-medium mb-2">Jarak Maksimal Pengiriman (km)</label>
+                                            <input type="number" id="shipping-max-distance" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-gray-700 text-sm font-medium mb-2">Estimasi Waktu Pengiriman (menit)</label>
+                                            <input type="number" id="shipping-estimate" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="gradient-bg text-white py-2 px-6 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center space-x-2">
+                                    <i class="fas fa-save"></i>
+                                    <span>Simpan Pengaturan</span>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Store Information -->
+                        <div>
+                            <h4 class="text-md font-medium text-gray-800 mb-4">Informasi Toko</h4>
+                            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                                <div class="text-center mb-4">
+                                    <div class="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <i class="fas fa-store text-orange-500 text-2xl"></i>
+                                    </div>
+                                    <h5 class="font-medium" id="store-info-name">VLStore</h5>
+                                    <p class="text-sm text-gray-500" id="store-info-description">Delivery & Digital Services</p>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Total Produk:</span>
+                                        <span class="font-medium" id="store-info-products">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Total Kategori:</span>
+                                        <span class="font-medium" id="store-info-categories">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Pesanan Bulan Ini:</span>
+                                        <span class="font-medium" id="store-info-orders">0</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-500">Pelanggan:</span>
+                                        <span class="font-medium" id="store-info-customers">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <h4 class="text-md font-medium text-gray-800 mb-4">Logo Toko</h4>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                <div class="mb-2">
+                                    <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl"></i>
+                                </div>
+                                <p class="text-sm text-gray-500 mb-2">Drag & drop atau klik untuk upload</p>
+                                <input type="file" id="store-logo" class="hidden" accept="image/*">
+                                <button type="button" id="upload-logo-btn" class="text-orange-500 text-sm font-medium">Pilih File</button>
+                                <div id="logo-preview" class="mt-4 hidden">
+                                    <img src="" alt="Preview" class="image-preview mx-auto">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="add-product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold" id="product-modal-title">Tambah Produk Baru</h3>
+                    <button id="close-product-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <form id="product-form">
+                    <input type="hidden" id="product-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Nama Produk</label>
+                            <input type="text" id="product-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Kategori</label>
+                            <select id="product-category" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                <option value="">Pilih Kategori</option>
+                                <!-- Categories will be loaded here -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Harga</label>
+                            <input type="number" id="product-price" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Harga Asli</label>
+                            <input type="number" id="product-original-price" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Stok</label>
+                            <input type="number" id="product-stock" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Status</label>
+                            <select id="product-status" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Nonaktif</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Tipe Produk</label>
+                            <select id="product-type" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                                <option value="food">Makanan</option>
+                                <option value="drink">Minuman</option>
+                                <option value="digital">Digital</option>
+                                <option value="alfamart">Alfamart</option>
+                                <option value="indomaret">Indomaret</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Deskripsi</label>
+                        <textarea id="product-description" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Gambar Produk</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <div class="mb-2">
+                                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-sm text-gray-500 mb-2">Drag & drop atau klik untuk upload</p>
+                            <input type="file" id="product-image" class="hidden" accept="image/*">
+                            <button type="button" id="upload-image-btn" class="text-orange-500 text-sm font-medium">Pilih File</button>
+                            <div id="image-preview" class="mt-4 hidden">
+                                <img src="" alt="Preview" class="image-preview mx-auto">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancel-product" class="border border-gray-300 text-gray-700 py-2 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="gradient-bg text-white py-2 px-6 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center space-x-2">
+                            <i class="fas fa-save"></i>
+                            <span id="product-submit-text">Simpan Produk</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div id="add-category-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md mx-4">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold" id="category-modal-title">Tambah Kategori Baru</h3>
+                    <button id="close-category-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <form id="category-form">
+                    <input type="hidden" id="category-id">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Nama Kategori</label>
+                        <input type="text" id="category-name" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Ikon</label>
+                        <select id="category-icon" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                            <option value="fas fa-utensils">Utensils</option>
+                            <option value="fas fa-coffee">Coffee</option>
+                            <option value="fas fa-fire">Fire</option>
+                            <option value="fas fa-location-arrow">Location</option>
+                            <option value="fas fa-shopping-bag">Shopping Bag</option>
+                            <option value="fas fa-store">Store</option>
+                            <option value="fas fa-mobile-alt">Mobile</option>
+                            <option value="fas fa-wallet">Wallet</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Warna</label>
+                        <select id="category-color" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                            <option value="orange">Orange</option>
+                            <option value="blue">Blue</option>
+                            <option value="red">Red</option>
+                            <option value="green">Green</option>
+                            <option value="purple">Purple</option>
+                            <option value="yellow">Yellow</option>
+                            <option value="indigo">Indigo</option>
+                            <option value="pink">Pink</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2">Status</label>
+                        <select id="category-status" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500" required>
+                            <option value="active">Aktif</option>
+                            <option value="inactive">Nonaktif</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancel-category" class="border border-gray-300 text-gray-700 py-2 px-6 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" class="gradient-bg text-white py-2 px-6 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center space-x-2">
+                            <i class="fas fa-save"></i>
+                            <span id="category-submit-text">Simpan Kategori</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Detail Modal -->
+    <div id="order-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold">Detail Pesanan</h3>
+                    <button id="close-order-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="order-detail-content">
+                    <!-- Order details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Detail Modal -->
+    <div id="customer-detail-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold">Detail Pelanggan</h3>
+                    <button id="close-customer-modal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="customer-detail-content">
+                    <!-- Customer details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menu-toggle');
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+        const pageTitle = document.getElementById('page-title');
+        const logoutBtn = document.getElementById('logout-btn');
+        const notificationsBtn = document.getElementById('notifications-btn');
+        const currentTimeEl = document.getElementById('current-time');
+        
+        // Modal Elements
+        const addProductBtn = document.getElementById('add-product-btn');
+        const addProductModal = document.getElementById('add-product-modal');
+        const closeProductModal = document.getElementById('close-product-modal');
+        const cancelProduct = document.getElementById('cancel-product');
+        const productForm = document.getElementById('product-form');
+        const productModalTitle = document.getElementById('product-modal-title');
+        const productSubmitText = document.getElementById('product-submit-text');
+        
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const addCategoryModal = document.getElementById('add-category-modal');
+        const closeCategoryModal = document.getElementById('close-category-modal');
+        const cancelCategory = document.getElementById('cancel-category');
+        const categoryForm = document.getElementById('category-form');
+        const categoryModalTitle = document.getElementById('category-modal-title');
+        const categorySubmitText = document.getElementById('category-submit-text');
+        
+        const orderDetailModal = document.getElementById('order-detail-modal');
+        const closeOrderModal = document.getElementById('close-order-modal');
+        
+        const customerDetailModal = document.getElementById('customer-detail-modal');
+        const closeCustomerModal = document.getElementById('close-customer-modal');
+        
+        const uploadImageBtn = document.getElementById('upload-image-btn');
+        const productImage = document.getElementById('product-image');
+        const imagePreview = document.getElementById('image-preview');
+        
+        const uploadLogoBtn = document.getElementById('upload-logo-btn');
+        const storeLogo = document.getElementById('store-logo');
+        const logoPreview = document.getElementById('logo-preview');
+        
+        const settingsForm = document.getElementById('settings-form');
+        
+        // Search and Filter Elements
+        const productSearch = document.getElementById('product-search');
+        const orderSearch = document.getElementById('order-search');
+        const orderFilter = document.getElementById('order-filter');
+        const customerSearch = document.getElementById('customer-search');
+        
+        // Pagination Elements
+        const productsPaginationInfo = document.getElementById('products-pagination-info');
+        const productsPagination = document.getElementById('products-pagination');
+        const ordersPaginationInfo = document.getElementById('orders-pagination-info');
+        const ordersPagination = document.getElementById('orders-pagination');
+        const customersPaginationInfo = document.getElementById('customers-pagination-info');
+        const customersPagination = document.getElementById('customers-pagination');
+        
+        // Global Variables
+        let currentEditingProduct = null;
+        let currentEditingCategory = null;
+        let products = [];
+        let categories = [];
+        let orders = [];
+        let customers = [];
+        let settings = {};
+        
+        // Pagination Variables
+        let currentProductPage = 1;
+        let currentOrderPage = 1;
+        let currentCustomerPage = 1;
+        const itemsPerPage = 10;
+
+        // Event Listeners
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        });
+
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+
+        // Navigation
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from all nav items
+                navItems.forEach(nav => nav.classList.remove('active'));
+                
+                // Add active class to clicked item
+                item.classList.add('active');
+                
+                // Get the target content section
+                const target = item.getAttribute('data-nav');
+                
+                // Hide all content sections
+                contentSections.forEach(section => section.classList.add('hidden'));
+                
+                // Show target content section
+                document.getElementById(`${target}-content`).classList.remove('hidden');
+                
+                // Update page title
+                pageTitle.textContent = getPageTitle(target);
+                
+                // Close sidebar on mobile
+                if (window.innerWidth < 768) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+                
+                // Load data for the section
+                loadSectionData(target);
+            });
+        });
+
+        // Product Modal
+        addProductBtn.addEventListener('click', () => {
+            currentEditingProduct = null;
+            productModalTitle.textContent = 'Tambah Produk Baru';
+            productSubmitText.textContent = 'Simpan Produk';
+            productForm.reset();
+            imagePreview.classList.add('hidden');
+            document.getElementById('product-id').value = '';
+            addProductModal.classList.remove('hidden');
+            loadCategoriesForSelect();
+        });
+
+        closeProductModal.addEventListener('click', () => {
+            addProductModal.classList.add('hidden');
+        });
+
+        cancelProduct.addEventListener('click', () => {
+            addProductModal.classList.add('hidden');
+        });
+
+        // Category Modal
+        addCategoryBtn.addEventListener('click', () => {
+            currentEditingCategory = null;
+            categoryModalTitle.textContent = 'Tambah Kategori Baru';
+            categorySubmitText.textContent = 'Simpan Kategori';
+            categoryForm.reset();
+            document.getElementById('category-id').value = '';
+            document.getElementById('category-status').value = 'active';
+            addCategoryModal.classList.remove('hidden');
+        });
+
+        closeCategoryModal.addEventListener('click', () => {
+            addCategoryModal.classList.add('hidden');
+        });
+
+        cancelCategory.addEventListener('click', () => {
+            addCategoryModal.classList.add('hidden');
+        });
+
+        // Order Modal
+        closeOrderModal.addEventListener('click', () => {
+            orderDetailModal.classList.add('hidden');
+        });
+
+        // Customer Modal
+        closeCustomerModal.addEventListener('click', () => {
+            customerDetailModal.classList.add('hidden');
+        });
+
+        // Image Upload
+        uploadImageBtn.addEventListener('click', () => {
+            productImage.click();
+        });
+
+        productImage.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    imagePreview.querySelector('img').src = event.target.result;
+                    imagePreview.classList.remove('hidden');
+                }
+                
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Logo Upload
+        uploadLogoBtn.addEventListener('click', () => {
+            storeLogo.click();
+        });
+
+        storeLogo.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(event) {
+                    logoPreview.querySelector('img').src = event.target.result;
+                    logoPreview.classList.remove('hidden');
+                }
+                
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Search and Filter
+        productSearch.addEventListener('input', () => {
+            currentProductPage = 1;
+            loadProducts();
+        });
+
+        orderSearch.addEventListener('input', () => {
+            currentOrderPage = 1;
+            loadOrders();
+        });
+
+        orderFilter.addEventListener('change', () => {
+            currentOrderPage = 1;
+            loadOrders();
+        });
+
+        customerSearch.addEventListener('input', () => {
+            currentCustomerPage = 1;
+            loadCustomers();
+        });
+
+        // Form Submissions
+        productForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveProduct();
+        });
+
+        categoryForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveCategory();
+        });
+
+        settingsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveSettings();
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', () => {
+            Swal.fire({
+                title: 'Konfirmasi Logout',
+                text: 'Anda yakin ingin logout?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Logout',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    auth.signOut().then(() => {
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        console.error('Logout error:', error);
+                    });
+                }
+            });
+        });
+
+        // View All Links
+        document.querySelectorAll('.view-all-orders').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelector('[data-nav="orders"]').click();
+            });
+        });
+
+        document.querySelectorAll('.view-all-products').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelector('[data-nav="products"]').click();
+            });
+        });
+
+        // Functions
+        function getPageTitle(section) {
+            const titles = {
+                dashboard: 'Dashboard',
+                products: 'Kelola Produk',
+                categories: 'Kelola Kategori',
+                orders: 'Kelola Pesanan',
+                customers: 'Data Pelanggan',
+                settings: 'Pengaturan'
+            };
+            
+            return titles[section] || 'Dashboard';
+        }
+
+        function loadSectionData(section) {
+            switch(section) {
+                case 'products':
+                    loadProducts();
+                    break;
+                case 'categories':
+                    loadCategories();
+                    break;
+                case 'orders':
+                    loadOrders();
+                    break;
+                case 'customers':
+                    loadCustomers();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+                default:
+                    // Dashboard data is already loaded by real-time listeners
+                    break;
+            }
+        }
+
+        // Initialize real-time listeners for dashboard
+        function initializeRealtimeListeners() {
+            // Products listener
+            db.collection('products').onSnapshot((snapshot) => {
+                products = [];
+                snapshot.forEach(doc => {
+                    products.push({ id: doc.id, ...doc.data() });
+                });
+                updateDashboardProducts();
+                if (document.getElementById('products-content').classList.contains('hidden') === false) {
+                    loadProducts();
+                }
+            }, (error) => {
+                console.error('Products listener error:', error);
+            });
+
+            // Categories listener
+            db.collection('categories').onSnapshot((snapshot) => {
+                categories = [];
+                snapshot.forEach(doc => {
+                    categories.push({ id: doc.id, ...doc.data() });
+                });
+                updateDashboardCategories();
+                if (document.getElementById('categories-content').classList.contains('hidden') === false) {
+                    loadCategories();
+                }
+            }, (error) => {
+                console.error('Categories listener error:', error);
+            });
+
+            // Orders listener
+            db.collection('orders').onSnapshot((snapshot) => {
+                orders = [];
+                snapshot.forEach(doc => {
+                    orders.push({ id: doc.id, ...doc.data() });
+                });
+                updateDashboardOrders();
+                updateDashboardRevenue();
+                if (document.getElementById('orders-content').classList.contains('hidden') === false) {
+                    loadOrders();
+                }
+            }, (error) => {
+                console.error('Orders listener error:', error);
+            });
+
+            // Customers listener
+            db.collection('customers').onSnapshot((snapshot) => {
+                customers = [];
+                snapshot.forEach(doc => {
+                    customers.push({ id: doc.id, ...doc.data() });
+                });
+                updateDashboardCustomers();
+                if (document.getElementById('customers-content').classList.contains('hidden') === false) {
+                    loadCustomers();
+                }
+            }, (error) => {
+                console.error('Customers listener error:', error);
+            });
+
+            // Settings listener
+            db.collection('settings').doc('store').onSnapshot((doc) => {
+                if (doc.exists) {
+                    settings = doc.data();
+                    updateSettingsForm();
+                    updateStoreInfo();
+                }
+            }, (error) => {
+                console.error('Settings listener error:', error);
+            });
+        }
+
+        function updateDashboardProducts() {
+            document.getElementById('total-products').textContent = products.length;
+            document.getElementById('store-info-products').textContent = products.length;
+            
+            // Calculate products change (for demo, we'll use a static value)
+            document.getElementById('products-change').innerHTML = '<i class="fas fa-arrow-up mr-1"></i> 3 produk baru';
+        }
+
+        function updateDashboardCategories() {
+            document.getElementById('store-info-categories').textContent = categories.length;
+        }
+
+        function updateDashboardOrders() {
+            const totalOrders = orders.length;
+            document.getElementById('total-orders').textContent = totalOrders;
+            document.getElementById('store-info-orders').textContent = orders.filter(order => {
+                const orderDate = order.createdAt.toDate();
+                const now = new Date();
+                return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
+            }).length;
+            
+            // Calculate orders change (for demo, we'll use a static value)
+            document.getElementById('orders-change').innerHTML = '<i class="fas fa-arrow-up mr-1"></i> 8.2% dari bulan lalu';
+            
+            // Update recent orders
+            updateRecentOrders();
+        }
+
+        function updateDashboardRevenue() {
+            const totalRevenue = orders
+                .filter(order => order.status === 'delivered')
+                .reduce((sum, order) => sum + order.payment.total, 0);
+            
+            document.getElementById('total-revenue').textContent = `Rp ${formatPrice(totalRevenue)}`;
+            
+            // Calculate revenue change (for demo, we'll use a static value)
+            document.getElementById('revenue-change').innerHTML = '<i class="fas fa-arrow-up mr-1"></i> 12.5% dari bulan lalu';
+        }
+
+        function updateDashboardCustomers() {
+            const totalCustomers = customers.length;
+            document.getElementById('total-customers').textContent = totalCustomers;
+            document.getElementById('store-info-customers').textContent = totalCustomers;
+            
+            // Calculate customers change (for demo, we'll use a static value)
+            document.getElementById('customers-change').innerHTML = '<i class="fas fa-arrow-up mr-1"></i> 5.7% dari bulan lalu';
+        }
+
+        function updateRecentOrders() {
+            const recentOrdersContainer = document.getElementById('recent-orders');
+            const recentOrders = orders
+                .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+                .slice(0, 5);
+            
+            if (recentOrders.length === 0) {
+                recentOrdersContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-shopping-cart text-4xl mb-4"></i>
+                        <p>Belum ada pesanan</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            recentOrdersContainer.innerHTML = '';
+            
+            recentOrders.forEach(order => {
+                const statusText = {
+                    pending: { text: "Pending", class: "bg-yellow-100 text-yellow-800" },
+                    confirmed: { text: "Dikonfirmasi", class: "bg-blue-100 text-blue-800" },
+                    processing: { text: "Diproses", class: "bg-indigo-100 text-indigo-800" },
+                    shipped: { text: "Dikirim", class: "bg-purple-100 text-purple-800" },
+                    delivered: { text: "Selesai", class: "bg-green-100 text-green-800" },
+                    cancelled: { text: "Dibatalkan", class: "bg-red-100 text-red-800" }
+                };
+                
+                const status = statusText[order.status] || statusText.pending;
+                const orderDate = order.createdAt.toDate();
+                const formattedDate = `${orderDate.getDate()} ${getMonthName(orderDate.getMonth())} ${orderDate.getFullYear()}, ${formatTime(orderDate)}`;
+                
+                const orderElement = document.createElement('div');
+                orderElement.className = 'flex items-center justify-between py-3 border-b border-gray-100';
+                orderElement.innerHTML = `
+                    <div>
+                        <p class="font-medium">${order.orderNumber}</p>
+                        <p class="text-sm text-gray-500">${order.customer.name}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-medium">Rp ${formatPrice(order.payment.total)}</p>
+                        <span class="inline-block px-2 py-1 text-xs ${status.class} rounded-full">${status.text}</span>
+                    </div>
+                `;
+                
+                orderElement.addEventListener('click', () => {
+                    viewOrder(order.id);
+                });
+                orderElement.style.cursor = 'pointer';
+                
+                recentOrdersContainer.appendChild(orderElement);
+            });
+        }
+
+        function updatePopularProducts() {
+            const popularProductsContainer = document.getElementById('popular-products');
+            
+            // Calculate product sales
+            const productSales = {};
+            orders.forEach(order => {
+                if (order.items) {
+                    order.items.forEach(item => {
+                        if (productSales[item.id]) {
+                            productSales[item.id].count += item.quantity;
+                        } else {
+                            productSales[item.id] = {
+                                count: item.quantity,
+                                product: products.find(p => p.id === item.id) || { name: 'Produk Tidak Ditemukan', price: 0 }
+                            };
+                        }
+                    });
+                }
+            });
+            
+            const popularProducts = Object.values(productSales)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5);
+            
+            if (popularProducts.length === 0) {
+                popularProductsContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-box text-4xl mb-4"></i>
+                        <p>Belum ada data penjualan</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            popularProductsContainer.innerHTML = '';
+            
+            popularProducts.forEach(item => {
+                const productElement = document.createElement('div');
+                productElement.className = 'flex items-center space-x-4 py-3 border-b border-gray-100';
+                productElement.innerHTML = `
+                    <img src="${item.product.image || 'https://via.placeholder.com/50x50'}" alt="${item.product.name}" class="w-12 h-12 object-cover rounded-lg">
+                    <div class="flex-1">
+                        <p class="font-medium">${item.product.name}</p>
+                        <p class="text-sm text-gray-500">${item.count} pesanan</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-medium text-green-500">Rp ${formatPrice(item.product.price)}</p>
+                    </div>
+                `;
+                
+                popularProductsContainer.appendChild(productElement);
+            });
+        }
+
+        async function loadProducts() {
+            try {
+                const tableBody = document.getElementById('products-table-body');
+                
+                // Show loading
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-gray-500">
+                            <div class="loading mx-auto mb-2"></div>
+                            <p>Memuat produk...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // Apply search filter
+                let filteredProducts = products;
+                const searchTerm = productSearch.value.toLowerCase();
+                if (searchTerm) {
+                    filteredProducts = products.filter(product => 
+                        product.name.toLowerCase().includes(searchTerm) ||
+                        (product.category && product.category.toLowerCase().includes(searchTerm))
+                    );
+                }
+                
+                // Apply pagination
+                const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+                const startIndex = (currentProductPage - 1) * itemsPerPage;
+                const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+                
+                // Update table
+                tableBody.innerHTML = '';
+                
+                if (paginatedProducts.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-gray-500">
+                                <i class="fas fa-box text-4xl mb-4"></i>
+                                <p>Tidak ada produk ditemukan</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    paginatedProducts.forEach(product => {
+                        const category = categories.find(cat => cat.id === product.category);
+                        const row = document.createElement('tr');
+                        row.className = 'table-row border-b border-gray-100';
+                        row.innerHTML = `
+                            <td class="py-4 px-4">
+                                <div class="flex items-center space-x-3">
+                                    <img src="${product.image || 'https://via.placeholder.com/50x50'}" alt="${product.name}" class="w-10 h-10 object-cover rounded">
+                                    <div>
+                                        <span class="font-medium">${product.name}</span>
+                                        ${product.type === 'alfamart' || product.type === 'indomaret' ? 
+                                            `<span class="text-xs ${product.type === 'alfamart' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'} px-2 py-1 rounded-full">${product.type === 'alfamart' ? 'Alfamart' : 'Indomaret'}</span>` : 
+                                            ''}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4">${category ? category.name : 'Tidak ada kategori'}</td>
+                            <td class="py-4 px-4">Rp ${formatPrice(product.price)}</td>
+                            <td class="py-4 px-4">${product.stock}</td>
+                            <td class="py-4 px-4">
+                                <span class="inline-block px-2 py-1 text-xs rounded-full ${product.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                    ${product.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                                </span>
+                            </td>
+                            <td class="py-4 px-4">
+                                ${calculateProductSales(product.id)}
+                            </td>
+                            <td class="py-4 px-4 text-right">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-blue-500 hover:text-blue-700 edit-product" data-id="${product.id}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="text-red-500 hover:text-red-700 delete-product" data-id="${product.id}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                }
+                
+                // Update pagination info
+                productsPaginationInfo.textContent = `Menampilkan ${startIndex + 1}-${Math.min(startIndex + itemsPerPage, filteredProducts.length)} dari ${filteredProducts.length} produk`;
+                
+                // Update pagination buttons
+                updatePagination(productsPagination, currentProductPage, totalPages, 'product');
+                
+                // Add event listeners to action buttons
+                document.querySelectorAll('.edit-product').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const productId = e.currentTarget.getAttribute('data-id');
+                        editProduct(productId);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-product').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const productId = e.currentTarget.getAttribute('data-id');
+                        deleteProduct(productId);
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error loading products:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Memuat Produk',
+                    text: 'Terjadi kesalahan saat memuat data produk',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        function calculateProductSales(productId) {
+            let totalSold = 0;
+            orders.forEach(order => {
+                if (order.items) {
+                    order.items.forEach(item => {
+                        if (item.id === productId) {
+                            totalSold += item.quantity;
+                        }
+                    });
+                }
+            });
+            return totalSold;
+        }
+
+        async function loadCategories() {
+            try {
+                const categoriesGrid = document.getElementById('categories-grid');
+                
+                // Show loading
+                categoriesGrid.innerHTML = `
+                    <div class="col-span-3 text-center py-8 text-gray-500">
+                        <div class="loading mx-auto mb-2"></div>
+                        <p>Memuat kategori...</p>
+                    </div>
+                `;
+                
+                if (categories.length === 0) {
+                    categoriesGrid.innerHTML = `
+                        <div class="col-span-3 text-center py-8 text-gray-500">
+                            <i class="fas fa-tags text-4xl mb-4"></i>
+                            <p>Belum ada kategori</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                categoriesGrid.innerHTML = '';
+                
+                categories.forEach(category => {
+                    const productCount = products.filter(product => product.category === category.id).length;
+                    
+                    const categoryCard = document.createElement('div');
+                    categoryCard.className = 'bg-white rounded-xl shadow-sm p-6 border border-gray-100';
+                    categoryCard.innerHTML = `
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="bg-${category.color}-100 w-12 h-12 rounded-full flex items-center justify-center">
+                                    <i class="${category.icon} text-${category.color}-500 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold">${category.name}</h4>
+                                    <p class="text-sm text-gray-500">${productCount} produk</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-blue-500 hover:text-blue-700 edit-category" data-id="${category.id}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="text-red-500 hover:text-red-700 delete-category" data-id="${category.id}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Dibuat: ${formatDate(category.createdAt.toDate())}</span>
+                            <span class="inline-block px-2 py-1 text-xs ${category.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} rounded-full">
+                                ${category.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                            </span>
+                        </div>
+                    `;
+                    
+                    categoriesGrid.appendChild(categoryCard);
+                });
+                
+                // Add event listeners to action buttons
+                document.querySelectorAll('.edit-category').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const categoryId = e.currentTarget.getAttribute('data-id');
+                        editCategory(categoryId);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-category').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const categoryId = e.currentTarget.getAttribute('data-id');
+                        deleteCategory(categoryId);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Memuat Kategori',
+                    text: 'Terjadi kesalahan saat memuat data kategori',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const tableBody = document.getElementById('orders-table-body');
+                
+                // Show loading
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500">
+                            <div class="loading mx-auto mb-2"></div>
+                            <p>Memuat pesanan...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // Apply filters
+                let filteredOrders = orders;
+                const searchTerm = orderSearch.value.toLowerCase();
+                const statusFilter = orderFilter.value;
+                
+                if (searchTerm) {
+                    filteredOrders = filteredOrders.filter(order => 
+                        order.orderNumber.toLowerCase().includes(searchTerm) ||
+                        order.customer.name.toLowerCase().includes(searchTerm) ||
+                        order.customer.phone.includes(searchTerm)
+                    );
+                }
+                
+                if (statusFilter !== 'all') {
+                    filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+                }
+                
+                // Apply pagination
+                const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+                const startIndex = (currentOrderPage - 1) * itemsPerPage;
+                const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+                
+                // Update table
+                tableBody.innerHTML = '';
+                
+                if (paginatedOrders.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="py-8 text-center text-gray-500">
+                                <i class="fas fa-shopping-cart text-4xl mb-4"></i>
+                                <p>Tidak ada pesanan ditemukan</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    paginatedOrders.forEach(order => {
+                        const statusText = {
+                            pending: { text: "Pending", class: "bg-yellow-100 text-yellow-800" },
+                            confirmed: { text: "Dikonfirmasi", class: "bg-blue-100 text-blue-800" },
+                            processing: { text: "Diproses", class: "bg-indigo-100 text-indigo-800" },
+                            shipped: { text: "Dikirim", class: "bg-purple-100 text-purple-800" },
+                            delivered: { text: "Selesai", class: "bg-green-100 text-green-800" },
+                            cancelled: { text: "Dibatalkan", class: "bg-red-100 text-red-800" }
+                        };
+                        
+                        const status = statusText[order.status] || statusText.pending;
+                        const orderDate = order.createdAt.toDate();
+                        const formattedDate = `${orderDate.getDate()} ${getMonthName(orderDate.getMonth())} ${orderDate.getFullYear()}`;
+                        
+                        const row = document.createElement('tr');
+                        row.className = 'table-row border-b border-gray-100';
+                        row.innerHTML = `
+                            <td class="py-4 px-4 font-medium">${order.orderNumber}</td>
+                            <td class="py-4 px-4">${order.customer.name}</td>
+                            <td class="py-4 px-4">${formattedDate}</td>
+                            <td class="py-4 px-4">Rp ${formatPrice(order.payment.total)}</td>
+                            <td class="py-4 px-4">
+                                <span class="inline-block px-2 py-1 text-xs rounded-full ${status.class}">
+                                    ${status.text}
+                                </span>
+                            </td>
+                            <td class="py-4 px-4 text-right">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-blue-500 hover:text-blue-700 view-order" data-id="${order.id}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="text-green-500 hover:text-green-700 update-order" data-id="${order.id}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                }
+                
+                // Update pagination info
+                ordersPaginationInfo.textContent = `Menampilkan ${startIndex + 1}-${Math.min(startIndex + itemsPerPage, filteredOrders.length)} dari ${filteredOrders.length} pesanan`;
+                
+                // Update pagination buttons
+                updatePagination(ordersPagination, currentOrderPage, totalPages, 'order');
+                
+                // Add event listeners to action buttons
+                document.querySelectorAll('.view-order').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const orderId = e.currentTarget.getAttribute('data-id');
+                        viewOrder(orderId);
+                    });
+                });
+                
+                document.querySelectorAll('.update-order').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const orderId = e.currentTarget.getAttribute('data-id');
+                        updateOrderStatus(orderId);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Memuat Pesanan',
+                    text: 'Terjadi kesalahan saat memuat data pesanan',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        async function loadCustomers() {
+            try {
+                const tableBody = document.getElementById('customers-table-body');
+                
+                // Show loading
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-gray-500">
+                            <div class="loading mx-auto mb-2"></div>
+                            <p>Memuat pelanggan...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // Apply search filter
+                let filteredCustomers = customers;
+                const searchTerm = customerSearch.value.toLowerCase();
+                if (searchTerm) {
+                    filteredCustomers = customers.filter(customer => 
+                        customer.name.toLowerCase().includes(searchTerm) ||
+                        customer.email.toLowerCase().includes(searchTerm) ||
+                        customer.phone.includes(searchTerm)
+                    );
+                }
+                
+                // Apply pagination
+                const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+                const startIndex = (currentCustomerPage - 1) * itemsPerPage;
+                const paginatedCustomers = filteredCustomers.slice(startIndex, startIndex + itemsPerPage);
+                
+                // Update table
+                tableBody.innerHTML = '';
+                
+                if (paginatedCustomers.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="py-8 text-center text-gray-500">
+                                <i class="fas fa-users text-4xl mb-4"></i>
+                                <p>Tidak ada pelanggan ditemukan</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    paginatedCustomers.forEach(customer => {
+                        // Calculate customer stats
+                        const customerOrders = orders.filter(order => order.customer.phone === customer.phone);
+                        const totalOrders = customerOrders.length;
+                        const totalSpent = customerOrders.reduce((sum, order) => sum + order.payment.total, 0);
+                        const joinDate = customer.createdAt.toDate();
+                        const formattedDate = `${joinDate.getDate()} ${getMonthName(joinDate.getMonth())} ${joinDate.getFullYear()}`;
+                        
+                        const row = document.createElement('tr');
+                        row.className = 'table-row border-b border-gray-100';
+                        row.innerHTML = `
+                            <td class="py-4 px-4 font-medium">${customer.name}</td>
+                            <td class="py-4 px-4">${customer.email}</td>
+                            <td class="py-4 px-4">${customer.phone}</td>
+                            <td class="py-4 px-4">${totalOrders}</td>
+                            <td class="py-4 px-4">Rp ${formatPrice(totalSpent)}</td>
+                            <td class="py-4 px-4">${formattedDate}</td>
+                            <td class="py-4 px-4 text-right">
+                                <div class="flex justify-end space-x-2">
+                                    <button class="text-blue-500 hover:text-blue-700 view-customer" data-id="${customer.id}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                }
+                
+                // Update pagination info
+                customersPaginationInfo.textContent = `Menampilkan ${startIndex + 1}-${Math.min(startIndex + itemsPerPage, filteredCustomers.length)} dari ${filteredCustomers.length} pelanggan`;
+                
+                // Update pagination buttons
+                updatePagination(customersPagination, currentCustomerPage, totalPages, 'customer');
+                
+                // Add event listeners to action buttons
+                document.querySelectorAll('.view-customer').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const customerId = e.currentTarget.getAttribute('data-id');
+                        viewCustomer(customerId);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Memuat Pelanggan',
+                    text: 'Terjadi kesalahan saat memuat data pelanggan',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+            }
+        }
+
+        function loadCategoriesForSelect() {
+            const select = document.getElementById('product-category');
+            select.innerHTML = '<option value="">Pilih Kategori</option>';
+            
+            categories
+                .filter(category => category.status === 'active')
+                .forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    select.appendChild(option);
+                });
+        }
+
+        function updatePagination(container, currentPage, totalPages, type) {
+            container.innerHTML = '';
+            
+            if (totalPages <= 1) return;
+            
+            // Previous button
+            if (currentPage > 1) {
+                const prevButton = document.createElement('button');
+                prevButton.className = 'px-3 py-1 border rounded-lg text-gray-600 hover:bg-gray-50';
+                prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                prevButton.addEventListener('click', () => {
+                    if (type === 'product') currentProductPage--;
+                    else if (type === 'order') currentOrderPage--;
+                    else if (type === 'customer') currentCustomerPage--;
+                    loadSectionData(type + 's');
+                });
+                container.appendChild(prevButton);
+            }
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const pageButton = document.createElement('button');
+                    pageButton.className = `px-3 py-1 border rounded-lg ${i === currentPage ? 'bg-orange-500 text-white border-orange-500' : 'text-gray-600 hover:bg-gray-50'}`;
+                    pageButton.textContent = i;
+                    pageButton.addEventListener('click', () => {
+                        if (type === 'product') currentProductPage = i;
+                        else if (type === 'order') currentOrderPage = i;
+                        else if (type === 'customer') currentCustomerPage = i;
+                        loadSectionData(type + 's');
+                    });
+                    container.appendChild(pageButton);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-2 py-1';
+                    ellipsis.textContent = '...';
+                    container.appendChild(ellipsis);
+                }
+            }
+            
+            // Next button
+            if (currentPage < totalPages) {
+                const nextButton = document.createElement('button');
+                nextButton.className = 'px-3 py-1 border rounded-lg text-gray-600 hover:bg-gray-50';
+                nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                nextButton.addEventListener('click', () => {
+                    if (type === 'product') currentProductPage++;
+                    else if (type === 'order') currentOrderPage++;
+                    else if (type === 'customer') currentCustomerPage++;
+                    loadSectionData(type + 's');
+                });
+                container.appendChild(nextButton);
+            }
+        }
+
+        function formatPrice(price) {
+            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        function formatDate(date) {
+            return `${date.getDate()} ${getMonthName(date.getMonth())} ${date.getFullYear()}`;
+        }
+
+        function formatTime(date) {
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+
+        function getMonthName(monthIndex) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            return months[monthIndex];
+        }
+
+        async function saveProduct() {
+            try {
+                const submitButton = productForm.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<div class="loading"></div> Menyimpan...';
+                submitButton.disabled = true;
+                
+                // Get form data
+                const productData = {
+                    name: document.getElementById('product-name').value,
+                    category: document.getElementById('product-category').value,
+                    price: parseInt(document.getElementById('product-price').value),
+                    originalPrice: document.getElementById('product-original-price').value ? 
+                        parseInt(document.getElementById('product-original-price').value) : null,
+                    stock: parseInt(document.getElementById('product-stock').value),
+                    status: document.getElementById('product-status').value,
+                    type: document.getElementById('product-type').value,
+                    description: document.getElementById('product-description').value,
+                    updatedAt: new Date()
+                };
+                
+                // Set createdAt for new products
+                if (!currentEditingProduct) {
+                    productData.createdAt = new Date();
+                    productData.sales = 0;
+                }
+                
+                // Upload image if exists
+                if (productImage.files[0]) {
+                    const storageRef = storage.ref();
+                    const imageRef = storageRef.child(`products/${Date.now()}_${productImage.files[0].name}`);
+                    const snapshot = await imageRef.put(productImage.files[0]);
+                    productData.image = await snapshot.ref.getDownloadURL();
+                }
+                
+                // Save to Firebase
+                if (currentEditingProduct) {
+                    await db.collection('products').doc(currentEditingProduct).update(productData);
+                } else {
+                    await db.collection('products').add(productData);
+                }
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Produk Berhasil Disimpan!',
+                    text: `Produk telah berhasil ${currentEditingProduct ? 'diperbarui' : 'ditambahkan'}`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Close modal and reset form
+                addProductModal.classList.add('hidden');
+                productForm.reset();
+                imagePreview.classList.add('hidden');
+                
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+                
+            } catch (error) {
+                console.error('Error saving product:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Menyimpan Produk',
+                    text: 'Terjadi kesalahan saat menyimpan produk',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                
+                const submitButton = productForm.querySelector('button[type="submit"]');
+                submitButton.innerHTML = '<i class="fas fa-save"></i><span id="product-submit-text">Simpan Produk</span>';
+                submitButton.disabled = false;
+            }
+        }
+
+        async function saveCategory() {
+            try {
+                const submitButton = categoryForm.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<div class="loading"></div> Menyimpan...';
+                submitButton.disabled = true;
+                
+                // Get form data
+                const categoryData = {
+                    name: document.getElementById('category-name').value,
+                    icon: document.getElementById('category-icon').value,
+                    color: document.getElementById('category-color').value,
+                    status: document.getElementById('category-status').value,
+                    updatedAt: new Date()
+                };
+                
+                // Set createdAt for new categories
+                if (!currentEditingCategory) {
+                    categoryData.createdAt = new Date();
+                }
+                
+                // Save to Firebase
+                if (currentEditingCategory) {
+                    await db.collection('categories').doc(currentEditingCategory).update(categoryData);
+                } else {
+                    await db.collection('categories').add(categoryData);
+                }
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Kategori Berhasil Disimpan!',
+                    text: `Kategori telah berhasil ${currentEditingCategory ? 'diperbarui' : 'ditambahkan'}`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Close modal and reset form
+                addCategoryModal.classList.add('hidden');
+                categoryForm.reset();
+                
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+                
+            } catch (error) {
+                console.error('Error saving category:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Menyimpan Kategori',
+                    text: 'Terjadi kesalahan saat menyimpan kategori',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                
+                const submitButton = categoryForm.querySelector('button[type="submit"]');
+                submitButton.innerHTML = '<i class="fas fa-save"></i><span id="category-submit-text">Simpan Kategori</span>';
+                submitButton.disabled = false;
+            }
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            currentEditingProduct = id;
+            productModalTitle.textContent = 'Edit Produk';
+            productSubmitText.textContent = 'Update Produk';
+            
+            // Fill form with product data
+            document.getElementById('product-id').value = id;
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-category').value = product.category;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-original-price').value = product.originalPrice || '';
+            document.getElementById('product-stock').value = product.stock;
+            document.getElementById('product-status').value = product.status;
+            document.getElementById('product-type').value = product.type;
+            document.getElementById('product-description').value = product.description || '';
+            
+            // Show image preview if exists
+            if (product.image) {
+                imagePreview.querySelector('img').src = product.image;
+                imagePreview.classList.remove('hidden');
+            } else {
+                imagePreview.classList.add('hidden');
+            }
+            
+            loadCategoriesForSelect();
+            addProductModal.classList.remove('hidden');
+        }
+
+        function deleteProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            
+            Swal.fire({
+                title: 'Hapus Produk?',
+                html: `Anda yakin ingin menghapus produk <strong>${product.name}</strong>? Tindakan ini tidak dapat dibatalkan.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        await db.collection('products').doc(id).delete();
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Produk Dihapus!',
+                            text: 'Produk telah berhasil dihapus',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } catch (error) {
+                        console.error('Error deleting product:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Menghapus Produk',
+                            text: 'Terjadi kesalahan saat menghapus produk',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                }
+            });
+        }
+
+        function editCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (!category) return;
+            
+            currentEditingCategory = id;
+            categoryModalTitle.textContent = 'Edit Kategori';
+            categorySubmitText.textContent = 'Update Kategori';
+            
+            // Fill form with category data
+            document.getElementById('category-id').value = id;
+            document.getElementById('category-name').value = category.name;
+            document.getElementById('category-icon').value = category.icon;
+            document.getElementById('category-color').value = category.color;
+            document.getElementById('category-status').value = category.status;
+            
+            addCategoryModal.classList.remove('hidden');
+        }
+
+        function deleteCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (!category) return;
+            
+            // Check if category is used by any products
+            const productsInCategory = products.filter(product => product.category === id);
+            
+            Swal.fire({
+                title: 'Hapus Kategori?',
+                html: `Anda yakin ingin menghapus kategori <strong>${category.name}</strong>? 
+                       ${productsInCategory.length > 0 ? `<br><span class="text-red-500">${productsInCategory.length} produk dalam kategori ini akan kehilangan kategorinya.</span>` : ''}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        // Remove category from products
+                        const batch = db.batch();
+                        productsInCategory.forEach(product => {
+                            const productRef = db.collection('products').doc(product.id);
+                            batch.update(productRef, { category: null });
+                        });
+                        
+                        // Delete category
+                        const categoryRef = db.collection('categories').doc(id);
+                        batch.delete(categoryRef);
+                        
+                        await batch.commit();
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Kategori Dihapus!',
+                            text: 'Kategori telah berhasil dihapus',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } catch (error) {
+                        console.error('Error deleting category:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Menghapus Kategori',
+                            text: 'Terjadi kesalahan saat menghapus kategori',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                }
+            });
+        }
+
+        function viewOrder(id) {
+            const order = orders.find(o => o.id === id);
+            if (!order) return;
+            
+            const orderDetailContent = document.getElementById('order-detail-content');
+            const orderDate = order.createdAt.toDate();
+            const formattedDate = `${orderDate.getDate()} ${getMonthName(orderDate.getMonth())} ${orderDate.getFullYear()}, ${formatTime(orderDate)}`;
+            
+            const statusText = {
+                pending: { text: "Pending", class: "bg-yellow-100 text-yellow-800" },
+                confirmed: { text: "Dikonfirmasi", class: "bg-blue-100 text-blue-800" },
+                processing: { text: "Diproses", class: "bg-indigo-100 text-indigo-800" },
+                shipped: { text: "Dikirim", class: "bg-purple-100 text-purple-800" },
+                delivered: { text: "Selesai", class: "bg-green-100 text-green-800" },
+                cancelled: { text: "Dibatalkan", class: "bg-red-100 text-red-800" }
+            };
+            
+            const status = statusText[order.status] || statusText.pending;
+            
+            let itemsHtml = '';
+            if (order.items && order.items.length > 0) {
+                order.items.forEach(item => {
+                    const product = products.find(p => p.id === item.id) || { name: 'Produk Tidak Ditemukan', price: 0 };
+                    itemsHtml += `
+                        <div class="grid grid-cols-12 items-center py-3 border-b">
+                            <div class="col-span-6 flex items-center space-x-3">
+                                <img src="${product.image || 'https://via.placeholder.com/40x40'}" alt="${product.name}" class="w-10 h-10 object-cover rounded">
+                                <div>
+                                    <span>${product.name}</span>
+                                    ${product.type === 'alfamart' || product.type === 'indomaret' ? 
+                                        `<span class="text-xs ${product.type === 'alfamart' ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'} px-2 py-1 rounded-full">${product.type === 'alfamart' ? 'Alfamart' : 'Indomaret'}</span>` : 
+                                        ''}
+                                </div>
+                            </div>
+                            <div class="col-span-2 text-center">${item.quantity}</div>
+                            <div class="col-span-2 text-right">Rp ${formatPrice(product.price)}</div>
+                            <div class="col-span-2 text-right font-medium">Rp ${formatPrice(product.price * item.quantity)}</div>
+                        </div>
+                    `;
+                });
+            }
+            
+            orderDetailContent.innerHTML = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold mb-2">Informasi Pesanan</h4>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">ID Pesanan:</span>
+                                        <span class="font-medium">${order.orderNumber}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tanggal:</span>
+                                        <span class="font-medium">${formattedDate}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Status:</span>
+                                        <span class="font-medium ${status.class} px-2 py-1 rounded-full text-xs">${status.text}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Metode Pembayaran:</span>
+                                        <span class="font-medium">${order.payment.method === 'cod' ? 'Cash on Delivery' : order.payment.method}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-2">Informasi Pelanggan</h4>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Nama:</span>
+                                        <span class="font-medium">${order.customer.name}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Telepon:</span>
+                                        <span class="font-medium">${order.customer.phone}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Email:</span>
+                                        <span class="font-medium">${order.customer.email || '-'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Detail Produk</h4>
+                        <div class="border rounded-lg">
+                            <div class="grid grid-cols-12 bg-gray-50 py-3 px-4 text-sm font-medium text-gray-600">
+                                <div class="col-span-6">Produk</div>
+                                <div class="col-span-2 text-center">Jumlah</div>
+                                <div class="col-span-2 text-right">Harga</div>
+                                <div class="col-span-2 text-right">Subtotal</div>
+                            </div>
+                            ${itemsHtml}
+                            <div class="py-3 px-4">
+                                <div class="flex justify-between items-center">
+                                    <div class="text-sm text-gray-600">
+                                        <p>Alamat Pengiriman:</p>
+                                        <p class="font-medium">${order.customer.address}</p>
+                                        ${order.location ? `<p class="text-xs mt-1">Lokasi: ${order.location.lat.toFixed(4)}, ${order.location.lng.toFixed(4)}</p>` : ''}
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="flex justify-between mb-1">
+                                            <span class="text-gray-600 mr-4">Subtotal:</span>
+                                            <span>Rp ${formatPrice(order.payment.total - (order.shipping?.cost || 0))}</span>
+                                        </div>
+                                        ${order.shipping ? `
+                                        <div class="flex justify-between mb-1">
+                                            <span class="text-gray-600 mr-4">Ongkir:</span>
+                                            <span>Rp ${formatPrice(order.shipping.cost)}</span>
+                                        </div>
+                                        ` : ''}
+                                        <div class="flex justify-between font-semibold text-lg border-t pt-2 mt-2">
+                                            <span class="mr-4">Total:</span>
+                                            <span>Rp ${formatPrice(order.payment.total)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button class="bg-orange-500 text-white py-2 px-6 rounded-lg font-medium hover:opacity-90 transition-opacity update-order-status" data-id="${order.id}">
+                            Update Status
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listener to update status button
+            orderDetailContent.querySelector('.update-order-status').addEventListener('click', () => {
+                updateOrderStatus(order.id);
+            });
+            
+            orderDetailModal.classList.remove('hidden');
+        }
+
+        function updateOrderStatus(id) {
+            const order = orders.find(o => o.id === id);
+            if (!order) return;
+            
+            const statusOptions = {
+                pending: 'Pending',
+                confirmed: 'Dikonfirmasi',
+                processing: 'Diproses',
+                shipped: 'Dikirim',
+                delivered: 'Selesai',
+                cancelled: 'Dibatalkan'
+            };
+            
+            Swal.fire({
+                title: 'Update Status Pesanan',
+                input: 'select',
+                inputOptions: statusOptions,
+                inputValue: order.status,
+                inputPlaceholder: 'Pilih status',
+                showCancelButton: true,
+                confirmButtonText: 'Update',
+                cancelButtonText: 'Batal'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        await db.collection('orders').doc(id).update({ 
+                            status: result.value,
+                            updatedAt: new Date()
+                        });
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Status Diupdate!',
+                            text: 'Status pesanan telah berhasil diupdate',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        
+                        // Close order detail modal if open
+                        orderDetailModal.classList.add('hidden');
+                    } catch (error) {
+                        console.error('Error updating order status:', error);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal Update Status',
+                            text: 'Terjadi kesalahan saat mengupdate status pesanan',
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    }
+                }
+            });
+        }
+
+        function viewCustomer(id) {
+            const customer = customers.find(c => c.id === id);
+            if (!customer) return;
+            
+            const customerDetailContent = document.getElementById('customer-detail-content');
+            const customerOrders = orders.filter(order => order.customer.phone === customer.phone);
+            const totalOrders = customerOrders.length;
+            const totalSpent = customerOrders.reduce((sum, order) => sum + order.payment.total, 0);
+            const joinDate = customer.createdAt.toDate();
+            const formattedDate = `${joinDate.getDate()} ${getMonthName(joinDate.getMonth())} ${joinDate.getFullYear()}`;
+            
+            let ordersHtml = '';
+            if (customerOrders.length > 0) {
+                customerOrders.slice(0, 5).forEach(order => {
+                    const orderDate = order.createdAt.toDate();
+                    const orderFormattedDate = `${orderDate.getDate()} ${getMonthName(orderDate.getMonth())} ${orderDate.getFullYear()}`;
+                    
+                    const statusText = {
+                        pending: { text: "Pending", class: "bg-yellow-100 text-yellow-800" },
+                        confirmed: { text: "Dikonfirmasi", class: "bg-blue-100 text-blue-800" },
+                        processing: { text: "Diproses", class: "bg-indigo-100 text-indigo-800" },
+                        shipped: { text: "Dikirim", class: "bg-purple-100 text-purple-800" },
+                        delivered: { text: "Selesai", class: "bg-green-100 text-green-800" },
+                        cancelled: { text: "Dibatalkan", class: "bg-red-100 text-red-800" }
+                    };
+                    
+                    const status = statusText[order.status] || statusText.pending;
+                    
+                    ordersHtml += `
+                        <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                            <div>
+                                <p class="font-medium">${order.orderNumber}</p>
+                                <p class="text-sm text-gray-500">${orderFormattedDate}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium">Rp ${formatPrice(order.payment.total)}</p>
+                                <span class="inline-block px-2 py-1 text-xs ${status.class} rounded-full">${status.text}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                ordersHtml = `
+                    <div class="text-center py-4 text-gray-500">
+                        <p>Belum ada pesanan</p>
+                    </div>
+                `;
+            }
+            
+            customerDetailContent.innerHTML = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold mb-2">Informasi Pelanggan</h4>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Nama:</span>
+                                        <span class="font-medium">${customer.name}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Email:</span>
+                                        <span class="font-medium">${customer.email}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Telepon:</span>
+                                        <span class="font-medium">${customer.phone}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Bergabung:</span>
+                                        <span class="font-medium">${formattedDate}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-2">Statistik</h4>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Total Pesanan:</span>
+                                        <span class="font-medium">${totalOrders}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Total Belanja:</span>
+                                        <span class="font-medium">Rp ${formatPrice(totalSpent)}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Rata-rata Pesanan:</span>
+                                        <span class="font-medium">${totalOrders > 0 ? 'Rp ' + formatPrice(Math.round(totalSpent / totalOrders)) : 'Rp 0'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-semibold mb-2">Pesanan Terbaru</h4>
+                        <div class="border rounded-lg p-4">
+                            ${ordersHtml}
+                            ${totalOrders > 5 ? `
+                            <div class="text-center mt-4">
+                                <button class="text-orange-500 text-sm font-medium view-all-customer-orders" data-phone="${customer.phone}">
+                                    Lihat Semua ${totalOrders} Pesanan
+                                </button>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listener to view all orders button
+            if (totalOrders > 5) {
+                customerDetailContent.querySelector('.view-all-customer-orders').addEventListener('click', () => {
+                    customerDetailModal.classList.add('hidden');
+                    document.querySelector('[data-nav="orders"]').click();
+                    orderSearch.value = customer.phone;
+                    loadOrders();
+                });
+            }
+            
+            customerDetailModal.classList.remove('hidden');
+        }
+
+        function loadSettings() {
+            if (Object.keys(settings).length === 0) return;
+            
+            // Update form with current settings
+            document.getElementById('store-name').value = settings.storeName || '';
+            document.getElementById('store-description').value = settings.storeDescription || '';
+            document.getElementById('store-email').value = settings.storeEmail || '';
+            document.getElementById('store-phone').value = settings.storePhone || '';
+            document.getElementById('shipping-base-cost').value = settings.shippingBaseCost || '';
+            document.getElementById('shipping-max-distance').value = settings.shippingMaxDistance || '';
+            document.getElementById('shipping-estimate').value = settings.shippingEstimate || '';
+            
+            // Update logo preview if exists
+            if (settings.storeLogo) {
+                logoPreview.querySelector('img').src = settings.storeLogo;
+                logoPreview.classList.remove('hidden');
+            } else {
+                logoPreview.classList.add('hidden');
+            }
+        }
+
+        function updateSettingsForm() {
+            if (Object.keys(settings).length === 0) return;
+            
+            document.getElementById('store-name').value = settings.storeName || '';
+            document.getElementById('store-description').value = settings.storeDescription || '';
+            document.getElementById('store-email').value = settings.storeEmail || '';
+            document.getElementById('store-phone').value = settings.storePhone || '';
+            document.getElementById('shipping-base-cost').value = settings.shippingBaseCost || '';
+            document.getElementById('shipping-max-distance').value = settings.shippingMaxDistance || '';
+            document.getElementById('shipping-estimate').value = settings.shippingEstimate || '';
+            
+            if (settings.storeLogo) {
+                logoPreview.querySelector('img').src = settings.storeLogo;
+                logoPreview.classList.remove('hidden');
+            }
+        }
+
+        function updateStoreInfo() {
+            document.getElementById('store-info-name').textContent = settings.storeName || 'VLStore';
+            document.getElementById('store-info-description').textContent = settings.storeDescription || 'Delivery & Digital Services';
+        }
+
+        async function saveSettings() {
+            try {
+                const submitButton = settingsForm.querySelector('button[type="submit"]');
+                const originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<div class="loading"></div> Menyimpan...';
+                submitButton.disabled = true;
+                
+                // Get form data
+                const settingsData = {
+                    storeName: document.getElementById('store-name').value,
+                    storeDescription: document.getElementById('store-description').value,
+                    storeEmail: document.getElementById('store-email').value,
+                    storePhone: document.getElementById('store-phone').value,
+                    shippingBaseCost: parseInt(document.getElementById('shipping-base-cost').value),
+                    shippingMaxDistance: parseInt(document.getElementById('shipping-max-distance').value),
+                    shippingEstimate: parseInt(document.getElementById('shipping-estimate').value),
+                    updatedAt: new Date()
+                };
+                
+                // Upload logo if exists
+                if (storeLogo.files[0]) {
+                    const storageRef = storage.ref();
+                    const logoRef = storageRef.child(`store/logo_${Date.now()}_${storeLogo.files[0].name}`);
+                    const snapshot = await logoRef.put(storeLogo.files[0]);
+                    settingsData.storeLogo = await snapshot.ref.getDownloadURL();
+                }
+                
+                // Save to Firebase
+                await db.collection('settings').doc('store').set(settingsData, { merge: true });
+                
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pengaturan Berhasil Disimpan!',
+                    text: 'Pengaturan toko telah berhasil diperbarui',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+                
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Menyimpan Pengaturan',
+                    text: 'Terjadi kesalahan saat menyimpan pengaturan',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                
+                const submitButton = settingsForm.querySelector('button[type="submit"]');
+                submitButton.innerHTML = '<i class="fas fa-save"></i><span>Simpan Pengaturan</span>';
+                submitButton.disabled = false;
+            }
+        }
+
+        // Update current time
+        function updateCurrentTime() {
+            const now = new Date();
+            currentTimeEl.textContent = `${now.getDate()} ${getMonthName(now.getMonth())} ${now.getFullYear()} - ${formatTime(now)}`;
+        }
+
+        // Initialize the admin panel
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set dashboard as active
+            document.querySelector('[data-nav="dashboard"]').classList.add('active');
+            document.getElementById('dashboard-content').classList.remove('hidden');
+            
+            // Initialize real-time listeners
+            initializeRealtimeListeners();
+            
+            // Update current time
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 60000); // Update every minute
+            
+            // Update popular products when products or orders change
+            // This will be handled by the real-time listeners
+            
+            // Check authentication
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('admin-name').textContent = user.displayName || user.email;
+                    console.log('Admin authenticated:', user.email);
+                } else {
+                    // Redirect to login page if not authenticated
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        // Update popular products when products or orders data is available
+        let productsLoaded = false;
+        let ordersLoaded = false;
+
+        // Override the update functions to also update popular products
+        const originalUpdateDashboardProducts = updateDashboardProducts;
+        updateDashboardProducts = function() {
+            originalUpdateDashboardProducts();
+            productsLoaded = true;
+            if (productsLoaded && ordersLoaded) {
+                updatePopularProducts();
+            }
+        };
+
+        const originalUpdateDashboardOrders = updateDashboardOrders;
+        updateDashboardOrders = function() {
+            originalUpdateDashboardOrders();
+            ordersLoaded = true;
+            if (productsLoaded && ordersLoaded) {
+                updatePopularProducts();
+            }
+        };
+    </script>
+</body>
+</html>
