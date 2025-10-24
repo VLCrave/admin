@@ -1,1289 +1,664 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - Crave Street Admin</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<style>
-  body { font-family: 'Inter', sans-serif; }
-  .list-item {
-    background: rgba(55,65,81,0.5);
-    border-radius: 12px;
-    padding: 12px;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .list-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
-  .small-txt { font-size: 12px; color: #c7c7c7; }
-  .glass-card { 
-    background: rgba(30, 41, 59, 0.6); 
-    backdrop-filter: blur(12px); 
-    border-radius: 16px; 
-    padding: 20px; 
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255,255,255,0.1);
-  }
-  .glass-card:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-    border-color: rgba(59, 130, 246, 0.5);
-  }
-  .menu-card {
-    cursor: pointer;
-    min-height: 140px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    border: 2px solid rgba(75, 85, 99, 0.3);
-  }
-  .menu-card:hover {
-    border-color: rgba(59, 130, 246, 0.6);
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
-  }
-  .filter-btn { 
-    background: rgba(55,65,81,0.5);
-    padding: 8px 16px;
-    border-radius: 8px;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-  }
-  .filter-btn:hover {
-    background: rgba(75,85,99,0.7);
-    transform: translateY(-1px);
-  }
-  .filter-btn.active { 
-    background: linear-gradient(to right, #3b82f6, #06b6d4); 
-    color: white; 
-    font-weight: 600;
-    border-color: rgba(255,255,255,0.2);
-    box-shadow: 0 4px 12px rgba(59,130,246,0.4);
-  }
-  @media print {
-    body * { visibility: hidden; }
-    #printArea, #printArea * { visibility: visible; }
-    #printArea { position: absolute; top:0; left:0; width:100%; }
-  }
-  @keyframes fadeInUp { 
-    from { opacity:0; transform: translateY(15px); } 
-    to { opacity:1; transform: translateY(0); } 
-  }
-  .animate-fadeInUp { animation: fadeInUp 0.5s ease-out; }
-  .progress-bar {
-    height: 6px;
-    border-radius: 3px;
-    overflow: hidden;
-    background-color: rgba(255,255,255,0.1);
-  }
-  .progress-fill {
-    height: 100%;
-    transition: width 0.5s ease;
-  }
-</style>
-</head>
-<body class="bg-gradient-to-br from-gray-900 via-gray-800 to-black min-h-screen text-white">
-
-<header class="sticky top-0 bg-gray-800/90 backdrop-blur-lg z-50 px-4 py-3 shadow-lg border-b border-gray-700">
-  <div class="max-w-6xl mx-auto flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <img src="https://vlcrave.github.io/admin/logo.png" alt="Logo" class="h-10 w-10 rounded-full">
-      <div>
-        <h1 class="text-white font-bold text-lg">Crave Street</h1>
-        <p class="text-gray-400 text-xs">Admin Dashboard</p>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-3">
-      <div class="text-right hidden sm:block">
-        <p class="text-gray-300 text-sm">
-          <span id="userName" class="font-semibold text-blue-400" title="">Admin</span>
-        </p>
-        <p class="text-gray-400 text-xs">Administrator</p>
-      </div>
-
-      <img 
-        id="userPhoto" 
-        src="https://vlcrave.github.io/admin/logo.png" 
-        alt="User" 
-        class="h-10 w-10 rounded-full border-2 border-blue-400 object-cover"
-      >
-
-      <button 
-        onclick="logout()" 
-        class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-semibold text-white text-sm transition"
-      >
-        Logout
-      </button>
-    </div>
-  </div>
-</header>
-
-<main class="p-4 max-w-6xl mx-auto mt-6">
-
-<!-- DASHBOARD -->
-<div id="dashboardGrid" class="space-y-6"></div>
-
-<!-- VOUCHER SECTION -->
-<div id="voucherContainer" class="hidden animate-fadeInUp">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-        🎟️ Kelola Voucher
-      </h2>
-      <p class="text-gray-400 text-sm mt-1">Generate dan kelola voucher redeem code</p>
-    </div>
-    <button onclick="backToDashboard()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition flex items-center gap-2">
-      <span>←</span> Dashboard
-    </button>
-  </div>
-
-  <div class="glass-card mb-6">
-    <h3 class="font-semibold mb-4 text-lg">Generate Voucher Baru</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-      <input 
-        id="voucherJumlah" 
-        type="number" 
-        min="1" 
-        max="100" 
-        placeholder="Jumlah (1-100)" 
-        class="px-4 py-3 rounded-lg bg-gray-700/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-      >
-      <button id="genBtn" onclick="generateVouchers()" class="bg-green-600 hover:bg-green-700 py-3 rounded-lg font-semibold transition flex items-center justify-center gap-2">
-        ➕ Generate
-      </button>
-      <div class="flex gap-2">
-        <button onclick="window.loadVouchers()" class="flex-1 bg-gray-700 hover:bg-gray-600 px-4 py-3 rounded-lg transition">🔄</button>
-        <button onclick="printAllVouchers()" class="flex-1 bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg transition">🖨️</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="flex gap-2 mb-4 flex-wrap">
-    <button onclick="window.filterVouchers('all')" class="filter-btn active" data-filter="all">Semua</button>
-    <button onclick="window.filterVouchers('unused')" class="filter-btn" data-filter="unused">Belum Dipakai</button>
-    <button onclick="window.filterVouchers('used')" class="filter-btn" data-filter="used">Sudah Dipakai</button>
-  </div>
-
-  <div id="voucherList" class="space-y-3 max-h-[500px] overflow-y-auto pr-2"></div>
-</div>
-
-<!-- FINANCE SECTION -->
-<div id="financeContainer" class="hidden animate-fadeInUp">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-        📊 Laporan Keuangan
-      </h2>
-      <p class="text-gray-400 text-sm mt-1">Kelola pemasukan dan pengeluaran bisnis</p>
-    </div>
-    <button onclick="backToDashboard()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition flex items-center gap-2">
-      <span>←</span> Dashboard
-    </button>
-  </div>
-
-  <!-- BOX SALDO -->
-  <div id="saldoBoxes" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6"></div>
-
-  <!-- FORM TAMBAH TRANSAKSI -->
-  <div class="glass-card mb-6">
-    <h3 class="font-semibold mb-4 text-lg">Tambah Transaksi Baru</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-      <select id="jenisTransaksi" class="px-4 py-3 rounded-lg bg-gray-700/50 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600">
-        <option value="pemasukan">💰 Pemasukan</option>
-        <option value="pengeluaran">💸 Pengeluaran</option>
-      </select>
-      <input 
-        id="nominalTransaksi" 
-        type="number" 
-        placeholder="Nominal (Rp)" 
-        class="px-4 py-3 rounded-lg bg-gray-700/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-      >
-    </div>
-    <input 
-      id="keteranganTransaksi" 
-      type="text" 
-      placeholder="Keterangan transaksi" 
-      class="px-4 py-3 rounded-lg bg-gray-700/50 text-white placeholder-gray-400 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-    >
-    <button onclick="tambahTransaksi()" class="bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg w-full font-semibold transition">
-      ➕ Simpan Transaksi
-    </button>
-  </div>
-
-  <!-- FILTER BUTTONS -->
-  <div class="flex gap-2 mb-4 flex-wrap">
-    <button class="filter-btn active" onclick="window.applyFinanceFilter('semua')" data-filter="semua">Semua</button>
-    <button class="filter-btn" onclick="window.applyFinanceFilter('harian')" data-filter="harian">Hari Ini</button>
-    <button class="filter-btn" onclick="window.applyFinanceFilter('mingguan')" data-filter="mingguan">Minggu Ini</button>
-    <button class="filter-btn" onclick="window.applyFinanceFilter('bulanan')" data-filter="bulanan">Bulan Ini</button>
-  </div>
-
-  <!-- LIST TRANSAKSI -->
-  <div id="financeList" class="space-y-3 max-h-[500px] overflow-y-auto pr-2"></div>
-</div>
-
-<!-- ADMIN SETTING SECTION -->
-<div id="adminSettingContainer" class="hidden animate-fadeInUp">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-        ⚙️ Pengaturan Admin
-      </h2>
-      <p class="text-gray-400 text-sm mt-1">Kelola profil dan lihat aktivitas admin</p>
-    </div>
-    <button onclick="backToDashboard()" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition flex items-center gap-2">
-      <span>←</span> Dashboard
-    </button>
-  </div>
-
-  <div class="flex gap-2 mb-6 flex-wrap">
-    <button class="admin-tab-btn filter-btn active" data-tab="changePassword">🔑 Ganti Password</button>
-    <button class="admin-tab-btn filter-btn" data-tab="changeName">✏️ Ganti Nama</button>
-    <button class="admin-tab-btn filter-btn" data-tab="adminLog">📋 Activity Log</button>
-  </div>
-
-  <div id="adminTabContent">
-    <div id="changePassword" class="admin-tab-content glass-card">
-      <h3 class="font-semibold mb-3 text-lg">Reset Password</h3>
-      <p class="text-gray-400 text-sm mb-4">Kirim link reset password ke email Anda</p>
-      <button onclick="resetAdminPassword()" class="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded-lg w-full font-semibold transition">
-        🔑 Kirim Email Reset Password
-      </button>
-    </div>
-    
-    <div id="changeName" class="admin-tab-content glass-card hidden">
-      <h3 class="font-semibold mb-3 text-lg">Ubah Nama Admin</h3>
-      <p class="text-gray-400 text-sm mb-4">Nama ini akan ditampilkan di dashboard</p>
-      <input 
-        type="text" 
-        id="newAdminName" 
-        placeholder="Masukkan nama baru" 
-        class="px-4 py-3 rounded-lg bg-gray-700/50 text-white placeholder-gray-400 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600"
-      >
-      <button onclick="changeAdminName()" class="bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg w-full font-semibold transition">
-        💾 Simpan Perubahan
-      </button>
-    </div>
-    
-    <div id="adminLog" class="admin-tab-content glass-card hidden">
-      <h3 class="font-semibold mb-3 text-lg">Riwayat Aktivitas Admin</h3>
-      <p class="text-gray-400 text-sm mb-4">Log semua aktivitas admin di sistem</p>
-      <div id="adminLogList" class="space-y-3 max-h-[400px] overflow-y-auto pr-2"></div>
-    </div>
-  </div>
-</div>
-
-<div id="printArea" class="hidden"></div>
-
-</main>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
-import { 
-  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc, query, where, orderBy, serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-// ===== FIREBASE CONFIG =====
-const firebaseConfig = {
-  apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
-  authDomain: "crave-street-id.firebaseapp.com",
-  projectId: "crave-street-id",
-  storageBucket: "crave-street-id.firebasestorage.app",
-  messagingSenderId: "221955592583",
-  appId: "1:221955592583:web:43dc59d791e750095cc322",
-  measurementId: "G-WCRQGLW47B"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-// ===== GLOBAL VARIABLES =====
-let currentUser = null;
-let currentAdminData = null;
-window.existingVouchers = [];
-window.financeArr = [];
-window.activeFilter = "semua";
-window.currentAdminName = "Admin";
-window.kasUsaha = 0;
-
-let voucherListEl, financeListEl, saldoBoxesEl;
-
-// ===== WAIT FOR DOM =====
-document.addEventListener('DOMContentLoaded', () => {
-  voucherListEl = document.getElementById("voucherList");
-  financeListEl = document.getElementById("financeList");
-  saldoBoxesEl = document.getElementById("saldoBoxes");
-  
-  // Load kas usaha dari Firestore
-  loadKasUsaha();
-});
-
-// ===== LOAD KAS USAHA =====
-async function loadKasUsaha() {
-  try {
-    const kasDoc = await getDoc(doc(db, "kas_usaha", "current"));
-    if (kasDoc.exists()) {
-      window.kasUsaha = kasDoc.data().nominal || 0;
-      console.log("Kas usaha loaded:", window.kasUsaha);
-    } else {
-      // Jika belum ada, buat dokumen dengan nilai default
-      await setDoc(doc(db, "kas_usaha", "current"), { 
-        nominal: 0,
-        createdAt: serverTimestamp() 
-      });
-      window.kasUsaha = 0;
-      console.log("Kas usaha created with default value 0");
-    }
-  } catch (err) {
-    console.error("Error loading kas usaha:", err);
-    window.kasUsaha = 0;
-  }
-}
-
-// ===== SAVE KAS USAHA =====
-async function saveKasUsaha(nominal) {
-  try {
-    await setDoc(doc(db, "kas_usaha", "current"), { 
-      nominal: nominal,
-      updatedAt: serverTimestamp()
-    });
-    console.log("Kas usaha saved:", nominal);
-  } catch (err) {
-    console.error("Error saving kas usaha:", err);
-    throw err;
-  }
-}
-
-// ===== FETCH ADMIN FROM FIRESTORE =====
-async function fetchAdminFromFirestore(email) {
-  try {
-    const q = query(collection(db, "admins"), where("email", "==", email));
-    const snap = await getDocs(q);
-
-    if (!snap.empty) {
-      const docData = snap.docs[0].data();
-      const adminData = { id: snap.docs[0].id, ...docData };
-      sessionStorage.setItem("currentAdmin", JSON.stringify(adminData));
-      return adminData;
-    } else {
-      return { nama: "Admin" };
-    }
-  } catch (err) {
-    console.error("Error fetching admin:", err);
-    return { nama: "Admin" };
-  }
-}
-
-// ===== AUTH STATE LISTENER =====
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
-
-  currentUser = user;
-
-  try {
-    const storedAdmin = sessionStorage.getItem("currentAdmin");
-    if (storedAdmin) {
-      try {
-        currentAdminData = JSON.parse(storedAdmin);
-      } catch {
-        currentAdminData = await fetchAdminFromFirestore(user.email);
-      }
-    } else {
-      currentAdminData = await fetchAdminFromFirestore(user.email);
-    }
-
-    window.currentAdminName = currentAdminData?.nama || "Admin";
-
-    const displayName = currentAdminData?.nama || "Admin";
-    const userNameEl = document.getElementById("userName");
-    if (userNameEl) {
-      userNameEl.innerText = displayName.length > 10 ? displayName.substring(0, 10) + "..." : displayName;
-      userNameEl.title = displayName;
-    }
-  } catch (err) {
-    console.error("Gagal memuat data admin:", err);
-    const userNameEl = document.getElementById("userName");
-    if (userNameEl) userNameEl.innerText = "Admin";
-  }
-
-  // Pastikan fungsi ini sudah didefinisikan di script lain
-  if (window.renderDashboard) window.renderDashboard();
-  if (window.loadVouchers) await window.loadVouchers();
-  if (window.loadFinance) await window.loadFinance();
-});
-
-// ===== LOGOUT =====
-window.logout = async function() {
-  const res = await Swal.fire({
-    title: "Logout?",
-    text: "Anda akan keluar dari dashboard",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Ya, Logout",
-    cancelButtonText: "Batal",
-    confirmButtonColor: "#ef4444"
-  });
-
-  if (res.isConfirmed) {
-    try {
-      // Simpan log admin sebelum logout
-      const adminId = currentAdminData?.id || null;
-      let adminName = window.currentAdminName || "Admin";
-
-      if (adminId) {
-        await addDoc(collection(db, "admin_logs"), {
-          adminId,
-          createdBy: adminName,
-          aksi: "Logout",
-          keterangan: "Admin keluar dari dashboard",
-          createdAt: serverTimestamp()
-        });
-      }
-
-      await signOut(auth);
-      sessionStorage.removeItem("currentAdmin");
-      window.location.href = "login.html";
-    } catch (err) {
-      Swal.fire("Error", "Gagal logout", "error");
-    }
-  }
-};
-
-// ===== RENDER DASHBOARD =====
-window.renderDashboard = function(){
-  document.getElementById("voucherContainer").classList.add("hidden");
-  document.getElementById("financeContainer").classList.add("hidden");
-  document.getElementById("adminSettingContainer").classList.add("hidden");
-
-  const grid = document.getElementById("dashboardGrid");
-  grid.classList.remove("hidden");
-  grid.innerHTML = "";
-
-  const displayName = currentAdminData?.nama || "Admin";
-  const hour = new Date().getHours();
-  const greetingText = hour < 11 ? "Selamat Pagi" :
-                       hour < 15 ? "Selamat Siang" :
-                       hour < 18 ? "Selamat Sore" : "Selamat Malam";
-  const greetingIcon = hour < 11 ? "☀️" : hour < 15 ? "🌤️" : hour < 18 ? "🌇" : "🌙";
-
-  const greeting = document.createElement("div");
-  greeting.className = "text-center mb-8 animate-fadeInUp";
-  greeting.innerHTML = `
-    <h2 class="text-3xl font-bold text-white mb-2">${greetingText}, ${displayName}! ${greetingIcon}</h2>
-    <p class="text-gray-400">Kelola bisnis Anda dengan mudah dari dashboard ini</p>
-  `;
-  grid.appendChild(greeting);
-
-  const menus = [
-    { 
-      title: "Kelola Voucher", 
-      icon: "🎟️",
-      desc: "Generate & manage voucher redeem code", 
-      action: "voucher", 
-      stats: `${window.existingVouchers.length} voucher`
-    },
-    { 
-      title: "Laporan Keuangan", 
-      icon: "📊",
-      desc: "Monitor pemasukan & pengeluaran", 
-      action: "finance", 
-      stats: `${window.financeArr.length} transaksi`
-    },
-    { 
-      title: "Pengaturan Admin", 
-      icon: "⚙️",
-      desc: "Kelola profil & lihat activity log", 
-      action: "admin", 
-      stats: "Settings"
-    }
-  ];
-
-  const menuGrid = document.createElement("div");
-  menuGrid.className = "grid grid-cols-1 md:grid-cols-3 gap-6";
-
-  menus.forEach(menu => {
-    const card = document.createElement("div");
-    card.className = "glass-card menu-card";
-    card.onclick = () => window.showSection(menu.action);
-    card.innerHTML = `
-      <div class="text-4xl mb-3">${menu.icon}</div>
-      <h3 class="text-xl font-bold mb-2 text-white">${menu.title}</h3>
-      <p class="text-sm text-gray-300 mb-3">${menu.desc}</p>
-      <div class="text-xs text-gray-400 bg-gray-700/50 inline-block px-3 py-1 rounded-full">${menu.stats}</div>
-    `;
-    menuGrid.appendChild(card);
-  });
-
-  grid.appendChild(menuGrid);
-};
-
-// ===== SHOW SECTION =====
-window.showSection = function(key) {
-  document.getElementById("dashboardGrid").classList.add("hidden");
-  document.getElementById("voucherContainer").classList.add("hidden");
-  document.getElementById("financeContainer").classList.add("hidden");
-  document.getElementById("adminSettingContainer").classList.add("hidden");
-  
-  switch (key) {
-    case "voucher":
-      document.getElementById("voucherContainer").classList.remove("hidden");
-      window.filterVouchers("all");
-      break;
-
-    case "finance":
-      document.getElementById("financeContainer").classList.remove("hidden");
-      window.applyFinanceFilter("harian");
-      break;
-
-    case "admin":
-      document.getElementById("adminSettingContainer").classList.remove("hidden");
-      window.loadAdminSettings();
-      break;
-  }
-};
-
-window.backToDashboard = function(){
-  window.renderDashboard();
-};
-
-// ===== APPLY FINANCE FILTER =====
-window.applyFinanceFilter = function(filterKey) {
-  // Set filter aktif
-  window.activeFilter = filterKey;
-
-  // Update tombol aktif
-  const filterBtns = document.querySelectorAll('#financeContainer .filter-btn');
-  filterBtns.forEach(btn => {
-    btn.classList.remove('active');
-    if (btn.dataset.filter === filterKey) {
-      btn.classList.add('active');
-    }
-  });
-
-  // Render ulang financeList dengan filter baru
-  if (window.renderFinance) window.renderFinance();
-};
-
-// ===== ADMIN SETTINGS =====
-window.loadAdminSettings = function(){
-  const tabs = document.querySelectorAll(".admin-tab-content");
-  tabs.forEach(t => t.classList.add("hidden"));
-  document.getElementById("changePassword").classList.remove("hidden");
-  
-  const tabBtns = document.querySelectorAll(".admin-tab-btn");
-  tabBtns.forEach(b => b.classList.remove("active"));
-  tabBtns[0].classList.add("active");
-  
-  tabBtns.forEach(btn => {
-    btn.onclick = () => {
-      tabBtns.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      tabs.forEach(t => t.classList.add("hidden"));
-      document.getElementById(btn.getAttribute("data-tab")).classList.remove("hidden");
-    };
-  });
-  
-  window.loadAdminLogs();
-};
-
-window.resetAdminPassword = async function() {
-  if(!currentUser){
-    Swal.fire("Error", "User tidak ditemukan", "error");
-    return;
-  }
-
-  const res = await Swal.fire({
-    title: "Reset Password?",
-    text: `Email reset akan dikirim ke ${currentUser.email}`,
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Kirim Email",
-    confirmButtonColor: "#3b82f6"
-  });
-
-  if(!res.isConfirmed) return;
-
-  try{
-    // Kirim email reset
-    await sendPasswordResetEmail(auth, currentUser.email);
-
-    // Catat ke admin_logs
-    const adminId = currentAdminData?.id || null;
-    await addDoc(collection(db, "admin_logs"), {
-      adminId,
-      createdBy: window.currentAdminName,
-      aksi: "Request reset password",
-      keterangan: `Email reset dikirim ke ${currentUser.email}`,
-      createdAt: serverTimestamp()
-    });
-
-    Swal.fire({
-      icon: "success",
-      title: "Email Terkirim!",
-      text: "Silakan cek email Anda untuk reset password",
-      confirmButtonColor: "#3b82f6"
-    });
-  } catch(err) {
-    Swal.fire("Error", err.message || "Gagal mengirim email", "error");
-  }
-};
-
-window.changeAdminName = async function() {
-  const newName = document.getElementById("newAdminName").value.trim();
-
-  if (!newName) {
-    Swal.fire("Error", "Nama tidak boleh kosong", "error");
-    return;
-  }
-
-  if (!currentAdminData || !currentAdminData.id) {
-    Swal.fire("Error", "Data admin tidak ditemukan", "error");
-    return;
-  }
-
-  try {
-    // Update nama di collection admins
-    await updateDoc(doc(db, "admins", currentAdminData.id), { nama: newName });
-
-    // Update global dan sessionStorage
-    currentAdminData.nama = newName;
-    window.currentAdminName = newName;
-    sessionStorage.setItem("currentAdmin", JSON.stringify(currentAdminData));
-
-    const displayName = newName.length > 10 ? newName.substring(0, 10) + "..." : newName;
-    const userNameEl = document.getElementById("userName");
-    if (userNameEl) {
-      userNameEl.innerText = displayName;
-      userNameEl.title = newName;
-    }
-    document.getElementById("newAdminName").value = "";
-
-    // Simpan log admin
-    const adminId = currentAdminData.id;
-    await addDoc(collection(db, "admin_logs"), {
-      adminId,
-      createdBy: newName,
-      aksi: `Ganti nama menjadi "${newName}"`,
-      keterangan: "Perubahan nama admin",
-      createdAt: serverTimestamp()
-    });
-
-    Swal.fire({
-      icon: "success",
-      title: "Berhasil!",
-      text: "Nama berhasil diubah",
-      confirmButtonColor: "#10b981"
-    });
-
-    // Reload log
-    if (window.loadAdminLogs) window.loadAdminLogs();
-
-  } catch (err) {
-    console.error("Error changeAdminName:", err);
-    Swal.fire("Error", err.message || "Gagal mengubah nama", "error");
-  }
-};
-
-window.loadAdminLogs = async function(){
-  const logContainer = document.getElementById("adminLogList");
-  logContainer.innerHTML = "<p class='text-gray-400 text-sm text-center py-4'>Memuat log...</p>";
-
-  try{
-    const q = query(collection(db,"admin_logs"), orderBy("createdAt","desc"));
-    const snap = await getDocs(q);
-    const logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-    if(!logs.length){
-      logContainer.innerHTML = "<p class='text-gray-400 text-sm text-center py-4'>Belum ada log aktivitas</p>";
-      return;
-    }
-
-    logContainer.innerHTML = "";
-
-    for(const l of logs){
-      // Waktu
-      let dateStr = "-";
-      if(l.createdAt){
-        try{
-          const d = typeof l.createdAt.toDate === "function" ? l.createdAt.toDate() : new Date(l.createdAt);
-          dateStr = d.toLocaleString("id-ID", {
-            day:"2-digit", month:"short", year:"numeric",
-            hour:"2-digit", minute:"2-digit"
-          });
-        }catch(err){}
-      }
-
-      // Buat elemen log
-      const div = document.createElement("div");
-      div.className = "list-item flex justify-between border-b border-gray-700 py-2 text-sm";
-      div.innerHTML = `
-        <span class="text-white font-medium">${l.createdBy || "-"}</span>
-        <span class="text-gray-300 flex-1 px-2">${l.aksi || "-"}</span>
-        <span class="text-gray-400">${dateStr}</span>
-      `;
-      logContainer.appendChild(div);
-    }
-
-  }catch(err){
-    console.error("Error loadAdminLogs:", err);
-    logContainer.innerHTML = "<p class='text-red-400 text-sm text-center py-4'>Gagal memuat log</p>";
-  }
-};
-
-// ===== VOUCHER FUNCTIONS =====
-window.loadVouchers = async () => {
-  try {
-    const snap = await getDocs(
-      query(collection(db, "redeem_codes"), orderBy("createdAt", "desc"))
-    );
-
-    window.existingVouchers = [];
-    snap.forEach(d => window.existingVouchers.push({ id: d.id, ...d.data() }));
-
-    return window.existingVouchers;
-  } catch (e) {
-    console.error("Error loading vouchers:", e);
-    if (voucherListEl)
-      voucherListEl.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Gagal memuat voucher</p>`;
-    return [];
-  }
-};
-
-// ===== FILTER VOUCHERS =====
-window.filterVouchers = function(filter) {
-  window.activeVoucherFilter = filter;
-  const btns = document.querySelectorAll("#voucherContainer .filter-btn");
-  btns.forEach(b => b.classList.remove("active"));
-  btns.forEach(b => { if(b.dataset.filter === filter) b.classList.add("active"); });
-
-  const list = voucherListEl;
-  list.innerHTML = "";
-
-  let filteredVouchers = [...window.existingVouchers];
-  if(filter === "used") filteredVouchers = filteredVouchers.filter(v => v.used);
-  if(filter === "unused") filteredVouchers = filteredVouchers.filter(v => !v.used);
-
-  if(!filteredVouchers.length){
-    list.innerHTML = `<p class="text-gray-400 text-sm text-center py-4">Tidak ada voucher</p>`;
-    return;
-  }
-
-  filteredVouchers.forEach(v => {
-    const div = document.createElement("div");
-    div.className = "list-item flex justify-between items-center";
-    div.innerHTML = `
-      <div>
-        <p class="font-medium">${v.code}</p>
-        <p class="small-txt mt-1">${v.used ? "Sudah dipakai" : "Belum dipakai"}</p>
-      </div>
-      <div class="flex gap-2">
-        <button onclick="copyVoucher('${v.code}')" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-white text-xs">📋 Salin</button>
-      </div>
-    `;
-    list.appendChild(div);
-  });
-};
-
-// ===== GENERATE VOUCHER =====
-window.generateVouchers = async function() {
-  const count = parseInt(document.getElementById("voucherJumlah").value) || 0;
-  if(count < 1 || count > 100){
-    Swal.fire("Error","Jumlah harus antara 1-100","error");
-    return;
-  }
-
-  const batch = [];
-  for(let i=0;i<count;i++){
-    const code = Math.random().toString(36).substring(2,10).toUpperCase();
-    batch.push({ code, used:false, createdAt:serverTimestamp() });
-  }
-
-  try{
-    for(const v of batch){
-      await addDoc(collection(db,"redeem_codes"), v);
-    }
-
-    // Simpan log admin
-    await addDoc(collection(db,"admin_logs"),{
-      adminId: currentAdminData?.id || null,
-      createdBy: window.currentAdminName,
-      aksi: `Menambahkan ${count} voucher${count>1?"s":""}`,
-      keterangan: `Voucher dibuat otomatis (${count} kode)`,
-      createdAt: serverTimestamp()
-    });
-
-    Swal.fire("Berhasil","Voucher berhasil dibuat","success");
-    document.getElementById("voucherJumlah").value = "";
-    await window.loadVouchers();
-    window.filterVouchers(window.activeVoucherFilter || "all");
-
-  }catch(err){
-    Swal.fire("Error", err.message || "Gagal generate voucher","error");
-  }
-};
-
-// ===== COPY VOUCHER =====
-window.copyVoucher = function(code){
-  navigator.clipboard.writeText(code).then(()=>{
-    Swal.fire("Berhasil","Kode voucher disalin","success");
-  }).catch(()=> Swal.fire("Error","Gagal menyalin","error"));
-};
-
-// ===== PRINT VOUCHERS =====
-window.printAllVouchers = function(){
-  const printArea = document.getElementById("printArea");
-  printArea.innerHTML = "<h3 class='text-lg font-bold mb-2 text-white'>Voucher List</h3>";
-  const ul = document.createElement("ul");
-  ul.className = "list-disc list-inside text-white";
-  window.existingVouchers.forEach(v=>{
-    const li = document.createElement("li");
-    li.textContent = `${v.code} - ${v.used ? "Sudah dipakai" : "Belum dipakai"}`;
-    ul.appendChild(li);
-  });
-  printArea.appendChild(ul);
-  printArea.classList.remove("hidden");
-  window.print();
-  printArea.classList.add("hidden");
-};
-
-// ===== HELPER =====
-const toDate = (ts) => {
-  if (!ts) return new Date();
-  return ts.toDate ? ts.toDate() : new Date(ts);
-};
-
-const formatRupiah = (nominal) => "Rp" + nominal.toLocaleString("id-ID");
-
-// ===== FINANCE FUNCTIONS =====
-window.loadFinance = async function(){
-  try {
-    const snap = await getDocs(query(collection(db,"finance_reports"), orderBy("createdAt","desc")));
-    window.financeArr = snap.docs.map(d=>({id:d.id,...d.data()}));
-    window.renderFinance();
-  } catch(err) {
-    console.error("Error load finance:",err);
-    if(financeListEl) financeListEl.innerHTML = `<p class="text-red-400 text-sm text-center py-4">Gagal memuat transaksi</p>`;
-  }
-};
-
-// ===== RENDER FINANCE =====
-window.renderFinance = async function(){
-  if(!financeListEl) return;
-  financeListEl.innerHTML = "";
-
-  let filtered = [...window.financeArr];
-  const now = new Date();
-
-  if(window.activeFilter==="harian") filtered = filtered.filter(f=>toDate(f.createdAt).toDateString()===now.toDateString());
-  if(window.activeFilter==="mingguan") filtered = filtered.filter(f=>{
-    const d = toDate(f.createdAt);
-    const weekStart = new Date(now); weekStart.setDate(now.getDate()-now.getDay());
-    const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate()+6);
-    return d>=weekStart && d<=weekEnd;
-  });
-  if(window.activeFilter==="bulanan") filtered = filtered.filter(f=>{
-    const d = toDate(f.createdAt);
-    return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
-  });
-
-  if(!filtered.length){
-    financeListEl.innerHTML = `<p class="text-gray-400 text-sm text-center py-4">Tidak ada transaksi</p>`;
-    return;
-  }
-
-  for(const f of filtered){
-    const d = toDate(f.createdAt);
-    const dateStr = d.toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
-
-    let adminName = "Unknown";
-    try {
-      if(f.adminId){
-        const snap = await getDoc(doc(db,"admins",f.adminId));
-        if(snap.exists()) adminName = snap.data().nama || "Unknown";
-      }
-    } catch(err){ console.error("Gagal ambil nama admin:", err); }
-
-    const div = document.createElement("div");
-    div.className = "list-item flex flex-col p-3 mb-2 rounded-md border border-gray-600 bg-transparent transition hover:shadow-sm";
-
-    div.innerHTML = `
-      <div class="flex justify-between items-center mb-1">
-        <span class="${f.jenis==="pemasukan"?"text-green-400":"text-red-400"} font-semibold">
-          ${f.jenis==="pemasukan"?"+ Pemasukan":"- Pengeluaran"}
-        </span>
-        <span class="${f.jenis==="pemasukan"?"text-green-400":"text-red-400"} font-bold">
-          ${f.jenis==="pemasukan"?"+":"-"} ${formatRupiah(f.nominal)}
-        </span>
-      </div>
-      <div class="text-gray-300 dark:text-gray-400 text-sm mb-0.5">Keterangan: ${f.keterangan||"-"}</div>
-      <div class="text-gray-400 dark:text-gray-500 text-xs">Waktu: ${dateStr}</div>
-      <div class="text-gray-400 dark:text-gray-500 text-xs mb-2">Oleh: ${adminName}</div>
-      <div class="flex justify-end gap-2">
-        <button class="px-2 py-1 text-xs text-blue-400 border border-blue-400 rounded hover:bg-blue-400 hover:text-white" onclick="editTransaksi('${f.id}')">Edit</button>
-        <button class="px-2 py-1 text-xs text-red-400 border border-red-400 rounded hover:bg-red-400 hover:text-white" onclick="hapusTransaksi('${f.id}')">Hapus</button>
-      </div>
-    `;
-    financeListEl.appendChild(div);
-  }
-
-  if(window.renderSaldoBoxes) window.renderSaldoBoxes();
-};
-
-// ===== EDIT TRANSAKSI MENGGUNAKAN SWAL =====
-window.editTransaksi = async function(id) {
-  try {
-    const docRef = doc(db, "finance_reports", id);
-    const snap = await getDoc(docRef);
-    if (!snap.exists()) {
-      Swal.fire("Error", "Data tidak ditemukan", "error");
-      return;
-    }
-    const data = snap.data();
-
-    const { value: formValues } = await Swal.fire({
-      title: 'Edit Transaksi',
-      html:
-        `<input id="swalNominal" type="number" class="swal2-input" placeholder="Nominal (Rp)" value="${data.nominal}">` +
-        `<input id="swalKeterangan" type="text" class="swal2-input" placeholder="Keterangan" value="${data.keterangan || ''}">`,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: 'Simpan',
-      cancelButtonText: 'Batal',
-      preConfirm: () => {
-        const nominal = parseInt(document.getElementById('swalNominal').value);
-        const keterangan = document.getElementById('swalKeterangan').value.trim();
-        if (!nominal || nominal <= 0) {
-          Swal.showValidationMessage('Nominal harus lebih dari 0');
-          return false;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Keuangan - Crave Street</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
         }
-        return { nominal, keterangan };
-      }
-    });
-
-    if (!formValues) return; // user batal
-
-    await updateDoc(docRef, {
-      nominal: formValues.nominal,
-      keterangan: formValues.keterangan,
-      updatedAt: serverTimestamp()
-    });
-
-    await addDoc(collection(db, "admin_logs"), {
-      adminId: currentAdminData?.id || null,
-      createdBy: window.currentAdminName,
-      aksi: `Mengedit ${data.jenis} ${formatRupiah(data.nominal)} → ${formatRupiah(formValues.nominal)}`,
-      keterangan: formValues.keterangan || "",
-      createdAt: serverTimestamp()
-    });
-
-    Swal.fire("Berhasil", "Transaksi berhasil diupdate", "success");
-    if (window.loadFinance) await window.loadFinance();
-
-  } catch (err) {
-    console.error("Error editTransaksi:", err);
-    Swal.fire("Error", "Gagal mengedit transaksi", "error");
-  }
-};
-
-// ===== HAPUS TRANSAKSI =====
-window.hapusTransaksi = async function(id){
-  try {
-    const res = await Swal.fire({
-      title:"Hapus transaksi?",
-      text:"Data yang dihapus tidak bisa dikembalikan!",
-      icon:"warning",
-      showCancelButton:true,
-      confirmButtonText:"Hapus",
-      cancelButtonText:"Batal"
-    });
-    if(!res.isConfirmed) return;
-
-    const docRef = doc(db,"finance_reports",id);
-    const snap = await getDoc(docRef);
-    if(snap.exists()){
-      const data = snap.data();
-      await deleteDoc(docRef);
-
-      await addDoc(collection(db,"admin_logs"),{
-        adminId: currentAdminData?.id || null,
-        createdBy: window.currentAdminName,
-        aksi: `Menghapus ${data.jenis} ${formatRupiah(data.nominal)}`,
-        keterangan: data.keterangan || "",
-        createdAt: serverTimestamp()
-      });
-
-      Swal.fire("Berhasil","Transaksi berhasil dihapus","success");
-      await window.loadFinance();
-    }
-  } catch(err){ console.error("Error hapusTransaksi:", err); }
-};
-
-// ===== TAMBAH TRANSAKSI LANGSUNG =====
-window.tambahTransaksi = async function() {
-  try {
-    const jenisEl = document.getElementById("jenisTransaksi");
-    const nominalEl = document.getElementById("nominalTransaksi");
-    const keteranganEl = document.getElementById("keteranganTransaksi");
-
-    if (!jenisEl || !nominalEl || !keteranganEl) {
-      Swal.fire("Error", "Form transaksi tidak ditemukan", "error");
-      return;
-    }
-
-    const jenis = jenisEl.value;
-    const nominal = parseInt(nominalEl.value);
-    const keterangan = keteranganEl.value.trim();
-
-    if (!jenis || !nominal || nominal <= 0) {
-      Swal.fire("Error", "Jenis dan nominal harus diisi dengan benar", "error");
-      return;
-    }
-
-    // Simpan ke finance_reports
-    await addDoc(collection(db, "finance_reports"), {
-      jenis,
-      nominal,
-      keterangan,
-      adminId: currentAdminData?.id || null,
-      createdAt: serverTimestamp()
-    });
-
-    // Simpan log admin
-    await addDoc(collection(db, "admin_logs"), {
-      adminId: currentAdminData?.id || null,
-      createdBy: window.currentAdminName,
-      aksi: `Menambahkan ${jenis} ${formatRupiah(nominal)}`,
-      keterangan: keterangan || "",
-      createdAt: serverTimestamp()
-    });
-
-    Swal.fire("Berhasil", "Transaksi berhasil ditambahkan", "success");
-
-    // Reset form
-    jenisEl.value = "pemasukan";
-    nominalEl.value = "";
-    keteranganEl.value = "";
-
-    // Reload daftar transaksi
-    if (window.loadFinance) await window.loadFinance();
-
-  } catch (err) {
-    console.error("Gagal menambah transaksi:", err);
-    Swal.fire("Error", "Gagal menambah transaksi", "error");
-  }
-};
-
-// ===== RENDER SALDO BOXES =====
-window.renderSaldoBoxes = function(){
-  if(!saldoBoxesEl) return;
-
-  let totalPemasukan = 0, totalPengeluaran = 0;
-  let lastUpdate = null;
-
-  window.financeArr.forEach(f=>{
-    const created = f.createdAt?.toDate ? f.createdAt.toDate() : f.createdAt instanceof Date ? f.createdAt : null;
-    if(created && (!lastUpdate || created > lastUpdate)) lastUpdate = created;
-
-    if(f.jenis==="pemasukan") totalPemasukan += f.nominal;
-    if(f.jenis==="pengeluaran") totalPengeluaran += f.nominal;
-  });
-
-  const labaRugi = totalPemasukan - totalPengeluaran;
-
-  // Persentase pembagian hasil sesuai permintaan terbaru
-  const adminVicky = Math.round(labaRugi * 0.40);  // 40%
-  const adminBayu = Math.round(labaRugi * 0.40);   // 40%
-  const kasHasil = Math.round(labaRugi * 0.10);    // 10%
-  const cuciPiring = Math.round(labaRugi * 0.10);  // 10%
-
-  const kasAkhir = labaRugi + window.kasUsaha;
-  const lastUpdateStr = lastUpdate ? lastUpdate.toLocaleString("id-ID",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}) : "-";
-
-  // === Render Box ===
-  saldoBoxesEl.innerHTML = `
-    <div class="glass-card text-center p-4 mb-2">
-      <p class="text-green-500 font-medium">PEMASUKAN</p>
-      <p class="font-bold text-xl">${formatRupiah(totalPemasukan)}</p>
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+        }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+        }
+        
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 50;
+                height: 100vh;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+            }
+            
+            .overlay.active {
+                display: block;
+            }
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+    </style>
+</head>
+<body class="gradient-bg text-white min-h-screen">
+    <!-- Mobile Menu Button -->
+    <div class="lg:hidden fixed top-4 left-4 z-50">
+        <button id="menuToggle" class="p-2 rounded-lg bg-blue-600 text-white">
+            <i class="fas fa-bars"></i>
+        </button>
     </div>
-    <div class="glass-card text-center p-4 mb-2">
-      <p class="text-red-500 font-medium">PENGELUARAN</p>
-      <p class="font-bold text-xl">${formatRupiah(totalPengeluaran)}</p>
-    </div>
-    <div class="glass-card text-center p-4 mb-2 flex justify-between items-center">
-      <div>
-        <p class="text-yellow-400 font-medium">LABA/RUGI</p>
-        <p class="font-bold text-xl">${formatRupiah(labaRugi)}</p>
-      </div>
-      <button class="px-2 py-1 text-xs text-yellow-400 border border-yellow-400 rounded hover:bg-yellow-400 hover:text-black" 
-        onclick="bagikanLaba(${labaRugi}, ${adminVicky}, ${adminBayu}, ${kasHasil}, ${cuciPiring})" 
-        ${labaRugi <= 0 ? "disabled" : ""}>
-        Bagikan
-      </button>
-    </div>
-    <div class="glass-card text-center p-4 mb-2 flex justify-between items-center">
-      <div>
-        <p class="text-blue-500 font-medium">KAS USAHA</p>
-        <p class="font-bold text-xl">${formatRupiah(window.kasUsaha)}</p>
-      </div>
-      <button class="px-2 py-1 text-xs text-blue-400 border border-blue-400 rounded hover:bg-blue-400 hover:text-white" onclick="editKasUsaha()">Edit</button>
-    </div>
-    <div class="glass-card text-center p-4 mb-2">
-      <p class="text-blue-500 font-medium">KAS AKHIR</p>
-      <p class="font-bold text-xl">${formatRupiah(kasAkhir)}</p>
-    </div>
-    <div class="text-gray-400 text-xs text-right mt-1">
-      Last Update: ${lastUpdateStr}
-    </div>
-  `;
-};
 
-// === FUNGSI EDIT KAS USAHA ===
-window.editKasUsaha = async function(){
-  const { value: nominal } = await Swal.fire({
-    title: "Edit Kas Usaha",
-    input: "number",
-    inputLabel: "Masukkan nominal Kas Usaha",
-    inputValue: window.kasUsaha || 0,
-    showCancelButton: true,
-    confirmButtonText: "Simpan",
-    cancelButtonText: "Batal",
-    preConfirm: (val)=>{
-      if(!val || isNaN(val)) return Swal.showValidationMessage("Masukkan angka valid!");
-      return parseInt(val);
-    }
-  });
+    <!-- Overlay -->
+    <div id="overlay" class="overlay"></div>
 
-  if(nominal === undefined) return;
-  
-  try {
-    // Simpan ke Firestore
-    await saveKasUsaha(nominal);
-    window.kasUsaha = nominal;
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-64 bg-gray-900 p-6 flex flex-col lg:static fixed h-full z-50">
+            <!-- Logo -->
+            <div class="flex items-center space-x-3 mb-10">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">Crave Street</h1>
+                    <p class="text-gray-400 text-xs">Finance Dashboard</p>
+                </div>
+            </div>
 
-    // Simpan log admin
-    await addDoc(collection(db, "admin_logs"), {
-      adminId: currentAdminData?.id || null,
-      createdBy: window.currentAdminName,
-      aksi: "Mengubah nominal Kas Usaha",
-      keterangan: `Kas Usaha diubah menjadi ${formatRupiah(nominal)}`,
-      createdAt: serverTimestamp()
-    });
+            <!-- Navigation -->
+            <nav class="flex-1">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" class="flex items-center space-x-3 p-3 rounded-lg bg-blue-600 text-white">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 transition">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Transaksi</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 transition">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Laporan</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 transition">
+                            <i class="fas fa-wallet"></i>
+                            <span>Kas & Laba</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" class="flex items-center space-x-3 p-3 rounded-lg text-gray-300 hover:bg-gray-800 transition">
+                            <i class="fas fa-cog"></i>
+                            <span>Pengaturan</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
 
-    await Swal.fire("Berhasil", "Kas Usaha diperbarui", "success");
-    window.renderSaldoBoxes();
-  } catch (err) {
-    console.error("Error saving kas usaha:", err);
-    Swal.fire("Error", "Gagal menyimpan Kas Usaha", "error");
-  }
-};
-
-// === FUNGSI BAGIKAN LABA ===
-window.bagikanLaba = async function(labaRugi, adminVicky, adminBayu, kasHasil, cuciPiring){
-  if(labaRugi <= 0){
-    Swal.fire("Info", "Tidak ada laba untuk dibagikan", "info");
-    return;
-  }
-
-  const { value: accept } = await Swal.fire({
-    title: "Bagikan Laba?",
-    html: `
-      <div class="text-left space-y-2">
-        <p>Total Laba: <b>${formatRupiah(labaRugi)}</b></p>
-        <div class="bg-gray-700 p-3 rounded-lg mt-2">
-          <p>Admin Vicky (40%): <b>${formatRupiah(adminVicky)}</b></p>
-          <p>Admin Bayu (40%): <b>${formatRupiah(adminBayu)}</b></p>
-          <p>Kas Usaha (10%): <b>${formatRupiah(kasHasil)}</b></p>
-          <p>Cuci Piring (10%): <b>${formatRupiah(cuciPiring)}</b></p>
+            <!-- User Profile -->
+            <div class="pt-6 border-t border-gray-700">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium truncate">Admin User</p>
+                        <p class="text-xs text-gray-400 truncate">admin@cravestreet.com</p>
+                    </div>
+                    <button class="text-gray-400 hover:text-white">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                </div>
+            </div>
         </div>
-        <p class="text-sm text-gray-400 mt-2">Setelah pembagian, semua data pemasukan/pengeluaran akan direset ke 0.</p>
-      </div>
-    `,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "Ya, Bagikan Laba",
-    cancelButtonText: "Batal",
-    confirmButtonColor: "#facc15"
-  });
 
-  if(!accept) return;
+        <!-- Main Content -->
+        <div class="flex-1 lg:ml-0 p-6">
+            <!-- Header -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold">Dashboard Keuangan</h1>
+                    <p class="text-gray-400">Ringkasan performa keuangan bisnis Anda</p>
+                </div>
+                <div class="flex items-center space-x-4 mt-4 lg:mt-0">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" placeholder="Cari..." class="pl-10 pr-4 py-2 bg-gray-800 rounded-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button class="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
 
-  try {
-    // Tampilkan loading
-    Swal.fire({
-      title: "Memproses...",
-      text: "Sedang membagikan laba dan mereset data",
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Pemasukan -->
+                <div class="stat-card glass-card p-6 border-l-blue-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm">Total Pemasukan</p>
+                            <h3 class="text-2xl font-bold mt-1" id="totalPemasukan">Rp 12.450.000</h3>
+                            <p class="text-green-400 text-sm mt-2">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span id="growthPemasukan">12.5%</span> dari bulan lalu
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-money-bill-wave text-blue-400"></i>
+                        </div>
+                    </div>
+                </div>
 
-    // 1. Tambahkan bagian kas ke kas usaha
-    window.kasUsaha += kasHasil;
-    await saveKasUsaha(window.kasUsaha);
+                <!-- Total Pengeluaran -->
+                <div class="stat-card glass-card p-6 border-l-red-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm">Total Pengeluaran</p>
+                            <h3 class="text-2xl font-bold mt-1" id="totalPengeluaran">Rp 8.230.000</h3>
+                            <p class="text-red-400 text-sm mt-2">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span id="growthPengeluaran">8.3%</span> dari bulan lalu
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-shopping-cart text-red-400"></i>
+                        </div>
+                    </div>
+                </div>
 
-    // 2. Simpan riwayat pembagian laba
-    await addDoc(collection(db, "pembagian_laba"), {
-      totalLaba: labaRugi,
-      adminVicky,
-      adminBayu,
-      kasHasil,
-      cuciPiring,
-      adminId: currentAdminData?.id || null,
-      createdBy: window.currentAdminName,
-      createdAt: serverTimestamp()
-    });
+                <!-- Laba Bersih -->
+                <div class="stat-card glass-card p-6 border-l-green-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm">Laba Bersih</p>
+                            <h3 class="text-2xl font-bold mt-1" id="labaBersih">Rp 4.220.000</h3>
+                            <p class="text-green-400 text-sm mt-2">
+                                <i class="fas fa-arrow-up mr-1"></i>
+                                <span id="growthLaba">18.7%</span> dari bulan lalu
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-chart-line text-green-400"></i>
+                        </div>
+                    </div>
+                </div>
 
-    // 3. Hapus semua data transaksi (reset)
-    const financeSnap = await getDocs(collection(db, "finance_reports"));
-    const deletePromises = [];
-    financeSnap.forEach(doc => {
-      deletePromises.push(deleteDoc(doc.ref));
-    });
-    await Promise.all(deletePromises);
+                <!-- Kas Usaha -->
+                <div class="stat-card glass-card p-6 border-l-purple-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm">Kas Usaha</p>
+                            <h3 class="text-2xl font-bold mt-1" id="kasUsaha">Rp 15.780.000</h3>
+                            <p class="text-purple-400 text-sm mt-2">
+                                <i class="fas fa-piggy-bank mr-1"></i>
+                                <span id="growthKas">5.2%</span> dari bulan lalu
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-wallet text-purple-400"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    // 4. Simpan log admin
-    await addDoc(collection(db, "admin_logs"), {
-      adminId: currentAdminData?.id || null,
-      createdBy: window.currentAdminName,
-      aksi: "Pembagian laba dan reset data",
-      keterangan: `Laba ${formatRupiah(labaRugi)} dibagikan: Vicky ${formatRupiah(adminVicky)}, Bayu ${formatRupiah(adminBayu)}, Kas ${formatRupiah(kasHasil)}, Cuci Piring ${formatRupiah(cuciPiring)}`,
-      createdAt: serverTimestamp()
-    });
+            <!-- Charts & Analytics -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Main Chart -->
+                <div class="lg:col-span-2 glass-card p-6 fade-in">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold">Performa Keuangan 6 Bulan Terakhir</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-blue-600 rounded-lg">Bulanan</button>
+                            <button class="px-3 py-1 text-sm bg-gray-700 rounded-lg hover:bg-gray-600">Tahunan</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="financeChart"></canvas>
+                    </div>
+                </div>
 
-    // 5. Reload data
-    await window.loadFinance();
+                <!-- Distribution & Progress -->
+                <div class="space-y-6">
+                    <!-- Distribution Chart -->
+                    <div class="glass-card p-6 fade-in">
+                        <h2 class="text-lg font-semibold mb-4">Distribusi Keuangan</h2>
+                        <div class="chart-container">
+                            <canvas id="distributionChart"></canvas>
+                        </div>
+                    </div>
 
-    Swal.fire({
-      icon: "success",
-      title: "Laba Berhasil Dibagikan!",
-      html: `
-        <div class="text-left space-y-2">
-          <p>Total Laba: <b>${formatRupiah(labaRugi)}</b></p>
-          <div class="bg-gray-700 p-3 rounded-lg mt-2">
-            <p>Admin Vicky (40%): <b>${formatRupiah(adminVicky)}</b></p>
-            <p>Admin Bayu (40%): <b>${formatRupiah(adminBayu)}</b></p>
-            <p>Kas Usaha (10%): <b>${formatRupiah(kasHasil)}</b></p>
-            <p>Cuci Piring (10%): <b>${formatRupiah(cuciPiring)}</b></p>
-          </div>
-          <p class="text-sm text-green-400 mt-2">Data keuangan telah direset untuk periode berikutnya.</p>
+                    <!-- Laba Progress -->
+                    <div class="glass-card p-6 fade-in">
+                        <h2 class="text-lg font-semibold mb-4">Target Laba Bulanan</h2>
+                        <div class="flex items-center justify-center">
+                            <div class="relative">
+                                <svg class="w-32 h-32 progress-ring">
+                                    <circle
+                                        class="progress-ring-circle"
+                                        stroke="url(#gradient)"
+                                        stroke-width="8"
+                                        fill="transparent"
+                                        r="56"
+                                        cx="64"
+                                        cy="64"
+                                        stroke-dasharray="352"
+                                        stroke-dashoffset="105.6"
+                                    />
+                                    <defs>
+                                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#10b981" />
+                                            <stop offset="100%" stop-color="#3b82f6" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold">70%</p>
+                                        <p class="text-gray-400 text-sm">Tercapai</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <p class="text-gray-400">Target: Rp 6.000.000</p>
+                            <p class="text-green-400 font-semibold">Tercapai: Rp 4.220.000</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions & Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Recent Transactions -->
+                <div class="lg:col-span-2 glass-card p-6 fade-in">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold">Transaksi Terbaru</h2>
+                        <button class="text-blue-400 hover:text-blue-300 text-sm font-medium">
+                            Lihat Semua <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <!-- Transaction Items -->
+                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-arrow-down text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Penjualan Makanan</p>
+                                    <p class="text-gray-400 text-sm">12 Mar 2024 • 14:30</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-green-400">+ Rp 450.000</p>
+                                <p class="text-gray-400 text-sm">Pemasukan</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-arrow-up text-red-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Bahan Baku</p>
+                                    <p class="text-gray-400 text-sm">12 Mar 2024 • 10:15</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-red-400">- Rp 280.000</p>
+                                <p class="text-gray-400 text-sm">Pengeluaran</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-gray-800/50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-arrow-down text-green-400"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Penjualan Minuman</p>
+                                    <p class="text-gray-400 text-sm">11 Mar 2024 • 18:45</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-semibold text-green-400">+ Rp 320.000</p>
+                                <p class="text-gray-400 text-sm">Pemasukan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions & Summary -->
+                <div class="space-y-6">
+                    <!-- Quick Actions -->
+                    <div class="glass-card p-6 fade-in">
+                        <h2 class="text-lg font-semibold mb-4">Aksi Cepat</h2>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="p-4 bg-blue-600 rounded-lg hover:bg-blue-700 transition text-center">
+                                <i class="fas fa-plus text-lg mb-2"></i>
+                                <p class="text-sm">Tambah Transaksi</p>
+                            </button>
+                            <button class="p-4 bg-green-600 rounded-lg hover:bg-green-700 transition text-center">
+                                <i class="fas fa-file-export text-lg mb-2"></i>
+                                <p class="text-sm">Export Laporan</p>
+                            </button>
+                            <button class="p-4 bg-purple-600 rounded-lg hover:bg-purple-700 transition text-center">
+                                <i class="fas fa-chart-bar text-lg mb-2"></i>
+                                <p class="text-sm">Analisis Data</p>
+                            </button>
+                            <button class="p-4 bg-red-600 rounded-lg hover:bg-red-700 transition text-center">
+                                <i class="fas fa-share-alt text-lg mb-2"></i>
+                                <p class="text-sm">Bagikan Laporan</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Financial Summary -->
+                    <div class="glass-card p-6 fade-in">
+                        <h2 class="text-lg font-semibold mb-4">Ringkasan Keuangan</h2>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">Rata-rata Harian</span>
+                                <span class="font-semibold">Rp 415.000</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">Transaksi/Bulan</span>
+                                <span class="font-semibold">128</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">Profit Margin</span>
+                                <span class="font-semibold text-green-400">34%</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">ROI</span>
+                                <span class="font-semibold text-green-400">28.5%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      `,
-      confirmButtonColor: "#22c55e"
-    });
+    </div>
 
-  } catch (err) {
-    console.error("Error bagikanLaba:", err);
-    Swal.fire("Error", "Gagal membagikan laba", "error");
-  }
-};
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzzr0ChjdVi7m4Ge-EFm3OK43ASujjZ40",
+            authDomain: "crave-street-id.firebaseapp.com",
+            projectId: "crave-street-id",
+            storageBucket: "crave-street-id.firebasestorage.app",
+            messagingSenderId: "221955592583",
+            appId: "1:221955592583:web:43dc59d791e750095cc322",
+            measurementId: "G-WCRQGLW47B"
+        };
 
-</script>
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Mobile Menu Toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        });
+
+        document.getElementById('overlay').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.remove('active');
+            this.classList.remove('active');
+        });
+
+        // Initialize Charts
+        const financeChart = new Chart(
+            document.getElementById('financeChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Pemasukan',
+                            data: [8500000, 9200000, 10200000, 9800000, 11200000, 12450000],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Pengeluaran',
+                            data: [6200000, 5800000, 7100000, 6500000, 7800000, 8230000],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#9ca3af',
+                                font: {
+                                    family: 'Inter'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#9ca3af'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#9ca3af',
+                                callback: function(value) {
+                                    return 'Rp ' + (value / 1000000).toFixed(1) + 'JT';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        const distributionChart = new Chart(
+            document.getElementById('distributionChart'),
+            {
+                type: 'doughnut',
+                data: {
+                    labels: ['Bahan Baku', 'Operasional', 'Gaji', 'Lainnya'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#9ca3af',
+                                font: {
+                                    family: 'Inter'
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        );
+
+        // Simulate real-time data updates
+        function updateDashboardData() {
+            // In a real app, this would fetch from Firebase
+            const newPemasukan = 12450000 + Math.floor(Math.random() * 500000);
+            const newPengeluaran = 8230000 + Math.floor(Math.random() * 300000);
+            const newLaba = newPemasukan - newPengeluaran;
+            
+            document.getElementById('totalPemasukan').textContent = formatRupiah(newPemasukan);
+            document.getElementById('totalPengeluaran').textContent = formatRupiah(newPengeluaran);
+            document.getElementById('labaBersih').textContent = formatRupiah(newLaba);
+            
+            // Add pulse animation to updated elements
+            ['totalPemasukan', 'totalPengeluaran', 'labaBersih'].forEach(id => {
+                const element = document.getElementById(id);
+                element.classList.add('pulse');
+                setTimeout(() => element.classList.remove('pulse'), 2000);
+            });
+        }
+
+        // Format Rupiah helper function
+        function formatRupiah(amount) {
+            return 'Rp ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        // Update data every 30 seconds (simulated)
+        setInterval(updateDashboardData, 30000);
+
+        // Initial data load simulation
+        setTimeout(() => {
+            updateDashboardData();
+        }, 1000);
+
+        // Add fade-in animation to cards on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card').forEach(card => {
+            observer.observe(card);
+        });
+
+        // Firebase Data Integration (Example)
+        async function loadFinanceData() {
+            try {
+                // Example: Load transactions from Firestore
+                const transactionsSnapshot = await db.collection('transactions')
+                    .orderBy('date', 'desc')
+                    .limit(10)
+                    .get();
+                
+                // Example: Load financial summary
+                const summaryDoc = await db.collection('financialSummary').doc('current').get();
+                
+                // Update UI with real data
+                if (summaryDoc.exists) {
+                    const data = summaryDoc.data();
+                    // Update your dashboard elements with real data
+                }
+                
+            } catch (error) {
+                console.error('Error loading finance data:', error);
+            }
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadFinanceData);
+    </script>
 </body>
 </html>
